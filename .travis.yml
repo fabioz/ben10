@@ -1,9 +1,10 @@
 language: python
 python:
-  - "2.7"
+    - "2.7"
 install:
     - sudo apt-get install -qq unrar
     - pip install --use-wheel -r requirements.txt
+    - pip install coveralls
     - sudo rm -rf /dev/shm && sudo ln -s /run/shm /dev/shm
 script:
     - python setup.py develop
