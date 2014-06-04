@@ -350,11 +350,10 @@ class App(object):
         This is a decorator that registers a function as a custom fixture.
 
         Once registered, a command can request the fixture by adding its name as a parameter.
-
         '''
         def _AddFixture(name, func):
             name = self.ConvertToFixtureName(name or func.__name__)
-            self.__custom_fixtures[name] = func()
+            self.__custom_fixtures[name] = func
 
         if func is None:
             def Decorator(func):
@@ -447,7 +446,8 @@ class App(object):
         result = {
             'argv_' : argv,
         }
-        result.update(self.__custom_fixtures)
+        for i_fixture_name, i_fixture_func in self.__custom_fixtures.iteritems():
+            result[i_fixture_name] = i_fixture_func()
         for i_plugin in self.plugins.itervalues():
             result.update(i_plugin.GetFixtures())
 
