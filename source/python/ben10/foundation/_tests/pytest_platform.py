@@ -9,7 +9,7 @@ import sys
 #===================================================================================================
 # Test
 #===================================================================================================
-class Test:
+class Test(object):
 
     def testPlatform(self):
         p = Platform('win', '32')
@@ -59,29 +59,28 @@ class Test:
 
 
     def testGetValidPlatforms(self):
-        assert set(Platform.GetValidPlatforms()) == \
-            set([
-                'darwin32',
-                'darwin32d',
-                'darwin64',
-                'darwin64d',
-                'debian32',
-                'debian32d',
-                'debian64',
-                'debian64d',
-                'redhat32',
-                'redhat32d',
-                'redhat64',
-                'redhat64d',
-                'ubuntu32',
-                'ubuntu32d',
-                'ubuntu64',
-                'ubuntu64d',
-                'win32',
-                'win32d',
-                'win64',
-                'win64d',
-            ])
+        assert set(Platform.GetValidPlatforms()) == {
+            'darwin32',
+            'darwin32d',
+            'darwin64',
+            'darwin64d',
+            'debian32',
+            'debian32d',
+            'debian64',
+            'debian64d',
+            'redhat32',
+            'redhat32d',
+            'redhat64',
+            'redhat64d',
+            'ubuntu32',
+            'ubuntu32d',
+            'ubuntu64',
+            'ubuntu64d',
+            'win32',
+            'win32d',
+            'win64',
+            'win64d',
+        }
 
 
     def testCreate(self):
@@ -144,3 +143,22 @@ class Test:
         monkeypatch.setattr(platform, 'machine', lambda:'x86_64')
         assert str(Platform.GetOSPlatform()) == 'redhat64'
 
+
+    def testFlags(self, monkeypatch):
+        assert Platform.GetAllFlags() == {
+            'windows', 'linux', 'darwin',
+            'win32', 'win32d', 'win64', 'win64d',
+            'redhat32', 'redhat32d', 'redhat64', 'redhat64d',
+            'darwin32', 'darwin32d', 'darwin64', 'darwin64d',
+            'debian64', 'debian32', 'debian64d', 'debian32d',
+            'ubuntu64', 'ubuntu32', 'ubuntu32d', 'ubuntu64d',
+        }
+
+        platform = Platform.Create('win32')
+        assert platform.GetFlags() == {'windows', 'win32'}
+
+        platform = Platform.Create('win32d')
+        assert platform.GetFlags() == {'windows', 'win32', 'win32d', 'debug'}
+
+        platform = Platform.Create('redhat64')
+        assert platform.GetFlags() == {'linux', 'redhat64'}

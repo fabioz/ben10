@@ -9,6 +9,11 @@ class UnknownPlatform(NotImplementedError):
     An unknown platform is found, either converting from platform naming conventions or obtaining
     the current platform.
     '''
+    def __init__(self, platform):
+        self.platform = platform
+        msg = 'Unknown platform "%s"' % platform
+        NotImplementedError.__init__(self, msg)
+
 
 
 #===================================================================================================
@@ -364,7 +369,7 @@ class Platform(object):
         :returns:
             Returns the platform in the old format (simple-platform)
 
-        @note:
+        .. note::
             The old format does not have the debug information in the platform.
 
         :raises UnknownPlatform:
@@ -421,3 +426,32 @@ class Platform(object):
         except KeyError:
             raise UnknownPlatform(plat)
 
+
+    @classmethod
+    def GetAllFlags(cls):
+        '''
+        Returns a set with all possible platform flags.
+
+        :return set(str):
+        '''
+        result = {cls.FLAVOUR_WINDOWS, cls.FLAVOUR_LINUX, cls.FLAVOUR_DARWIN}
+        for i_platform in cls.GetValidPlatforms():
+            result.add(i_platform)
+        return result
+
+
+    def GetFlags(self):
+        '''
+        Returns the flags correspondent with the current platform.
+        The resulting set is always a sub-set of GetAllFlags.
+
+        :return set(str):
+        '''
+        result = {
+            str(self),  # Example: The exact name of the platform: win32, win32d, win64, win64d
+            self.GetBaseName(),  # Example: "win32" (for both win32d and win32)
+            self.GetPlatformFlavour(),  # Example: "windows" (for all windows variations)
+        }
+        if self.debug:
+            result.add('debug')
+        return result
