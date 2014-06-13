@@ -20,7 +20,7 @@ def git(embed_data):
 #===================================================================================================
 # Test
 #===================================================================================================
-class Test:
+class Test(object):
 
     def testCall(self, git):
         assert git.__call__ == git.Execute
@@ -331,39 +331,33 @@ class Test:
         cloned_complex = embed_data['cloned_complex']
         git.Clone(embed_data['complex.git'], cloned_complex)
 
-        assert (
-            git.GetRevisions(
-                cloned_complex,
-                r1='6952d5c4c89bc230288fbc4559f8e659ee0f9c6a',
-                r2='f533d1d30dd042b073d30becca7deb7b901f54e7',
-                ignore_merges=False
-            )
-            == [
-                'efa64656ba24edef6b9213e200aca022b9798059',
-                '5ced71f1c70e85dc92aa75c01e1d60b4cf99d564',
-                '472892a3e00dd6f9922bdb2296f38c90085bc435',
-                '952f1f194cf91ae064203e22a8de2bf0f49a069f',
-                '42b2140af9b6e6b078344d3db231e75bdc6124b7',
-                'f533d1d30dd042b073d30becca7deb7b901f54e7',
-            ],
-        )
+        assert git.GetRevisions(
+            cloned_complex,
+            r1='6952d5c4c89bc230288fbc4559f8e659ee0f9c6a',
+            r2='f533d1d30dd042b073d30becca7deb7b901f54e7',
+            ignore_merges=False
+        ) == [
+            'efa64656ba24edef6b9213e200aca022b9798059',
+            '5ced71f1c70e85dc92aa75c01e1d60b4cf99d564',
+            '472892a3e00dd6f9922bdb2296f38c90085bc435',
+            '952f1f194cf91ae064203e22a8de2bf0f49a069f',
+            '42b2140af9b6e6b078344d3db231e75bdc6124b7',
+            'f533d1d30dd042b073d30becca7deb7b901f54e7',
+        ]
 
         # Ignoring merges
-        assert (
-            git.GetRevisions(
-                cloned_complex,
-                r1='6952d5c4c89bc230288fbc4559f8e659ee0f9c6a',
-                r2='f533d1d30dd042b073d30becca7deb7b901f54e7',
-                ignore_merges=True
-            )
-            == [
-                'efa64656ba24edef6b9213e200aca022b9798059',
-                '5ced71f1c70e85dc92aa75c01e1d60b4cf99d564',
-                '472892a3e00dd6f9922bdb2296f38c90085bc435',
-                '952f1f194cf91ae064203e22a8de2bf0f49a069f',
-                'f533d1d30dd042b073d30becca7deb7b901f54e7'
-            ],
-        )
+        assert git.GetRevisions(
+            cloned_complex,
+            r1='6952d5c4c89bc230288fbc4559f8e659ee0f9c6a',
+            r2='f533d1d30dd042b073d30becca7deb7b901f54e7',
+            ignore_merges=True
+        ) == [
+            'efa64656ba24edef6b9213e200aca022b9798059',
+            '5ced71f1c70e85dc92aa75c01e1d60b4cf99d564',
+            '472892a3e00dd6f9922bdb2296f38c90085bc435',
+            '952f1f194cf91ae064203e22a8de2bf0f49a069f',
+            'f533d1d30dd042b073d30becca7deb7b901f54e7'
+        ]
 
         # When r1 is 0000000000000000000000000000000000000000, the ref must be passed
         with pytest.raises(AssertionError):
@@ -375,36 +369,30 @@ class Test:
 
         # If first revision is empty, list all commits reachable by r2, not reachable by any other
         # head
-        assert (
-            git.GetRevisions(
-                cloned_complex,
-                r1='0000000000000000000000000000000000000000',
-                r2='f533d1d30dd042b073d30becca7deb7b901f54e7',
-                ref='refs/heads/master',
-                ignore_merges=False
-            )
-            == [
-                '6952d5c4c89bc230288fbc4559f8e659ee0f9c6a',
-                'efa64656ba24edef6b9213e200aca022b9798059',
-                '5ced71f1c70e85dc92aa75c01e1d60b4cf99d564',
-                '472892a3e00dd6f9922bdb2296f38c90085bc435',
-                '952f1f194cf91ae064203e22a8de2bf0f49a069f',
-                '42b2140af9b6e6b078344d3db231e75bdc6124b7',
-                'f533d1d30dd042b073d30becca7deb7b901f54e7',
-            ],
-        )
+        assert git.GetRevisions(
+            cloned_complex,
+            r1='0000000000000000000000000000000000000000',
+            r2='f533d1d30dd042b073d30becca7deb7b901f54e7',
+            ref='refs/heads/master',
+            ignore_merges=False
+        ) == [
+            '6952d5c4c89bc230288fbc4559f8e659ee0f9c6a',
+            'efa64656ba24edef6b9213e200aca022b9798059',
+            '5ced71f1c70e85dc92aa75c01e1d60b4cf99d564',
+            '472892a3e00dd6f9922bdb2296f38c90085bc435',
+            '952f1f194cf91ae064203e22a8de2bf0f49a069f',
+            '42b2140af9b6e6b078344d3db231e75bdc6124b7',
+            'f533d1d30dd042b073d30becca7deb7b901f54e7',
+        ]
 
         # If last revision is empty, a branch was deleted, no commits here.
-        assert (
-            git.GetRevisions(
-                cloned_complex,
-                r1='f533d1d30dd042b073d30becca7deb7b901f54e7',
-                r2='0000000000000000000000000000000000000000',
-                ref='refs/heads/master',
-                ignore_merges=False
-            )
-            == [],
-        )
+        assert git.GetRevisions(
+            cloned_complex,
+            r1='f533d1d30dd042b073d30becca7deb7b901f54e7',
+            r2='0000000000000000000000000000000000000000',
+            ref='refs/heads/master',
+            ignore_merges=False
+        ) == []
 
 
     def testAddCommitPush(self, git, embed_data):
