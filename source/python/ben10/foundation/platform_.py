@@ -152,6 +152,7 @@ class Platform(object):
             'win64' : (cls.WIN, '64', False),
             'win64d' : (cls.WIN, '64', True),
             'redhat64' : (cls.REDHAT, '64', False),
+            'fedora64' : (cls.REDHAT, '64', False),
             'ubuntu64' : (cls.UBUNTU, '64', False),
             'debian64' : (cls.DEBIAN, '64', False),
             'darwin32' : (cls.DARWIN, '32', False),
