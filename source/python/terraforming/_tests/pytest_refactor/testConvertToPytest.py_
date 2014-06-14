@@ -1,0 +1,31 @@
+class Test(unittest.TestCase):
+
+    def test_First(self):
+        self.assertEqual(1, 1)
+        self.assert_(not (Colors.green >= Colors.blue))
+
+        self.assertRaises(TypeError, Call, 1, 2, 3)
+
+        # But you can't compare it directly to an int (an enumerate values is not an int)
+        self.assertRaises(TypeError, Colors.red < 1)
+
+
+    def testIterEnumValuesPython(self):
+        self.assertEqual(
+            list(IterEnumValues(_TestEnum)),
+            [
+                _TestEnum.Espresso,
+                _TestEnum.Latte,
+                _TestEnum.Cappuccino,
+                _TestEnum.Irish,
+                _TestEnum.Turkish,
+                _TestEnum.Crema,
+            ]
+        )
+
+        self.assertEqual(list(int(x) for x in IterEnumValues(_TestEnum)), [0, 1, 2, 3, 4, 6])
+
+        self.assertEqual(
+            list(x.name for x in IterEnumValues(_TestEnum)),
+            ['Espresso', 'Latte', 'Cappuccino', 'Irish', 'Turkish', 'Crema'],
+        )

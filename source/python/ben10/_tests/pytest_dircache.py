@@ -74,6 +74,7 @@ class Test:
         assert os.path.isdir(embed_data['cache_dir/alpha'])
 
 
+    @pytest.mark.symlink
     def testMakeLocallyAvailable(self, embed_data):
         '''
         Tests the MakeLocallyAvailable method.
