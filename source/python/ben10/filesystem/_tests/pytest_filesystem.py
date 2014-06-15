@@ -33,6 +33,7 @@ class Test:
         assert not IsFile(filename)
 
 
+    @pytest.mark.symlink
     def testLinkDirectory(self, embed_data):
         # Missing directories are not links
         assert not IsLink('missing_dir')
@@ -68,6 +69,7 @@ class Test:
         assert not IsLink(link_name)
 
 
+    @pytest.mark.symlink
     def testLinkFiles(self, embed_data):
         target = embed_data['file.txt']
 
@@ -340,6 +342,7 @@ class Test:
             CopyFiles(embed_data['source'], 'ERROR://target')
 
 
+    @pytest.mark.symlink
     def testCopyFileSymlink(self, embed_data):
         # Create a file
         original_filename = 'original_file.txt'
