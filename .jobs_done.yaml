@@ -3,13 +3,13 @@ junit_patterns:
 
 platform-windows:build_batch_commands:
 - |
-  %AA_AASIMAR_AA% -t project.build ben10 --projects-dir=%WORKSPACE% --dist={dist} --platform={platform} --dist-dirname=dist-development
+  %AA_AASIMAR_AA% -t project.build ben10 --projects-dir=%WORKSPACE% --dist={dist} --platform={platform}
   %AA_AASIMAR_II% pak              ben10 --projects-dir=%WORKSPACE% --dist={dist} --platform={platform} --branch={branch}
 
 
 platform-linux:build_shell_commands:
 - |
-  $AA_AASIMAR_AA  -t project.build ben10 --projects-dir=$WORKSPACE  --dist-dirname=dist-development --dist={dist} --platform={platform}
+  $AA_AASIMAR_AA  -t project.build ben10 --projects-dir=$WORKSPACE --dist={dist} --platform={platform}
 
 
 description_regex: "DESCRIPTION\\: (.*)"
