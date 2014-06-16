@@ -38,7 +38,7 @@ def exception_handler(request):
 #===================================================================================================
 # Test
 #===================================================================================================
-class Test():
+class Test(object):
 
     def testHandleException(self, exception_handler, capfd):
         try:
@@ -47,7 +47,8 @@ class Test():
             handle_exception.HandleException('Test')
         assert len(exception_handler.exceptions) == 1
 
-        assert capfd.readouterr() == [
+        obtained = capfd.readouterr()
+        assert obtained == [
             u'',
             u'''Traceback (most recent call last):
   File "%s", line 45, in testHandleException
@@ -68,4 +69,5 @@ RuntimeError
         finally:
             handle_exception.EndIgnoreHandleException()
 
-        assert capfd.readouterr() == [u'', u'', ]
+        obtained = capfd.readouterr()
+        assert obtained == [u'', u'', ]
