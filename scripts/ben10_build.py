@@ -11,3 +11,8 @@ class Ben10BuildCommand(BuildCommand):
     @Override(BuildCommand.EvBuild)
     def EvBuild(self, args):
         self.RunTests(jobs=6, xml=True)
+
+
+    @Override(BuildCommand.EvAfterBuild)
+    def EvAfterBuild(self, args):
+        self.CiPublish()
