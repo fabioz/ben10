@@ -48,14 +48,14 @@ class Test(object):
         assert len(exception_handler.exceptions) == 1
 
         obtained = capfd.readouterr()
-        assert obtained == [
+        assert tuple(obtained) == (
             u'',
             u'''Traceback (most recent call last):
   File "%s", line 45, in testHandleException
     raise RuntimeError()
 RuntimeError
 ''' % __file__,
-        ]
+        )
 
 
     def testIgnoreHandleException(self, exception_handler, capfd):
@@ -70,4 +70,4 @@ RuntimeError
             handle_exception.EndIgnoreHandleException()
 
         obtained = capfd.readouterr()
-        assert obtained == [u'', u'', ]
+        assert tuple(obtained) == (u'', u'')
