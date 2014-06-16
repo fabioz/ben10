@@ -1,8 +1,8 @@
-colorama==0.3.1
+colorama==0.2.5
 ftputil==3.0
 ruamel.ordereddict==0.4.6
-path.py==5.2
-pyftpdlib==1.4
+path.py==5.1
+pyftpdlib==0.6.0
 pytest==2.5.2
 pytest-cov==1.6
 pytest-localserver==0.3.2
