@@ -10,5 +10,5 @@ script:
     - python setup.py develop
     - py.test -vv --timeout=90 --cov-report term-missing --cov ben10 source/python/ben10
 after_success:
-    coveralls --verbose
+    coveralls
 
