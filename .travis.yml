@@ -4,11 +4,11 @@ python:
 install:
     - sudo apt-get install -qq unrar
     - pip install --use-wheel -r requirements.txt
-    - pip install coveralls
+    - pip install --use-wheel coveralls
     - sudo rm -rf /dev/shm && sudo ln -s /run/shm /dev/shm
 script:
     - python setup.py develop
     - py.test -vv --timeout=90 --cov-report term-missing --cov ben10 source/python/ben10
 after_success:
-    - coveralls --verbose
+    coveralls --verbose
 
