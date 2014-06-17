@@ -8,11 +8,13 @@ from ben10.foundation.decorators import Override
 #===================================================================================================
 class Ben10BuildCommand(BuildCommand):
 
+    PLATFORMS = ['win32', 'win64', 'redhat64']
+
     @Override(BuildCommand.EvBuild)
     def EvBuild(self, args):
         self.RunTests(jobs=6, xml=True)
 
 
-    @Override(BuildCommand.EvAfterBuild)
-    def EvAfterBuild(self, args):
-        self.CiPublish()
+    @Override(BuildCommand.EvPublish)
+    def EvPublish(self, args):
+        self.CiPublish(installer=False, all_platforms=','.join(self.PLATFORMS))
