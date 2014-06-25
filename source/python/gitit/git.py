@@ -986,9 +986,9 @@ class Git(object):
             Returns True if the given path is a git-repository and False otherwise.
         '''
         # Assume that if we have a .git dir, we are a valid repository
-        from ben10.filesystem import IsDir
+        from ben10.filesystem import Exists
         import os
-        return IsDir(os.path.join(repo_path, '.git'))
+        return Exists(os.path.join(repo_path, '.git'))
 
 
     def GetWorkingDir(self, path):
@@ -1009,7 +1009,7 @@ class Git(object):
         result = os.path.normpath(os.path.abspath(path))
         dir_name = os.path.dirname(result)
         while result != dir_name:
-            if os.path.isdir(result + '/.git'):
+            if self.IsValidRepository(result):
                 return result
             result = dir_name
             dir_name = os.path.dirname(result)
