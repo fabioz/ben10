@@ -985,10 +985,14 @@ class Git(object):
         :returns:
             Returns True if the given path is a git-repository and False otherwise.
         '''
-        # Assume that if we have a .git dir, we are a valid repository
         from ben10.filesystem import Exists
         import os
-        return Exists(os.path.join(repo_path, '.git'))
+
+        git_filename = os.path.join(repo_path, '.git')
+
+        # Assume that if we have a .git dir, we are a valid repository
+        # Assume that if we have a .git file, we have a valid sub-module repository
+        return Exists(git_filename)
 
 
     def GetWorkingDir(self, path):

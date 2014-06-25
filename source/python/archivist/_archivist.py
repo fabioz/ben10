@@ -1,6 +1,7 @@
 from ben10.filesystem import (CheckIsFile, CreateDirectory, CreateFile, DeleteFile, EOL_STYLE_NONE,
     ExtendedPathMask, FileAlreadyExistsError, FindFiles)
 import os
+import warnings
 
 
 
@@ -208,6 +209,11 @@ class Archivist(object):
                 out_filters=i_out_filters + list(out_filters),
                 recursive=tree_recurse,
             )
+            if len(filenames) == 0:
+                warnings.warn(
+                    'NO FILES LISTED in "extended path mask": %r' % (i_path,),
+                    stacklevel=2,
+                )
             for i_filename in filenames:
                 if not os.path.isdir(i_filename):
                     archive_filename = i_filename[len(dirname):]

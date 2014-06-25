@@ -5,7 +5,7 @@ from ben10.filesystem import FileAlreadyExistsError
 #===================================================================================================
 # Test
 #===================================================================================================
-class Test:
+class Test(object):
 
     def testExtractRar(self, embed_data):
         self._TestArchive(embed_data, embed_data['root_dir.rar'], extract_only=True)
@@ -119,3 +119,19 @@ class Test:
             'root_dir/apache_pb.gif',
             'CREATE/root_dir/apache_pb.gif',
         )
+
+
+    def testWarns(self):
+        from archivist import Archivist
+        import warnings
+
+        with warnings.catch_warnings(record=True) as reported_warnings:
+            warnings.simplefilter("always")
+
+            archive = Archivist()
+            archive._ZipFileListing([('folder_in_zip', '+non_matching_mask/*')])
+
+            assert len(reported_warnings) == 1
+            assert reported_warnings[0].message.message == 'NO FILES LISTED in "extended path mask": \'+non_matching_mask/*\''
+
+

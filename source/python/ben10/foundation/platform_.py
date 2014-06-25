@@ -8,6 +8,9 @@ class UnknownPlatform(NotImplementedError):
     '''
     An unknown platform is found, either converting from platform naming conventions or obtaining
     the current platform.
+
+    :ivar str platform:
+        The unknown platform string.
     '''
     def __init__(self, platform):
         self.platform = platform
@@ -205,8 +208,6 @@ class Platform(object):
         '''
         import platform
         import sys
-
-
 
         if sys.platform == 'win32':
             if 'AMD64' in platform.python_compiler():
