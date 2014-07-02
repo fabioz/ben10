@@ -1,17 +1,42 @@
+from coilib50.basic.singleton import Singleton
+from coilib50.cache.memoize import Memoize
+import os
+import posixpath
+
+
+
 #===================================================================================================
 # Git
 #===================================================================================================
-class Git(object):
+class Git(Singleton):
     '''
-    Python interface to git commands.
+    Python interface to git commands. Uses git executable available in the current environment.
 
-    Uses git executable available in the current environment.
+    Some functions use Memoize for cache, and assume that files in a repository will not change
+    during the lifetime of a Git instance.
+
+    If you want to ensure that no cache is used, create a new instance of Git whenever necessary,
+
+    If you wish to use this cache and share it globally, use Git.GetSingleton. You can also push a
+    new singleton whenever you know that changes were made to local files, as a way to invalidate
+    this cache
     '''
 
     # Constants for common refs
     ZERO_REVISION = '0' * 40
     REFS_HEADS = 'refs/heads/'
     REFS_TAGS = 'refs/tags/'
+
+
+    def ClearCache(self):
+        '''
+        Clears Memoize cache from all our methods
+        '''
+        self.Log.ClearCache(self)
+        self.GetCurrentBranch.ClearCache(self)
+        self.GetCurrentRef.ClearCache(self)
+        self.GetDirtyFiles.ClearCache(self)
+
 
     def Execute(
         self,
@@ -51,7 +76,7 @@ class Git(object):
         if isinstance(command_line, str):
             import shlex
             command_line = shlex.split(command_line)
-        command_line = ['git'] + command_line
+        command_line = ['git'] + list(command_line)
 
         from ben10.execute import Execute2
         output, retcode = Execute2(
@@ -258,7 +283,7 @@ class Git(object):
         '''
         result_format = "commit:%H%nshort_commit:%h%nauthor:%ae%nsummary:%s%ntimestamp:%ct"
         result = self.Execute(
-            ['show', ref, '-s','--pretty=format:%s' % result_format],
+            ['show', ref, '-s', '--pretty=format:%s' % result_format],
             repo_path,
             flat_output=False
         )
@@ -767,23 +792,25 @@ class Git(object):
         )
 
 
-    def Log(self, repo_path, flags=[]):
+    @Memoize(500)
+    def Log(self, repo_path, flags=()):
         '''
         :param str repo_path:
             Path to the repository (local)
 
-        :param list(str) flags:
+        :param tuple(str) flags:
             Additional flags passed to git log
 
-            e.g. ['--oneline']
+            e.g. ('--oneline',)
 
         :rtype: list(str)
         :returns:
             Output from git log
         '''
-        return self.Execute(['log'] + flags, repo_path)
+        return self.Execute(('log',) + flags, repo_path)
 
 
+    @Memoize(500)
     def GetCurrentBranch(self, repo_path):
         '''
         :param repo_path:
@@ -804,11 +831,42 @@ class Git(object):
         else:
             raise RuntimeError('Error parsing output from git branch')
 
-        # The comment differns depending on Git version. The text "(no branch)' was used before version 1.8.3
+        # The comment differs depending on Git version. The text "(no branch)' was used before version 1.8.3
         if current_branch == '(no branch)' or current_branch.startswith('(detached from'):
             raise NotCurrentlyInAnyBranchError(repo_path)
 
         return current_branch
+
+
+    @Memoize(500)
+    def GetCurrentRef(self, path, fail_if_dirty=False):
+        '''
+        :param str path:
+            Path within a Git repository.
+
+        :returns str:
+            Git ref for last commit that changed `path`
+        '''
+        # Just to be safe, make sure that `path` is absolute and standard
+        from ben10.filesystem import StandardizePath
+
+        path = StandardizePath(os.path.abspath(path))
+
+        if fail_if_dirty:
+            # Always look for dirty files in root directory. Since we usually have many refs in a
+            # single repository, this reduces the amount of 'git log' we have to execute
+            git_root_dir = Git().Execute(['rev-parse', '--show-toplevel'], path, flat_output=True)
+
+            modified_files_in_repo = [
+                posixpath.join(git_root_dir, dirty_file)
+                for _status, dirty_file in self.GetDirtyFiles(git_root_dir)
+            ]
+
+            modified_files_in_path = [p for p in modified_files_in_repo if p.startswith(path)]
+            if modified_files_in_path:
+                raise DirtyRepositoryError(git_root_dir, modified_files_in_path)
+
+        return Git().Log(path, ('-n1', '--pretty=format:%H', '.'))[0]
 
 
     def BranchExists(self, repo_path, branch_name):
@@ -1081,6 +1139,7 @@ class Git(object):
         return removed_files
 
 
+    @Memoize(500)
     def GetDirtyFiles(self, repo_path, source_dir='.'):
         '''
         Returns modified files from a repository (ignores untracked files).
@@ -1337,111 +1396,119 @@ class Git(object):
 #===================================================================================================
 # TargetDirAlreadyExistsError
 #===================================================================================================
-class TargetDirAlreadyExistsError(Exception):
+class TargetDirAlreadyExistsError(RuntimeError):
     '''
     Raised when trying to clone a repository into a location that already exists and is not empty.
     '''
     def __init__(self, target_dir):
         self.target_dir = target_dir
-
-    def __str__(self):
-        return 'Destination path "%s" already exists and is not an empty directory.' % self.target_dir
+        RuntimeError.__init__(
+            self,
+            'Destination path "%s" already exists and is not an empty directory.' % self.target_dir
+        )
 
 
 
 #===================================================================================================
 # RepositoryAccessError
 #===================================================================================================
-class RepositoryAccessError(Exception):
+class RepositoryAccessError(RuntimeError):
     '''
     Raised when trying to access an inexistent repository, or one which you don't have reading
     permissions
     '''
     def __init__(self, repo_path):
         self.repo_path = repo_path
-
-    def __str__(self):
-        return "Repository '%s' doesn't exist or you don't have permission to read it." \
+        RuntimeError.__init__(
+            self,
+            "Repository '%s' doesn't exist or you don't have permission to read it." \
             % self.repo_path
+        )
 
 
 
 #===================================================================================================
 # DirtyRepositoryError
 #===================================================================================================
-class DirtyRepositoryError(Exception):
+class DirtyRepositoryError(RuntimeError):
     '''
     Raised when trying to perform some operations in a dirty (uncommited changes) repository.
     '''
-    def __init__(self, repo_path):
-        Exception.__init__(self, 'Repository at "%s" is dirty.' % repo_path)
-        self.repo = repo_path
+    def __init__(self, repo_path, dirty_files=None):
+        self.repo_path = repo_path
+        self.dirty_files = dirty_files
+
+        message = 'Repository at "%s" is dirty.' % repo_path
+        if dirty_files:
+            message += '\n\tfiles:\n\t\t' + '\n\t\t'.join(dirty_files)
+
+        RuntimeError.__init__(self, message)
 
 
 
 #===================================================================================================
 # BranchAlreadyExistsError
 #===================================================================================================
-class BranchAlreadyExistsError(Exception):
+class BranchAlreadyExistsError(RuntimeError):
     '''
     Raised when trying to create a branch that already exists.
     '''
     def __init__(self, branch_name):
-        Exception.__init__(self, 'Branch "%s" already exists.' % branch_name)
         self.branch = branch_name
+        RuntimeError.__init__(self, 'Branch "%s" already exists.' % branch_name)
 
 
 
 #===================================================================================================
 # BranchDoesNotExistError
 #===================================================================================================
-class BranchDoesNotExistError(Exception):
+class BranchDoesNotExistError(RuntimeError):
     '''
     Raised when trying to operate with a branch that does not exist.
     '''
     def __init__(self, branch):
-        Exception.__init__(self, 'Branch "%s" does not exist.' % branch)
         self.branch = branch
+        RuntimeError.__init__(self, 'Branch "%s" does not exist.' % branch)
 
 
 
 #===================================================================================================
 # GitRefDoesNotExistError
 #===================================================================================================
-class GitRefDoesNotExistError(Exception):
+class GitRefDoesNotExistError(RuntimeError):
     '''
     Raised when trying to checkout a ref that does not exist.
     '''
 
     def __init__(self, ref):
-        Exception.__init__(self, 'Ref "%s" does not exist.' % ref)
         self.ref = ref
+        RuntimeError.__init__(self, 'Ref "%s" does not exist.' % ref)
 
 
 #===================================================================================================
 # NotCurrentlyInAnyBranchError
 #===================================================================================================
-class NotCurrentlyInAnyBranchError(Exception):
+class NotCurrentlyInAnyBranchError(RuntimeError):
     '''
     Raised when operating while not on any branch (headless state)
     '''
     def __init__(self, repo_path):
-        Exception.__init__(self, 'Repository "%s" is not currently on any branch.' % repo_path)
         self.repo_path = repo_path
+        RuntimeError.__init__(self, 'Repository "%s" is not currently on any branch.' % repo_path)
 
 
 
 #===================================================================================================
 # SSHServerCantBeFoundError
 #===================================================================================================
-class SSHServerCantBeFoundError(Exception):
+class SSHServerCantBeFoundError(RuntimeError):
     '''
     Raised when trying to connect to a git ssh server that cannot be found.
     '''
 
     def __init__(self, repository_url):
-        Exception.__init__(self, 'SSH server at "%s" could not be found.' % repository_url)
         self.repository_url = repository_url
+        RuntimeError.__init__(self, 'SSH server at "%s" could not be found.' % repository_url)
 
 
 

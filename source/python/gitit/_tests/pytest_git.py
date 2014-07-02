@@ -7,16 +7,6 @@ import pytest
 
 
 
-@pytest.fixture
-def git(embed_data):
-    result = Git()
-    result.remote = embed_data['remote.git']
-    result.cloned_remote = embed_data['cloned_remote']
-    result.Clone(result.remote, result.cloned_remote)
-    return result
-
-
-
 #===================================================================================================
 # Test
 #===================================================================================================
@@ -109,7 +99,7 @@ class Test(object):
             '    Adding alpha and bravo files',
         ]
 
-        r = git.Log(working_dir, ['--oneline'])
+        r = git.Log(working_dir, ('--oneline',))
         assert r == [
             '35ff012  "Added new_file"',
             '2a5f12d Added charlie.txt',
@@ -322,7 +312,8 @@ class Test(object):
         assert git.IsDirty(git.cloned_remote) == False
         DeleteFile(new_file)
 
-        # Modifying a file should
+        # Modifying a file should leave it dirty
+        git.ClearCache()
         CreateFile(embed_data['cloned_remote/alpha.txt'], contents='modified alpha')
         assert git.IsDirty(git.cloned_remote) == True
 
@@ -420,10 +411,12 @@ class Test(object):
         assert git.GetCurrentBranch(git.cloned_remote) == 'master'
 
         # Create a new branch and check again
+        git.ClearCache()
         git.CreateLocalBranch(git.cloned_remote, 'new_branch')
         assert git.GetCurrentBranch(git.cloned_remote) == 'new_branch'
 
         # Stay in headless state
+        git.ClearCache()
         git.Checkout(git.cloned_remote, '59b4124603cbb614437a5896d7a028e9df0df276')
         with pytest.raises(NotCurrentlyInAnyBranchError):
             git.GetCurrentBranch(git.cloned_remote)
@@ -513,6 +506,7 @@ class Test(object):
         assert git.GetDirtyFiles(git.cloned_remote) == []
 
         # Modify alpha.txt
+        git.ClearCache()
         CreateFile(embed_data['cloned_remote/alpha.txt'], contents='')
         assert set(git.GetDirtyFiles(git.cloned_remote)) == set([('M', 'alpha.txt')])
 
@@ -541,6 +535,7 @@ class Test(object):
         assert git.GetCurrentBranch(git.cloned_remote) == 'master'
 
         # Create a new branch and check again
+        git.ClearCache()
         git.CreateLocalBranch(git.cloned_remote, 'new_branch')
         assert git.GetCurrentBranch(git.cloned_remote) == 'new_branch'
 
@@ -549,6 +544,7 @@ class Test(object):
             git.CreateLocalBranch(git.cloned_remote, 'new_branch')
 
         # Try to create a branch while dirty
+        git.ClearCache()
         CreateFile(embed_data['cloned_remote/alpha.txt'], contents='')
         with pytest.raises(DirtyRepositoryError):
             git.CreateLocalBranch(git.cloned_remote, 'other_new_branch')
@@ -566,16 +562,19 @@ class Test(object):
         assert not git.IsDirty(git.cloned_remote)
 
         # Modify alpha.txt
+        git.ClearCache()
         alpha_txt = git.cloned_remote + '/alpha.txt'
         CreateFile(alpha_txt, 'Changing alpha.txt\n')
         assert git.IsDirty(git.cloned_remote)
 
         # Stash changes so we have alpha.txt with its original content.
+        git.ClearCache()
         git.Stash(git.cloned_remote)
         assert not git.IsDirty(git.cloned_remote)
         assert GetFileContents(alpha_txt) == 'alpha\n'
 
         # Pop changes so we have alpha.txt with our modification
+        git.ClearCache()
         git.StashPop(git.cloned_remote)
         assert git.IsDirty(git.cloned_remote)
         assert GetFileContents(alpha_txt) == 'Changing alpha.txt\n'
@@ -602,3 +601,20 @@ class Test(object):
             git.ListRemoteBranches(git.cloned_remote)
             == set(['master', 'new_branch_2'])
         )
+
+
+
+#===================================================================================================
+# git
+#===================================================================================================
+@pytest.fixture(scope='function')
+def git(embed_data):
+    '''
+    Git fixture that gives us an instance of git, plus some configurations for test data
+    repositories
+    '''
+    result = Git()
+    result.remote = embed_data['remote.git']
+    result.cloned_remote = embed_data['cloned_remote']
+    result.Clone(result.remote, result.cloned_remote)
+    return result
