@@ -422,7 +422,7 @@ class ImportStatements(object):
             cumulative_len = 0
             symbols_count = 0
             for i_leaf in WalkLeafs(node):
-                # TODO: Consider the EOL prefix in the cumulative_len, since it can contain comments
+                # TODO: BEN-28: [terraforming] Consider the EOL prefix in the cumulative_len, since it can contain comments
                 if i_leaf.value == '\n':
                     break
 
