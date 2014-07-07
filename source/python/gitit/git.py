@@ -1189,7 +1189,7 @@ class Git(object):
         return tag_output
 
 
-    def CreateLocalBranch(self, repo_path, branch_name):
+    def CreateLocalBranch(self, repo_path, branch_name, source=None):
         '''
         Creates a new local branch, and stays in it.
         Equivalent to 'git checkout -b branch_name'
@@ -1199,6 +1199,9 @@ class Git(object):
 
         :param str branch_name:
             The name of the branch to be created.
+
+        :param str|None source:
+            If a ref is given, branch is created from this point.
 
         :raises DirtyRepositoryError:
             .. seealso:: DirtyRepositoryError
@@ -1211,7 +1214,10 @@ class Git(object):
 
         try:
             # Create the new branch
-            self.Execute(['checkout', '-b', branch_name], repo_path)
+            if source is not None:
+                self.Execute(['checkout', source, '-b', branch_name], repo_path)
+            else:
+                self.Execute(['checkout', '-b', branch_name], repo_path)
         except GitExecuteError, e:
             if 'already exists' in e.git_msg:
                 raise BranchAlreadyExistsError(branch_name)
