@@ -296,3 +296,90 @@ class Test:
         assert self._called == 2
         b.m1(1)
         assert self._called == 2
+
+
+    def testPerformance__flaky(self):
+        '''
+        Results 2014-07-02 (support for defaults and passing kwargs)
+        ---------------------------------------------------------
+        call_no_positional is 6.1 times slower than baseline.
+        call_with_defaults is 11.2 times slower than baseline.
+        call_passing_kwargs is 13.4 times slower than baseline.
+        ---------------------------------------------------------
+
+
+        Results < 2014-07-02
+        ---------------------------------------------------------
+        call_no_positional is 5.3 times slower than baseline.
+        call_with_defaults (no support)
+        call_passing_kwargs (no support)
+        ---------------------------------------------------------
+        '''
+        from ben10.foundation.odict import odict
+        from textwrap import dedent
+        import timeit
+
+        for_size = 1000
+        repeat = 7
+        number = 10
+        timing = odict()
+
+        def Check(name, setup, stmt):
+            timer = timeit.Timer(
+                setup=(dedent(setup)),
+                stmt=(dedent(stmt)),
+            )
+            timing[name] = min(timer.repeat(repeat=repeat, number=number))
+
+
+        PRINT_PERFORMANCE = False
+        def PrintPerformance(timing, name):
+            if PRINT_PERFORMANCE:
+                print '%s is %.1f times slower than baseline.' % (name, timing[name] / timing['baseline'])
+
+        # Baseline
+        Check(
+            'baseline',
+            'from random import Random;r = Random(1)',
+            "for _i in xrange(%d): tuple((r.random(), 'g/cm3', 'density'))" % (for_size,)
+            )
+
+
+        Check(
+            'call_no_positional',
+            '''
+            from ben10.foundation.memoize import Memoize
+
+            @Memoize
+            def Foo(arg1, arg2):
+                pass
+            ''',
+            "for _i in xrange(%d): Foo('arg1', 'arg2'); Foo('arg1', 'arg2')" % (for_size,)
+            )
+        PrintPerformance(timing, 'call_no_positional')
+
+        Check(
+            'call_with_defaults',
+            '''
+            from ben10.foundation.memoize import Memoize
+
+            @Memoize
+            def Foo(arg1, arg2=None):
+                pass
+            ''',
+            "for _i in xrange(%d): Foo('arg1'); Foo('arg1', 'arg2')" % (for_size,)
+            )
+        PrintPerformance(timing, 'call_with_defaults')
+
+        Check(
+            'call_passing_kwargs',
+            '''
+            from ben10.foundation.memoize import Memoize
+
+            @Memoize
+            def Foo(arg1, arg2=None):
+                pass
+            ''',
+            "for _i in xrange(%d): Foo('arg1'); Foo('arg1', arg2='arg2')" % (for_size,)
+            )
+        PrintPerformance(timing, 'call_passing_kwargs')
