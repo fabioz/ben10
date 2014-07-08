@@ -855,7 +855,7 @@ class Git(Singleton):
         if fail_if_dirty:
             # Always look for dirty files in root directory. Since we usually have many refs in a
             # single repository, this reduces the amount of 'git log' we have to execute
-            git_root_dir = Git().Execute(['rev-parse', '--show-toplevel'], path, flat_output=True)
+            git_root_dir = self.Execute(['rev-parse', '--show-toplevel'], path, flat_output=True)
 
             modified_files_in_repo = [
                 posixpath.join(git_root_dir, dirty_file)
@@ -866,7 +866,7 @@ class Git(Singleton):
             if modified_files_in_path:
                 raise DirtyRepositoryError(git_root_dir, modified_files_in_path)
 
-        return Git().Log(path, ('-n1', '--pretty=format:%H', '.'))[0]
+        return self.Log(path, ('-n1', '--pretty=format:%H', '.'))[0]
 
 
     def BranchExists(self, repo_path, branch_name):
