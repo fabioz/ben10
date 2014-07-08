@@ -1,5 +1,5 @@
-from coilib50.basic.singleton import Singleton
-from coilib50.cache.memoize import Memoize
+from ben10.foundation.memoize import Memoize
+from ben10.foundation.singleton import Singleton
 import os
 import posixpath
 
