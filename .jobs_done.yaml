@@ -10,7 +10,7 @@ platform-windows:build_batch_commands:
 
 platform-linux:build_shell_commands:
 - |
-  $AA_AASIMAR_AA_CONFIG --dependencies-file=$WORKSPACE/ben10/dependencies.ini --projects-dir=$WORKSPACE --shared-dir=$HOME/Shared4Jobs --dist={dist} --platform={platform} --conf-dir=$WORKSPACE
+  $AA_AASIMAR_AA_CONFIG --dependencies-file=$WORKSPACE/ben10/dependencies.ini --projects-dir=$WORKSPACE --dist={dist} --platform={platform} --conf-dir=$WORKSPACE
   $AA_AASIMAR_AA  -t project.build ben10
 
 
