@@ -98,9 +98,28 @@ class Memoize(object):
 
         :param dict kwargs:
             The keyword arguments received.
+
+        :return tuple:
+            A tuple representing a call to our memoized function.
+
+            This tuple is normalized with values for all arguments that the function receives,
+            based on `args` and `kwargs` passed in this call, in addition to any default values.
         '''
-        assert not kwargs, 'The default implementation of this cache does not support keyword arguments.'
-        return args
+        argspec = self._argspec
+
+        if kwargs:
+            # If we received kwargs, set them in our argspec, as if that was the default value
+            argspec = argspec.copy()
+            for k, v in kwargs.iteritems():
+                argspec[k] = v
+
+        elif argspec is None:
+            # If we got not kwargs, and argspec is None, we are dealing with a simple function,
+            # where all parameters are positional and we are calling them based on position.
+            return args
+
+        # Obtain key from the args we received, plus whatever defaults we have in our argspec
+        return args + tuple(argspec.values()[len(args):])
 
 
     def __call__(self, func):
@@ -108,13 +127,10 @@ class Memoize(object):
         :param function func:
             This is the function which should be decorated.
 
-        :rtype: function
-        :returns:
+        :return function:
             The function decorated to cache the values based on the arguments.
         '''
         import inspect
-
-
 
         if self._memo_target == self.MEMO_FROM_ARGSPEC:
             check_func = func
@@ -138,6 +154,24 @@ class Memoize(object):
                     self._memo_target = self.MEMO_FUNCTION
 
 
+        # Register argspec details, these are used to normalize cache keys
+        from ben10.foundation.odict import odict
+        args, _trail, _kwargs, defaults = inspect.getargspec(func)
+
+        if defaults is None:
+            self._argspec = None
+        else:
+            if self._memo_target == self.MEMO_INSTANCE_METHOD:
+                args = args[1:]  # Ignore self when dealing with instance method
+            self._argspec = odict()
+            first_default = len(args) - len(defaults)
+            for i, arg in enumerate(args):
+                if i < first_default:
+                    self._argspec[arg] = '@Memoize: no_default'
+                else:
+                    self._argspec[arg] = defaults[i - first_default]
+
+        # Create call wrapper, and make it look like the real function
         call = self._CreateCallWrapper(func)
         call.func_name = func.func_name
         call.__name__ = func.__name__
@@ -149,18 +183,18 @@ class Memoize(object):
         '''
         Creates the cache object we want.
 
-        :rtype: object (with dict interface)
-        :returns:
+        :returns object:
             The object to be used as the cache (will prune items after the maximum size
-            is reached)
-        '''
-        from ben10.foundation.fifo import FIFO
-        from ben10.foundation.lru import LRU
+            is reached).
 
+            This object has a dict interface.
+        '''
         if self._prune_method == self.FIFO:
+            from ben10.foundation.fifo import FIFO
             return FIFO(self._maxsize)
 
         elif self._prune_method == self.LRU:
+            from ben10.foundation.lru import LRU
             return LRU(self._maxsize)
 
         else:
@@ -174,12 +208,7 @@ class Memoize(object):
         :param object func:
             This is the function that is being cached.
         '''
-
-        assert \
-            self._memo_target in (self.MEMO_INSTANCE_METHOD, self.MEMO_FUNCTION), \
-            "Don't know how to deal with memo target: %s" % self._memo_target
-
-        SENTINEL = ()
+        SENTINEL = []
         if self._memo_target == self.MEMO_INSTANCE_METHOD:
 
             outer_self = self
@@ -210,7 +239,7 @@ class Memoize(object):
             Call.ClearCache = ClearCache
             return Call
 
-        if self._memo_target == self.MEMO_FUNCTION:
+        elif self._memo_target == self.MEMO_FUNCTION:
 
             # When it's a function, we can use the same cache the whole time (i.e.: it's global)
             cache = self._CreateCacheObject()
@@ -225,3 +254,6 @@ class Memoize(object):
 
             Call.ClearCache = cache.clear
             return Call
+
+        else:
+            raise AssertionError("Don't know how to deal with memo target: %s" % self._memo_target)
