@@ -11,17 +11,18 @@ import pytest
 pytest_plugins = ["ben10.fixtures"]
 
 
+
 #===================================================================================================
 # Test
 #===================================================================================================
 class Test(object):
 
-    def test_embed_data(self, embed_data):
-        assert not os.path.isdir('data_fixtures__test_embed_data')
+    def testEmbedData(self, embed_data):
+        assert not os.path.isdir('data_fixtures__testEmbedData')
 
         embed_data.CreateDataDir()
 
-        assert os.path.isdir('data_fixtures__test_embed_data')
+        assert os.path.isdir('data_fixtures__testEmbedData')
 
         # Checking if all contents of pytest_fixtures is present
         assert os.path.isfile(embed_data.GetDataFilename('alpha.txt'))
@@ -29,19 +30,19 @@ class Test(object):
         assert os.path.isfile(embed_data.GetDataFilename('alpha.dist-12.0.txt'))
 
         # Checking auxiliary functions
-        assert embed_data.GetDataDirectory() == 'data_fixtures__test_embed_data'
-        assert embed_data.GetDataFilename('alpha.txt') == 'data_fixtures__test_embed_data/alpha.txt'
+        assert embed_data.GetDataDirectory() == 'data_fixtures__testEmbedData'
+        assert embed_data.GetDataFilename('alpha.txt') == 'data_fixtures__testEmbedData/alpha.txt'
 
         assert embed_data.GetDataDirectory(absolute=True) \
-            == StandardizePath(os.path.abspath('data_fixtures__test_embed_data'))
+            == StandardizePath(os.path.abspath('data_fixtures__testEmbedData'))
         assert embed_data.GetDataFilename('alpha.txt', absolute=True) \
-            == StandardizePath(os.path.abspath('data_fixtures__test_embed_data/alpha.txt'))
+            == StandardizePath(os.path.abspath('data_fixtures__testEmbedData/alpha.txt'))
 
 
-    def test_embed_data_ExistingDataDir(self, embed_data):
+    def testEmbedDataExistingDataDir(self, embed_data):
         # Create the directory manually (we must not use any embed_data functions or else the
         # directory is created)
-        extra_txt = 'data_fixtures__test_embed_data_ExistingDataDir/extra.txt'
+        extra_txt = 'data_fixtures__testEmbedDataExistingDataDir/extra.txt'
         CreateFile(extra_txt, 'This file will perish')
         assert os.path.isfile(extra_txt)
 
@@ -50,7 +51,7 @@ class Test(object):
         assert not os.path.isfile(extra_txt)
 
 
-    def test_embed_data_AssertEqualFiles(self, embed_data):
+    def testEmbedDataAssertEqualFiles(self, embed_data):
         CreateFile(embed_data.GetDataFilename('equal.txt'), 'This is alpha.txt')
         embed_data.AssertEqualFiles(
             'alpha.txt',
@@ -65,7 +66,7 @@ class Test(object):
             )
         assert str(e.value) == Dedent(
             '''
-            *** FILENAME: data_fixtures__test_embed_data_AssertEqualFiles/alpha.txt
+            *** FILENAME: data_fixtures__testEmbedDataAssertEqualFiles/alpha.txt
             ***\w
 
             ---\w
@@ -91,7 +92,7 @@ class Test(object):
         assert (
             str(e.value)
             == 'Files not found: '
-            'missing.txt,data_fixtures__test_embed_data_AssertEqualFiles/missing.txt'
+            'missing.txt,data_fixtures__testEmbedDataAssertEqualFiles/missing.txt'
         )
 
 
@@ -131,3 +132,38 @@ class Test(object):
 
         assert os.path.isdir('data_fixtures__testEmbedDataFixture') == False
 
+
+    @pytest.mark.performance
+    def testPerformance(self, performance):
+        setup = \
+            '''
+            def hello():
+                for i in range(5000):
+                    hello_world = 'hello' + 'world'
+            '''
+        stmt = 'hello()'
+
+        PERF = 1.34  # Real expected performance
+
+        # This should pass
+        performance(setup, stmt, expected_performance=PERF, accepted_variance=1)
+
+        # This should fail because we were too slow
+        with pytest.raises(AssertionError):
+            performance(setup, stmt, expected_performance=PERF / 10, accepted_variance=1)
+
+        # This should pass because we were too slow, but we accept a huge variance
+        performance(setup, stmt, expected_performance=PERF / 10, accepted_variance=100)
+
+        # This should fail because we were too fast!
+        with pytest.raises(AssertionError):
+            performance(setup, stmt, expected_performance=PERF * 10, accepted_variance=1)
+
+        # This should pass because we were too fast, but we accept a huge variance
+        performance(setup, stmt, expected_performance=PERF * 10, accepted_variance=100)
+
+        # Check show_graph option
+        import mock
+        with mock.patch('ben10.foundation.profiling.ShowGraph', autospec=True) as mock_show_graph:
+            performance(setup, stmt, expected_performance=PERF, accepted_variance=1, show_graph=True)
+        assert mock_show_graph.call_count == 1

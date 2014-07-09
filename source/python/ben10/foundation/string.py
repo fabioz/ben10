@@ -50,9 +50,9 @@ def Dedent(text, ignore_first_linebreak=True, ignore_last_linebreak=True):
         behaviour is new in Python 2.5; older versions of this module incorrectly expanded tabs
         before searching for common leading whitespace.)
     '''
-    if ignore_first_linebreak:
+    if ignore_first_linebreak and '\n' in text:
         text = text.split('\n', 1)[1]
-    if ignore_last_linebreak:
+    if ignore_last_linebreak and '\n' in text:
         text = text.rsplit('\n', 1)[0]
 
     import re
