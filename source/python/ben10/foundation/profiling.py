@@ -34,9 +34,10 @@ def ObtainStats(method, *args, **kwargs):
 # ProfileMethod
 #===================================================================================================
 def ProfileMethod(filename, rows=50, sort=(('cumul',), ('time',)), show_graph=False):
-    '''Decorator to profile the decorated function or method.
+    '''
+    Decorator to profile the decorated function or method.
 
-    :parm str filename:
+    :param str filename:
         Where to save the profiling information. If None, profile information will be printed to the
         output.
 
@@ -103,7 +104,7 @@ def ShowGraph(filename):
     Creates an .svg from the profile generated file and opens it (a proper association to .svg
     files must be already defined in the machine).
 
-    @param str filename:
+    :param str filename:
         This is the file generated from ProfileMethod.
     '''
     import gprof2dot

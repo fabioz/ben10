@@ -2,7 +2,7 @@
 Collection of fixtures for pytests.
 
 .. note::
-    Coverage for this file gives a lot of misses, just like calling coverave from module's main.
+    Coverage for this file gives a lot of misses, just like calling coverage from module's main.
 '''
 import os
 import pytest
