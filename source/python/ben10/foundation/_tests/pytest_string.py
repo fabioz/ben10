@@ -1,6 +1,4 @@
 from ben10.foundation.string import Dedent, Indent, SafeSplit
-import pytest
-import sys
 
 
 
@@ -8,6 +6,11 @@ import sys
 # Test
 #===================================================================================================
 class Test:
+
+    def testDedent0(self):
+        string = Dedent('oneline')
+        assert string == 'oneline'
+
 
     def testDedent1(self):
         string = Dedent(

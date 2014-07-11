@@ -1,5 +1,7 @@
 import cProfile as profile
+import os
 import pstats
+import subprocess
 import sys
 
 
@@ -31,20 +33,26 @@ def ObtainStats(method, *args, **kwargs):
 #===================================================================================================
 # ProfileMethod
 #===================================================================================================
-def ProfileMethod(filename, rows=50, sort=(('cumul',), ('time',))):
-    '''Decorator to profile the decorated function or method.
+def ProfileMethod(filename, rows=50, sort=(('cumul',), ('time',)), show_graph=False):
+    '''
+    Decorator to profile the decorated function or method.
 
-    :param filename:
-        Where to save the profiling information. If None, profile information will be printed to the output.
+    :param str filename:
+        Where to save the profiling information. If None, profile information will be printed to the
+        output.
 
-    :param rows:
+    :param int rows:
         If the profile will be printed to the output, how many rows of data to print.
 
-    :type sort: tuple(str, ...), tuple(tuple(str, ...), ...)
-    :param sort:
-        If the profile will be printed to the output (filename=None), how to sort the stats.
+    :param tuple sort:
+        If the profile will be printed to the output, how to sort the stats.
+
         It may be a list of strings or a list of lists of strings (in which case it will print
         the result multiple times, one for each inner list. E.g.: (('time',), ('cumul',))
+
+    :param bool show_graph:
+        Whether a graph should be generated. Note: the computer should have an .svg viewer
+        associated to the extension so that the file is properly opened.
 
     Flags accepted in sort:
         ['tim', 'stdn', 'p', 'ca', 'module', 'pcalls', 'file', 'cumu', 'st', 'cu', 'pcall',
@@ -64,20 +72,61 @@ def ProfileMethod(filename, rows=50, sort=(('cumul',), ('time',))):
             result = prof.runcall(method, *args, **kwargs)
 
             if filename is None:
-                tup_sort = sort
-                s = tup_sort[0]
-                if isinstance(s, str):
-                    tup_sort = [tup_sort]
-
-                stats = pstats.Stats(prof)
-                for s in tup_sort:
-                    stats.strip_dirs().sort_stats(*s).print_stats(int(rows))
+                assert not show_graph, 'Cannot show dot output if filename is not provided.'
             else:
                 prof.dump_stats(filename)
+
+                if show_graph:
+                    ShowGraph(filename)
+
+            # Show text output regardless of showing graph.
+            tup_sort = sort
+            s = tup_sort[0]
+            if isinstance(s, str):
+                tup_sort = [tup_sort]
+
+            stats = pstats.Stats(prof)
+            for s in tup_sort:
+                stats.strip_dirs().sort_stats(*s).print_stats(int(rows))
+
 
             return result
         return inner
     return wrapper
+
+
+
+#===================================================================================================
+# ShowGraph
+#===================================================================================================
+def ShowGraph(filename):
+    '''
+    Creates an .svg from the profile generated file and opens it (a proper association to .svg
+    files must be already defined in the machine).
+
+    :param str filename:
+        This is the file generated from ProfileMethod.
+    '''
+    import gprof2dot
+    initial = sys.argv[:]
+    output_filename = filename + '.dot'
+    sys.argv = ['', '-o', output_filename, '-f', 'pstats', filename]
+    try:
+        gprof2dot.Main().main()
+    finally:
+        sys.argv = initial
+
+    try:
+        dot = os.environ['GRAPHVIZ_DOT']
+    except KeyError:
+        raise AssertionError('The GRAPHVIZ_DOT environment variable must be defined to show graph.')
+
+    assert os.path.exists(dot), "Expected: %s to exist and point to dot.exe.\nDid you run 'aa eden.install graphviz'?" % dot
+    subprocess.call([dot, '-Tsvg', '-O', output_filename])
+
+    print 'Opening svg created at:', os.path.realpath((output_filename + '.svg'))
+    import desktop
+    desktop.open(output_filename + '.svg')
 
 
 
