@@ -1,3 +1,39 @@
+'''
+This module provides a basic interface concept.
+
+To use, create an interface:
+
+
+class IMyCalculator(Interface):
+
+    def Sum(self, *values):
+        ...
+
+
+Have classes implement an interface:
+
+class MyCalculatorImpl(object):
+
+    ImplementsInterface(IMyCalculator)
+
+    ...
+
+
+Then, to check an interface:
+
+
+impl = MyCalculatorImpl()
+
+if IsImplementation(impl, IMyCalculator):
+    ...
+
+
+Or if it *needs* to check an interface:
+
+AssertImplements(impl, IMyCalculator)
+
+
+'''
 from ben10.foundation.decorators import Deprecated, Override
 from ben10.foundation.is_frozen import IsDevelopment
 from ben10.foundation.klass import IsInstance
