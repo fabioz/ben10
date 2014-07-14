@@ -1,11 +1,10 @@
 '''
 LRU module. Based around heapq.
 '''
+
 from ben10.foundation.decorators import Override
 from heapq import heapify, heappop, heappush
 import itertools
-
-
 
 DEFAULT_LRU_SIZE = 50
 
@@ -59,7 +58,7 @@ class _Node(object):
             The node to compare: It's currently based on the node_time.
         '''
         if self.node_time < other.node_time:
-            return -1
+            return - 1
         if self.node_time > other.node_time:
             return 1
         return 0
@@ -304,6 +303,17 @@ class LRU(object):
         return node.obj
 
 
+    _SENTINEL = []
+
+    def pop(self, key, default=_SENTINEL):
+        try:
+            return self.__delitem__(key)
+        except KeyError:
+            if default is not self._SENTINEL:
+                return default
+            raise
+
+
     #--- Iterating
     def iternodes(self):
         '''
@@ -398,10 +408,8 @@ class _DictWithRemovalMemo(dict):
         return item
 
     def __delitem__(self, key):
-        '''
-        This method is never used since lru always use "pop" to perform removals.
-        '''
-        raise NotImplementedError()
+        item = dict.pop(self, key)
+        self.removed_items.append(item.obj)
 
 
 #===================================================================================================

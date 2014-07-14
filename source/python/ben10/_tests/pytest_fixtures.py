@@ -1,4 +1,3 @@
-from __future__ import with_statement
 from ben10.filesystem import CreateFile, StandardizePath
 from ben10.fixtures import MultipleFilesNotFound, SkipIfImportError, _EmbedDataFixture
 from ben10.foundation import is_frozen
@@ -164,6 +163,6 @@ class Test(object):
 
         # Check show_graph option
         import mock
-        with mock.patch('ben10.foundation.profiling.ShowGraph', autospec=True) as mock_show_graph:
+        with mock.patch('ben10.debug.profiling.ShowGraph', autospec=True) as mock_show_graph:
             performance(setup, stmt, expected_performance=PERF, accepted_variance=1, show_graph=True)
         assert mock_show_graph.call_count == 1

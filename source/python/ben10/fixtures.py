@@ -319,7 +319,7 @@ def performance(embed_data):
 
             .. seealso:: ben10.foundation.profiling.ProfileMethod
     '''
-    from ben10.foundation.profiling import ProfileMethod
+    from ben10.debug.profiling import ProfileMethod
     from ben10.foundation.string import Dedent
     from timeit import Timer
     import tempfile

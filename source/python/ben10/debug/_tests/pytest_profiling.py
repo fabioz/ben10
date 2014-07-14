@@ -1,7 +1,6 @@
 from StringIO import StringIO
 from UserList import UserList
-from ben10.foundation.profiling import (ObtainStats, PrintProfile, PrintProfileMultiple,
-    ProfileMethod)
+from ben10.debug.profiling import ObtainStats, PrintProfile, PrintProfileMultiple, ProfileMethod
 import os
 import pstats
 import pytest

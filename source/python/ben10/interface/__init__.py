@@ -21,7 +21,7 @@ from _interface import (AssertDeclaresInterface, AssertImplements, AssertImpleme
     Attribute, BadImplementationError, CacheInterfaceAttrs, DeclareClassImplements,
     GetImplementedInterfaces, ImplementsInterface, Interface, InterfaceError,
     InterfaceImplementationMetaClass, InterfaceImplementorStub, IsImplementation,
-    IsImplementationOfAny, ReadOnlyAttribute, ScalarAttribute)
+    IsImplementationOfAny, ReadOnlyAttribute)
 
 __all__ = [
     'AssertDeclaresInterface',

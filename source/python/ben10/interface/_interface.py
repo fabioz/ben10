@@ -36,7 +36,6 @@ AssertImplements(impl, IMyCalculator)
 '''
 from ben10.foundation.decorators import Deprecated, Override
 from ben10.foundation.is_frozen import IsDevelopment
-from ben10.foundation.klass import IsInstance
 from ben10.foundation.reraise import Reraise
 from ben10.foundation.singleton import Singleton
 from ben10.foundation.types_ import Method
@@ -394,12 +393,87 @@ def _IsImplementationFullChecking(class_or_instance, interface):
 
 
 #===================================================================================================
+# Attribute
+#===================================================================================================
+class Attribute(object):
+    '''
+    '''
+    _do_not_check_instance = object()
+
+    def __init__(self, attribute_type, instance=_do_not_check_instance):
+        '''
+        :param type attribute_type:
+            Will check the attribute type in the implementation against this type.
+            Checks if the attribute is a direct instance of attribute_type, or of it implements it.
+
+        :param object instance:
+            If passed, will check for *equality* against this instance. The default is to not check
+            for equality.
+        '''
+        self.attribute_type = attribute_type
+        self.instance = instance
+
+
+    def Match(self, attribute):
+        '''
+        :param object attribute:
+            Object that will be compared to see if it matches the expected interface.
+
+        :rtype: (bool, str)
+        :returns:
+            If the given object implements or inherits from the interface expected by this
+            attribute, will return (True, None), otherwise will return (False, message), where
+            message is an error message of why there was a mismatch (may be None also).
+        '''
+        msg = None
+
+        if isinstance(attribute, self.attribute_type):
+            return (True, None)
+
+        if self.instance is not self._do_not_check_instance:
+            if self.instance == attribute:
+                return (True, None)
+            else:
+                return (
+                    False,
+                    'The instance (%s) does not match the expected one (%s).' % (
+                        self.instance, attribute)
+                )
+
+        try:
+            if _IsImplementationFullChecking(attribute, self.attribute_type):
+                return (True, msg)
+        except InterfaceError, exception_msg:
+            # Necessary because whenever a value is compared to an interface it does not inherits
+            # from, IsImplementation raises an InterfaceError. In this context, an error like that
+            # will mean that our candidate attribute is in fact not matching the interface, so we
+            # capture this error and return False.
+            msg = exception_msg
+
+        return (False, None)
+
+
+
+#===================================================================================================
+# ReadOnlyAttribute
+#===================================================================================================
+class ReadOnlyAttribute(Attribute):
+    '''
+    This is an attribute that should be treated as read-only (note that usually this means that
+    the related property should be also declared as read-only).
+    '''
+
+
+
+#===================================================================================================
 # CacheInterfaceAttrs
 #===================================================================================================
 class CacheInterfaceAttrs(object):
     '''
     Cache for holding the attrs for a given interface (separated by attrs and methods).
     '''
+
+    _ATTRIBUTE_CLASSES = (Attribute, ReadOnlyAttribute)
 
     def __GetInterfaceMethodsAndAttrs(self, interface):
         '''
@@ -414,7 +488,7 @@ class CacheInterfaceAttrs(object):
 
         for attr in all_attrs:
             val = getattr(interface, attr)
-            if type(val) in (Attribute, ReadOnlyAttribute, ScalarAttribute):
+            if type(val) in self._ATTRIBUTE_CLASSES:
                 interface_attrs[attr] = val
 
             if _IsMethod(val, False):
@@ -843,102 +917,31 @@ def AssertDeclaresInterface(class_or_instance, interface):
 
 
 
-#===================================================================================================
-# Attribute
-#===================================================================================================
-class Attribute(object):
-    '''
-    '''
-    _do_not_check_instance = object()
-
-    def __init__(self, attribute_type, instance=_do_not_check_instance):
-        '''
-        :param type attribute_type:
-            Will check the attribute type in the implementation against this type.
-            Checks if the attribute is a direct instance of attribute_type, or of it implements it.
-
-        :param object instance:
-            If passed, will check for *equality* against this instance. The default is to not check
-            for equality.
-        '''
-        self.attribute_type = attribute_type
-        self.instance = instance
-
-
-    def Match(self, attribute):
-        '''
-        :param object attribute:
-            Object that will be compared to see if it matches the expected interface.
-
-        :rtype: (bool, str)
-        :returns:
-            If the given object implements or inherits from the interface expected by this
-            attribute, will return (True, None), otherwise will return (False, message), where
-            message is an error message of why there was a mismatch (may be None also).
-        '''
-        msg = None
-
-        if isinstance(attribute, self.attribute_type):
-            return (True, None)
-
-        if self.instance is not self._do_not_check_instance:
-            if self.instance == attribute:
-                return (True, None)
-            else:
-                return (
-                    False,
-                    'The instance (%s) does not match the expected one (%s).' % (
-                        self.instance, attribute)
-                )
-
-        try:
-            if _IsImplementationFullChecking(attribute, self.attribute_type):
-                return (True, msg)
-        except InterfaceError, exception_msg:
-            # Necessary because whenever a value is compared to an interface it does not inherits
-            # from, IsImplementation raises an InterfaceError. In this context, an error like that
-            # will mean that our candidate attribute is in fact not matching the interface, so we
-            # capture this error and return False.
-            msg = exception_msg
-
-        return (False, None)
-
-
-
-#===================================================================================================
-# ReadOnlyAttribute
-#===================================================================================================
-class ReadOnlyAttribute(Attribute):
-    '''
-    This is an attribute that should be treated as read-only (note that usually this means that
-    the related property should be also declared as read-only).
-    '''
-
-
-#===================================================================================================
-# ScalarAttribute
-#===================================================================================================
-class ScalarAttribute(Attribute):
-    '''
-    '''
-
-    def __init__(self, category):
-        '''
-        :param str quantity_type:
-            String with the category of the Scalar.
-        '''
-        self.category = category
-
-
-    @Override(Attribute.Match)
-    def Match(self, attribute):
-        if not IsInstance(attribute, 'Scalar'):
-            return (False, 'The attribute is not a Scalar instance.')
-        elif attribute.GetCategory() != self.category:
-            return (
-                False,
-                'The Scalar category (%s) does not match the expected category of the'
-                ' interface (%s).' % (attribute.GetCategory(), self.category)
-            )
-
-        return (True, None)
+# TODO: BEN-22: Check for excessive-dependency on interface module.
+# #===================================================================================================
+# # ScalarAttribute
+# #===================================================================================================
+# class ScalarAttribute(Attribute):
+#     '''
+#     '''
+#
+#     def __init__(self, category):
+#         '''
+#         :param str quantity_type:
+#             String with the category of the Scalar.
+#         '''
+#         self.category = category
+#
+#
+#     @Override(Attribute.Match)
+#     def Match(self, attribute):
+#         if not IsInstance(attribute, 'Scalar'):
+#             return (False, 'The attribute is not a Scalar instance.')
+#         elif attribute.GetCategory() != self.category:
+#             return (
+#                 False,
+#                 'The Scalar category (%s) does not match the expected category of the'
+#                 ' interface (%s).' % (attribute.GetCategory(), self.category)
+#             )
+#
+#         return (True, None)

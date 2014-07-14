@@ -1,4 +1,3 @@
-from __future__ import with_statement
 import threading
 
 
@@ -65,17 +64,21 @@ class Singleton(object):
             Returns the current singleton instance.
 
         .. note:: This function is thread-safe, but all the other methods (such as SetSingleton,
-        PushSingleton, PopSingleton, etc) are not (which should be Ok as those are mostly
-        test-related, as singletons shouldn't really be changed after the application is up
-        -- especially on multi-threaded environments).
+            PushSingleton, PopSingleton, etc) are not (which should be Ok as those are mostly
+            test-related, as singletons shouldn't really be changed after the application is up
+            especially on multi-threaded environments).
         '''
         try:
             # Make common case faster.
             return cls.__singleton_singleton_stack__[-1]
         except (AttributeError, IndexError):
             # Only lock if the 'fast path' did not work.
-            with cls.__lock:
+            stack = cls._ObtainStack()
+
+            if not stack:  # Faster than doing len(stack) == 0
                 return cls.SetSingleton(None)
+
+            return stack[-1]
 
 
     @classmethod
@@ -106,10 +109,12 @@ class Singleton(object):
         if instance is None:
             instance = cls.CreateDefaultSingleton()
 
-        # Set the staok[0] as the singleton
-        stack.append(instance)
-        cls.__singleton_stack_start_index = 1
-
+        # Set the stack[0] as the singleton
+        if not stack:
+            stack.append(instance)
+            cls.__singleton_stack_start_index = 1
+        else:
+            stack[0] = instance
         assert cls.__singleton_stack_start_index == 1
 
         return instance
@@ -126,7 +131,7 @@ class Singleton(object):
         if len(stack) != cls.__singleton_stack_start_index:
             raise PushPopSingletonError('ClearSingleton can not be called between a Push/Pop pair.')
 
-        if len(stack) == 0:
+        if not stack:
             raise SingletonNotSetError('ClearSingleton can only be called when THERE IS singleton set.')
 
         del stack[0]

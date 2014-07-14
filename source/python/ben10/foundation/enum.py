@@ -29,7 +29,7 @@
     Adaptation of flufl.enum
     Credit: Barry A. Warsaw
 '''
-from _ordereddict import ordereddict as odict
+from ben10.foundation.odict import odict
 from operator import itemgetter
 
 
@@ -309,3 +309,4 @@ def MakeEnum(name, enum_list):
 
 class EnumException(Exception):
     pass
+

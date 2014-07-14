@@ -82,11 +82,6 @@ class Test:
         lru.clear()
         assert lru.GetAndClearRemovedItems() == []
 
-        dict_ = _DictWithRemovalMemo()
-        dict_[1] = 1
-        with pytest.raises(NotImplementedError):
-            del dict_[1]
-
 
     def testNode(self):
         a = _Node(1, 'one', 1, 999)
@@ -162,6 +157,42 @@ class Test:
         with pytest.raises(ValueError):
             lru[1] = Value(0)
         assert len(lru) == 1
+
+
+    def testLRUPop(self):
+        lru = LRU(2)
+        lru[0] = 'foo'
+        lru[1] = 'bar'
+        assert lru.pop(0) == 'foo'
+        assert 0 not in lru
+        assert 1 in lru
+
+        assert lru.pop(1) == 'bar'
+        assert 1 not in lru
+
+        with pytest.raises(KeyError):
+            lru.pop(0)
+        assert lru.pop(0, None) is None
+        assert lru.pop(0, 0) == 0
+        assert lru.pop(-1, 'foobar') == 'foobar'
+
+
+    def testLRUIn(self):
+        lru = LRU(2)
+        lru[0] = 'foo'
+        assert 0 in lru
+        assert 1 not in lru
+        assert 2 not in lru
+
+        lru[1] = 'bar'
+        assert 0 in lru
+        assert 1 in lru
+        assert 2 not in lru
+
+        lru[2] = 'foobar'
+        assert 0 not in lru
+        assert 1 in lru
+        assert 2 in lru
 
 #     def profile(self):
 #         @ProfileMethod('test.prof')
