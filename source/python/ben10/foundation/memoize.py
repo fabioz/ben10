@@ -113,8 +113,8 @@ class Memoize(object):
             for k, v in kwargs.iteritems():
                 argspec[k] = v
 
-        elif argspec is None:
-            # If we got not kwargs, and argspec is None, we are dealing with a simple function,
+        elif not argspec:
+            # If we got not kwargs, and argspec is empty, we are dealing with a simple function,
             # where all parameters are positional and we are calling them based on position.
             return args
 
@@ -158,12 +158,10 @@ class Memoize(object):
         from ben10.foundation.odict import odict
         args, _trail, _kwargs, defaults = inspect.getargspec(func)
 
-        if defaults is None:
-            self._argspec = None
-        else:
+        self._argspec = odict()
+        if defaults is not None:
             if self._memo_target == self.MEMO_INSTANCE_METHOD:
                 args = args[1:]  # Ignore self when dealing with instance method
-            self._argspec = odict()
             first_default = len(args) - len(defaults)
             for i, arg in enumerate(args):
                 if i < first_default:
