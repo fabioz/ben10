@@ -12,6 +12,7 @@ class Ben10BuildCommand(BuildCommand):
 
     @Override(BuildCommand.EvBuild)
     def EvBuild(self, args):
+        self.Clean()
         self.RunTests(jobs=6, xml=True)
 
 
