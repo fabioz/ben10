@@ -49,6 +49,18 @@ class Test:
         console.Print('<red>alpha<blue>bravo</></>charlie')
         assert oss.getvalue() == '%(red)salpha%(blue)sbravo%(reset)s%(red)s%(reset)scharlie\n' % color_codes
 
+        # Printing multiple lines... as a string
+        oss = StringIO()
+        console = Console(stdout=oss)
+        console.Print('one\ntwo\nthree')
+        assert oss.getvalue() == 'one\ntwo\nthree\n'
+
+        # Printing multiple lines... as a list
+        oss = StringIO()
+        console = Console(stdout=oss)
+        console.Print(['one','two','three'])
+        assert oss.getvalue() == 'one\ntwo\nthree\n'
+
         # Automatically resets colors when reaching the eol
         oss = StringIO()
         console = Console(color=True, colorama=False, stdout=oss)

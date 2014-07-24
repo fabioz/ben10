@@ -192,6 +192,7 @@ class Console(object):
         '''
         Prints a message to the output.
 
+        :param str|list(str) message
         :param int verbosity:
         :param int newlines:
         :param int indent:
@@ -205,7 +206,10 @@ class Console(object):
         else:
             stream = self.__stdout
 
-        message = str(message)
+        if isinstance(message, (list,tuple)):
+            message = '\n'.join(map(str, message))
+        else:
+            message = str(message)
         if self.color:
             # `out` holds the stream of text we'll eventually output
             # `stack` is the currently applied color codes
