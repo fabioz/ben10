@@ -4,7 +4,6 @@ from ben10.foundation.string import SafeSplit
 from ben10.foundation.uname import GetExecutableDir
 from cStringIO import StringIO
 from txtout.txtout import TextOutput
-import errno
 import os
 import shlex
 import subprocess
@@ -279,105 +278,105 @@ def Execute(
             assert command.count('"') != 1, 'Command may have spaces in it. Use list instead of string.'
 
             # Always use normpath for command, because Windows does not like posix slashes
-            command =  StandardizePath(command)
+            command = StandardizePath(command)
             command = os.path.normpath(command)
-            command_line = [command] +  shlex.split(arguments)
+            command_line = [command] + shlex.split(arguments)
         else:
             command_line = shlex.split(command_line)
 
     if cwd is None:
-        cwd = '.'
+        cwd = os.getcwd()
 
-    with Cwd(cwd):
-        if environ is None:
-            environ = os.environ.copy()
+    if environ is None:
+        environ = os.environ.copy()
 
-        if extra_environ:
-            environ.update(extra_environ)
+    if extra_environ:
+        environ.update(extra_environ)
 
-        replace_environ = {}
-        for i_name, i_value in environ.iteritems():
-            if i_value is COPY_FROM_ENVIRONMENT and i_name in os.environ:
-                replace_environ[i_name] = os.environ[i_name]
-        environ.update(replace_environ)
+    replace_environ = {}
+    for i_name, i_value in environ.iteritems():
+        if i_value is COPY_FROM_ENVIRONMENT and i_name in os.environ:
+            replace_environ[i_name] = os.environ[i_name]
+    environ.update(replace_environ)
 
-        try:
-            with EnvironmentContextManager(environ):
-                popen = subprocess.Popen(
-                    command_line,
-                    stdin=subprocess.PIPE,
-                    stdout=subprocess.PIPE if pipe_stdout else None,
-                    stderr=subprocess.STDOUT,
-                    env=environ,
-                    bufsize=0,
-                    shell=shell,
-                )
-        except Exception, e:
-            Reraise(
-                e,
-                'While executing "System.Execute":\n'
-                '  environment::\n'
-                '%s\n'
-                '  current working dir::\n'
-                '    %s\n\n'
-                '  command_line::\n'
-                '%s\n'
-                % (EnvStr(environ), os.getcwd(), CmdLineStr(command_line)))
+    try:
+        with EnvironmentContextManager(environ):
+            popen = subprocess.Popen(
+                command_line,
+                cwd=cwd,
+                stdin=subprocess.PIPE,
+                stdout=subprocess.PIPE if pipe_stdout else None,
+                stderr=subprocess.STDOUT,
+                env=environ,
+                bufsize=0,
+                shell=shell,
+            )
+    except Exception, e:
+        Reraise(
+            e,
+            'While executing "System.Execute":\n'
+            '  environment::\n'
+            '%s\n'
+            '  current working dir::\n'
+            '    %s\n\n'
+            '  command_line::\n'
+            '%s\n'
+            % (EnvStr(environ), cwd, CmdLineStr(command_line)))
 
-        try:
-            result = []
-            if popen.stdin:
-                if input:
-                    try:
-                        popen.stdin.write(input)
-                    except IOError, e:
-                        import errno
-                        if e.errno != errno.EPIPE and e.errno != errno.EINVAL:
-                            raise
-                popen.stdin.close()
+    try:
+        result = []
+        if popen.stdin:
+            if input:
+                try:
+                    popen.stdin.write(input)
+                except IOError, e:
+                    import errno
+                    if e.errno != errno.EPIPE and e.errno != errno.EINVAL:
+                        raise
+            popen.stdin.close()
 
-            if popen.stdout:
-                # TODO: EDEN-245: Refactor System.Execute and derivates (git, scons, etc)
-                if clean_eol:  # Read one line at the time, and remove EOLs
-                    for line in iter(popen.stdout.readline, ""):
-                        line = line.rstrip('\n\r')
+        if popen.stdout:
+            # TODO: EDEN-245: Refactor System.Execute and derivates (git, scons, etc)
+            if clean_eol:  # Read one line at the time, and remove EOLs
+                for line in iter(popen.stdout.readline, ""):
+                    line = line.rstrip('\n\r')
+                    if output_callback:
+                        output_callback(line)
+                    result.append(line)
+            else:  # Read one char at a time, to keep \r and \n
+                current_line = ''
+                carriage = False
+                for char in iter(lambda: popen.stdout.read(1), ""):
+
+                    # Check if last line was \r, if not, print what we have
+                    if char != '\n' and carriage:
+                        carriage = False
                         if output_callback:
-                            output_callback(line)
-                        result.append(line)
-                else:  # Read one char at a time, to keep \r and \n
-                    current_line = ''
-                    carriage = False
-                    for char in iter(lambda: popen.stdout.read(1), ""):
+                            output_callback(current_line)
+                        result.append(current_line)
+                        current_line = ''
 
-                        # Check if last line was \r, if not, print what we have
-                        if char != '\n' and carriage:
-                            carriage = False
-                            if output_callback:
-                                output_callback(current_line)
-                            result.append(current_line)
-                            current_line = ''
+                    current_line += char
 
-                        current_line += char
+                    if char == '\r':
+                        carriage = True
 
-                        if char == '\r':
-                            carriage = True
+                    if char == '\n':
+                        if output_callback:
+                            output_callback(current_line)
+                        result.append(current_line)
+                        carriage = False
+                        current_line = ''
 
-                        if char == '\n':
-                            if output_callback:
-                                output_callback(current_line)
-                            result.append(current_line)
-                            carriage = False
-                            current_line = ''
+    finally:
+        if popen.stdout:
+            popen.stdout.close()
 
-        finally:
-            if popen.stdout:
-                popen.stdout.close()
+    popen.wait()
+    if return_code_callback:
+        return_code_callback(popen.returncode)
 
-        popen.wait()
-        if return_code_callback:
-            return_code_callback(popen.returncode)
-
-        return result
+    return result
 
 
 
