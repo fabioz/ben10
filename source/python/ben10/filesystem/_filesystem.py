@@ -816,11 +816,11 @@ def MoveDirectory(source_dir, target_dir):
 
     '''
     if not IsDir(source_dir):
-        from ben10.filesystem import DirectoryNotFoundError
+        from .filesystem_exceptions import DirectoryNotFoundError
         raise DirectoryNotFoundError(source_dir)
 
     if Exists(target_dir):
-        from ben10.filesystem import DirectoryAlreadyExistsError
+        from .filesystem_exceptions import DirectoryAlreadyExistsError
         raise DirectoryAlreadyExistsError(target_dir)
 
     from urlparse import urlparse
@@ -837,7 +837,7 @@ def MoveDirectory(source_dir, target_dir):
         if source_url.hostname != target_url.hostname:
             raise NotImplementedError('Can only move FTP directories in the same host')
 
-        from ben10.filesystem._filesystem_remote import FTPMoveDirectory
+        from ._filesystem_remote import FTPMoveDirectory
         return FTPMoveDirectory(source_url, target_url)
     else:
         raise NotImplementedError('Can only move directories local->local or ftp->ftp')
