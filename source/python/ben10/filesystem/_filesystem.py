@@ -816,11 +816,11 @@ def MoveDirectory(source_dir, target_dir):
 
     '''
     if not IsDir(source_dir):
-        from .filesystem_exceptions import DirectoryNotFoundError
+        from ._filesystem_exceptions import DirectoryNotFoundError
         raise DirectoryNotFoundError(source_dir)
 
     if Exists(target_dir):
-        from .filesystem_exceptions import DirectoryAlreadyExistsError
+        from ._filesystem_exceptions import DirectoryAlreadyExistsError
         raise DirectoryAlreadyExistsError(target_dir)
 
     from urlparse import urlparse
