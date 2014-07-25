@@ -13,7 +13,11 @@ class Ben10BuildCommand(BuildCommand):
     @Override(BuildCommand.EvBuild)
     def EvBuild(self, args):
         self.Clean()
-        self.RunTests(jobs=6, xml=True)
+        self.RunTests(
+            jobs=self.shared_script['hudson_test_jobs'],
+            xml=True,
+            verbose=4
+        )
 
 
     @Override(BuildCommand.EvPublish)
