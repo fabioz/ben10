@@ -22,6 +22,4 @@ class Ben10BuildCommand(BuildCommand):
 
     @Override(BuildCommand.EvPublish)
     def EvPublish(self, args):
-        # Do nothing until we find a way to solve aasimar/ben dependency cycle
-        # self.CiPublish(installer=False, all_platforms=','.join(self.PLATFORMS))
-        pass
+        self.CiPublish(installer=False, all_platforms=','.join(self.PLATFORMS))
