@@ -387,7 +387,7 @@ class Git(Singleton):
         return self.Execute(args, repo_path, flat_output=True)
 
 
-    def Show(self, repo_path, revision, diff_only=False):
+    def Show(self, repo_path, revision, diff_only=False, flags=[]):
         '''
         :param str repo_path:
             Path to the repository (local)
@@ -399,19 +399,22 @@ class Git(Singleton):
             If True, only shows diff for this commit. This is similar to git diffing to previous
             commit, but also works for commits without parents
 
+        :param list(str) flags:
+            Additional flags and parameters passed to 'git show'
+
         :return str:
             result from 'git show'
         '''
         if diff_only:
             output = self.Execute(
-                ['show', revision, '--pretty=format:'],
+                ['show', revision, '--pretty=format:'] + flags,
                 repo_path,
                 flat_output=True,
             )
             output = output.lstrip('\n')  # Remove empty lines from empty format
             return output
 
-        return self.Execute(['show', revision], repo_path, flat_output=True)
+        return self.Execute(['show', revision] + flags, repo_path, flat_output=True)
 
 
     def GetAuthor(self, repo_path, revision):
