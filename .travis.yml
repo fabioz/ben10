@@ -6,8 +6,6 @@ install:
     - pip install --use-wheel -r requirements.txt
     - pip install --use-wheel coveralls
     - sudo rm -rf /dev/shm && sudo ln -s /run/shm /dev/shm
-	- git config --global user.email "travisci@ben10.com"
-	- git config --global user.name "Travis CI Ben10"
 	- git config --global log.date iso
 script:
     - coverage run --source=source setup.py test
