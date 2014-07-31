@@ -6,7 +6,6 @@ install:
     - pip install --use-wheel -r requirements.txt
     - pip install --use-wheel coveralls
     - sudo rm -rf /dev/shm && sudo ln -s /run/shm /dev/shm
-	- git config --global log.date iso
 script:
     - coverage run --source=source setup.py test
 after_success:
