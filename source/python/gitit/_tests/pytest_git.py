@@ -17,7 +17,8 @@ class Test(object):
 
 
     def testVersion(self, git):
-        assert git('--version')[0].startswith('git version 1.9.2')
+        import re
+        assert re.match('^git version 1\.[89].*\.\d+$', git('--version')[0]) is not None
 
 
     def testFetch(self, git, embed_data):
@@ -82,19 +83,19 @@ class Test(object):
         assert r == [
             'commit 35ff01222f4c79baeccaf98ece11bebff9bec01c',
             'Author: Diogo de Campos <campos@esss.com.br>',
-            'Date:   Tue Jul 17 13:33:56 2012 -0300',
+            'Date:   2012-07-17 13:33:56 -0300',
             '',
             '     "Added new_file"',
             '',
             'commit 2a5f12d2ba5dd9fd52df8896e6b18b214db29225',
             'Author: Diogo de Campos <campos@esss.com.br>',
-            'Date:   Tue Jul 17 10:37:53 2012 -0300',
+            'Date:   2012-07-17 10:37:53 -0300',
             '',
             '    Added charlie.txt',
             '',
             'commit 59b4124603cbb614437a5896d7a028e9df0df276',
             'Author: Alexandre Andrade <ama@esss.com.br>',
-            'Date:   Thu Feb 9 14:51:53 2012 -0200',
+            'Date:   2012-02-09 14:51:53 -0200',
             '',
             '    Adding alpha and bravo files',
         ]
@@ -115,7 +116,7 @@ class Test(object):
             r
             == 'commit 2a5f12d2ba5dd9fd52df8896e6b18b214db29225\n'
             'Author: Diogo de Campos <campos@esss.com.br>\n'
-            'Date:   Tue Jul 17 10:37:53 2012 -0300\n\n'
+            'Date:   2012-07-17 10:37:53 -0300\n\n'
             '    Added charlie.txt\n\ndiff --git a/charlie.txt b/charlie.txt\n'
             'new file mode 100644\nindex 0000000..197d36d\n--- /dev/null\n+++ b/charlie.txt\n'
             '@@ -0,0 +1 @@\n+This is charlie'

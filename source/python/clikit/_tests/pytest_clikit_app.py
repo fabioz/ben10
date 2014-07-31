@@ -33,7 +33,7 @@ class Test:
         sys.argv = [sys.argv[0], 'case', 'alpha', 'bravo']
         try:
             app.Main()
-            assert app.console.GetOutput() == "alpha..bravo\n['case', 'alpha', 'bravo']\n"
+            assert app.console.GetOutput() == "alpha..bravo\ncase\nalpha\nbravo\n"
         finally:
             sys.argv = old_sys_argv
 
