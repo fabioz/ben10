@@ -1,14 +1,12 @@
 language: python
 python:
-    - "2.7"
+    - 2.7
 install:
     - sudo apt-get install -qq unrar
     - pip install --use-wheel -r requirements.txt
     - pip install --use-wheel coveralls
     - sudo rm -rf /dev/shm && sudo ln -s /run/shm /dev/shm
 script:
-    - python setup.py develop
-    - py.test -vv --timeout=90 --cov-report term-missing --cov ben10 source/python/ben10
+    - coverage run --source=source setup.py test
 after_success:
-    coveralls
-
+    - coveralls

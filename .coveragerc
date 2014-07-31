@@ -1,2 +1,6 @@
+[run]
+source = source
+
 [report]
+omit = */_tests/*
 precision = 2
