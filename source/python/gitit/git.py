@@ -278,10 +278,9 @@ class Git(Singleton):
             ['short_commit']
             ['author']
             ['summary']
-            ['timestamp']
             ['iso_date']
         '''
-        result_format = "commit:%H%nshort_commit:%h%nauthor:%ae%nsummary:%s%ntimestamp:%ct"
+        result_format = "commit:%H%nshort_commit:%h%nauthor:%ae%nsummary:%s%niso_date:%ci"
         result = self.Execute(
             ['show', ref, '-s', '--pretty=format:%s' % result_format],
             repo_path,
@@ -290,12 +289,6 @@ class Git(Singleton):
 
         result = [i.split(':', 1) for i in result]
         result = dict(result)
-        result['timestamp'] = float(result['timestamp'])
-
-        import datetime
-        d = datetime.datetime.fromtimestamp(result['timestamp'])
-        result['iso_date'] = d.isoformat(' ')
-
         return result
 
 
