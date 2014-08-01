@@ -329,7 +329,7 @@ class Test:
         # Create dir and check files
         CopyFiles(source_dir, target_dir, create_target_dir=True)
 
-        assert ListFiles(source_dir) == ListFiles(target_dir)
+        assert set(ListFiles(source_dir)) == set(ListFiles(target_dir))
 
         # Inexistent source directory --------------------------------------------------------------
         inexistent_dir = embed_data['INEXISTENT_DIR']
@@ -693,13 +693,13 @@ class Test:
         CopyDirectory(source_dir, target_dir)
 
         # Check directories for files
-        assert ListFiles(source_dir) == ListFiles(target_dir)
-        assert ListFiles(embed_data[source_dir + '/subdir_1']) \
-            == ListFiles(embed_data[target_dir + '/subdir_1'])
-        assert ListFiles(embed_data[source_dir + '/subdir_1/subsubdir_1']) \
-            == ListFiles(embed_data[target_dir + '/subdir_1/subsubdir_1'])
-        assert ListFiles(embed_data[source_dir + '/subdir_2']) \
-            == ListFiles(embed_data[target_dir + '/subdir_2'])
+        assert set(ListFiles(source_dir)) == set(ListFiles(target_dir))
+        assert set(ListFiles(embed_data[source_dir + '/subdir_1'])) \
+            == set(ListFiles(embed_data[target_dir + '/subdir_1']))
+        assert set(ListFiles(embed_data[source_dir + '/subdir_1/subsubdir_1'])) \
+            == set(ListFiles(embed_data[target_dir + '/subdir_1/subsubdir_1']))
+        assert set(ListFiles(embed_data[source_dir + '/subdir_2'])) \
+            == set(ListFiles(embed_data[target_dir + '/subdir_2']))
 
 
     @pytest.mark.skipif("sys.platform != 'win32'")
