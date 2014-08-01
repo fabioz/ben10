@@ -1,5 +1,5 @@
 from ben10.foundation import is_frozen
-from ben10.foundation.decorators import Abstract, Deprecated, Implements, Override
+from ben10.foundation.decorators import Abstract, Deprecated, Implements, Override, Comparable
 import pytest
 import warnings
 
@@ -169,3 +169,28 @@ class Test():
         alpha = Alpha()
         with pytest.raises(NotImplementedError):
             alpha.Method()
+
+
+    def testAbstract(self):
+
+        @Comparable
+        class Alpha(object):
+
+            def __init__(self, v):
+                self.v = v
+
+            def _cmpkey(self):
+                return self.v
+
+        a = Alpha(1)
+        b = Alpha(2)
+        c = Alpha(2)
+
+        assert a < b
+        assert a <= b
+        assert b > a
+        assert b >= a
+
+        assert b == c
+        assert b >= c
+        assert b <= c
