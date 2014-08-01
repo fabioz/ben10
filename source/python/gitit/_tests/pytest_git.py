@@ -201,7 +201,7 @@ class Test(object):
         )
         assert (
             git.GetCommitRepr(git.cloned_remote, short=False, date=True, summary=False)
-            == '35ff01222f4c79baeccaf98ece11bebff9bec01c [2012-07-17 13:33:56]'
+            == '35ff01222f4c79baeccaf98ece11bebff9bec01c [2012-07-17 13:33:56 -0300]'
         )
         assert (
             git.GetCommitRepr(git.cloned_remote, short=False, date=False, summary=True)
@@ -209,7 +209,7 @@ class Test(object):
         )
         assert (
             git.GetCommitRepr(git.cloned_remote, short=True, date=True, summary=True)
-            == '35ff012  "Added new_file" [2012-07-17 13:33:56]'
+            == '35ff012  "Added new_file" [2012-07-17 13:33:56 -0300]'
         )
 
 
