@@ -693,13 +693,13 @@ class Test:
         CopyDirectory(source_dir, target_dir)
 
         # Check directories for files
-        assert set(ListFiles(source_dir)) == set(ListFiles(target_dir))
-        assert set(ListFiles(embed_data[source_dir + '/subdir_1'])) \
-            == set(ListFiles(embed_data[target_dir + '/subdir_1']))
-        assert set(ListFiles(embed_data[source_dir + '/subdir_1/subsubdir_1'])) \
-            == set(ListFiles(embed_data[target_dir + '/subdir_1/subsubdir_1']))
-        assert set(ListFiles(embed_data[source_dir + '/subdir_2'])) \
-            == set(ListFiles(embed_data[target_dir + '/subdir_2']))
+        assert set(ListFiles(target_dir)) == {'1', '2', 'subdir_1', 'subdir_2'}
+        assert set(ListFiles(target_dir + '/subdir_1')) == {'subsubdir_1'}
+        assert set(ListFiles(target_dir + '/subdir_1/subsubdir_1')) == {'1.1.1','1.1.2'}
+        assert set(ListFiles(target_dir + '/subdir_2')) == {'2.1'}
+
+        for i in ('', '/subdir_1', '/subdir_1/subsubdir_1', '/subdir_2'):
+            assert set(ListFiles(target_dir + i)) == set(ListFiles(source_dir + i))
 
 
     @pytest.mark.skipif("sys.platform != 'win32'")
