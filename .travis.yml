@@ -1,8 +1,6 @@
 language: python
 python:
     - 2.7
-before_install:
-	- sudo ./git_setup.sh
 install:
     - sudo apt-get install -qq unrar
     - pip install --use-wheel -r requirements.txt

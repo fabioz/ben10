@@ -618,4 +618,8 @@ def git(embed_data):
     result.remote = embed_data['remote.git']
     result.cloned_remote = embed_data['cloned_remote']
     result.Clone(result.remote, result.cloned_remote)
+    result.Execute('config --local user.name "test"', result.cloned_remote)
+    result.Execute('config --local user.email "test@ben10.com"', result.cloned_remote)
+    result.Execute('config --local log.date iso', result.cloned_remote)
+    result.Execute('config --local commit.date iso', result.cloned_remote)
     return result
