@@ -475,6 +475,27 @@ class CacheInterfaceAttrs(object):
 
     _ATTRIBUTE_CLASSES = (Attribute, ReadOnlyAttribute)
 
+
+    @classmethod
+    def RegisterAttributeClass(cls, attribute_class):
+        '''
+        Registers a class to be considered as an attribute class.
+
+        This provides a way of extending the Interface behavior by declaring new attributes classes
+        such as ScalarAttribute.
+
+        :param Attribute attribute_class:
+            An Attribute class to register as an attribute class.
+
+        :return: set
+            Returns a set with all the current attribute classes.
+        '''
+        result = set(cls._ATTRIBUTE_CLASSES)
+        result.add(attribute_class)
+        cls._ATTRIBUTE_CLASSES = tuple(result)
+        return result
+
+
     def __GetInterfaceMethodsAndAttrs(self, interface):
         '''
             :type interface: the interface from where the methods and attributes should be gotten.
@@ -915,33 +936,3 @@ def _IsInterfaceDeclared(class_, interface):
 def AssertDeclaresInterface(class_or_instance, interface):
     return AssertImplements(class_or_instance, interface)
 
-
-
-# TODO: BEN-22: Check for excessive-dependency on interface module.
-# #===================================================================================================
-# # ScalarAttribute
-# #===================================================================================================
-# class ScalarAttribute(Attribute):
-#     '''
-#     '''
-#
-#     def __init__(self, category):
-#         '''
-#         :param str quantity_type:
-#             String with the category of the Scalar.
-#         '''
-#         self.category = category
-#
-#
-#     @Override(Attribute.Match)
-#     def Match(self, attribute):
-#         if not IsInstance(attribute, 'Scalar'):
-#             return (False, 'The attribute is not a Scalar instance.')
-#         elif attribute.GetCategory() != self.category:
-#             return (
-#                 False,
-#                 'The Scalar category (%s) does not match the expected category of the'
-#                 ' interface (%s).' % (attribute.GetCategory(), self.category)
-#             )
-#
-#         return (True, None)
