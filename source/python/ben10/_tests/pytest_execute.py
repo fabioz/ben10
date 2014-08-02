@@ -72,12 +72,8 @@ class Test(object):
         '''
         with pytest.raises(RuntimeError):
             self._AssertExecute(
-                Dedent(
-                    '''
-                    invalid_command
-                    '''
-                ),
-                []
+                '',
+                ['invalid_command']
             )
 
 
