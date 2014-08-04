@@ -22,4 +22,4 @@ class Ben10BuildCommand(BuildCommand):
 
     @Override(BuildCommand.EvPublish)
     def EvPublish(self, args):
-        self.CiPublish(installer=False, all_platforms=','.join(self.PLATFORMS))
+        self.CiPublish(installer=False, all_platforms=','.join(self.PLATFORMS), force=True)
