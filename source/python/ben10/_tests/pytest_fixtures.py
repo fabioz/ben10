@@ -142,7 +142,7 @@ class Test(object):
             '''
         stmt = 'hello()'
 
-        PERF = 1.34  # Real expected performance
+        PERF = 0.17  # Real expected performance
 
         # This should pass
         performance(setup, stmt, expected_performance=PERF, accepted_variance=1)
