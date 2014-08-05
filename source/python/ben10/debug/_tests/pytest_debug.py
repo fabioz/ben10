@@ -1,4 +1,4 @@
-from ben10.foundation.debug import IsPythonDebug
+from ben10.debug import IsPythonDebug
 
 
 

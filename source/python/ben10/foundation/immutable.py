@@ -1,10 +1,28 @@
 '''
-Defines types and functions to generate immutable structures.
+    Defines types and functions to generate immutable structures.
 
-USER: The cache-manager uses this module to generate a valid KEY for its cache dictionary.
+    USER: The cache-manager uses this module to generate a valid KEY for its cache dictionary.
 '''
 from types import NoneType
 
+_IMMUTABLE_TYPES = set((int, long, float, str, bool, NoneType))
+
+#===================================================================================================
+# RegisterAsImmutable
+#===================================================================================================
+def RegisterAsImmutable(immutable_type):
+    '''
+    Registers the given class as being immutable. This makes it be immutable for this module and
+    also registers a faster copy in the copy module (to return the same instance being copied).
+
+    :param type immutable_type:
+        The type to be considered immutable.
+    '''
+    _IMMUTABLE_TYPES.add(immutable_type)
+
+    # Fix it for the copy too!
+    import copy
+    copy._copy_dispatch[immutable_type] = copy._copy_immutable
 
 
 #===================================================================================================
@@ -29,10 +47,14 @@ def AsImmutable(value, return_str_if_not_expected=True):
     :returns:
         Returns an immutable representation of the passed object
     '''
-    # Micro-optimization (a 40% improvement on the AsImmutable function overall in a real case using sci20 processes).
+
+    #Micro-optimization (a 40% improvement on the AsImmutable function overall in a real case
+    #using sci20 processes).
+    #Checking the type of the class before going to the isinstance series and added
+    #SemanticAssociation as an immutable object.
     value_class = value.__class__
 
-    if value_class in (int, long, float, str, bool, NoneType):
+    if value_class in _IMMUTABLE_TYPES:
         return value
 
     if value_class == dict:
@@ -45,25 +67,25 @@ def AsImmutable(value, return_str_if_not_expected=True):
         return frozenset(value)
 
 
-    # Now, on to the isinstance series...
-
-    # TODO: BEN-20: Check imported code for applicability
-    # Can't do tests with these. Do they have real use?
+    #Now, on to the isinstance series...
     if isinstance(value, (int, long, float, str, bool)):
         return value
-    if isinstance(value, (tuple, list)):
-        return tuple(AsImmutable(i) for i in value)
-    if isinstance(value, (set, frozenset)):
-        return frozenset(value)
 
     if isinstance(value, dict):
         return ImmutableDict((i, AsImmutable(j)) for i, j in value.iteritems())
+
+    if isinstance(value, (tuple, list)):
+        return tuple(AsImmutable(i) for i in value)
+
+    if isinstance(value, (set, frozenset)):
+        return frozenset(value)
 
     if return_str_if_not_expected:
         return str(value)
 
     else:
         raise RuntimeError('Cannot make %s immutable (not supported).' % value)
+
 
 
 
@@ -77,7 +99,7 @@ class ImmutableDict(dict):
         dict.__init__(self, *args, **kwds)
         self._hash = None
     def __deepcopy__(self, memo):
-        return self  # it's immutable, so, there's no real need to make any copy
+        return self #it's immutable, so, there's no real need to make any copy
     def __setitem__(self, key, value):
         raise NotImplementedError, "dict is immutable"
     def __delitem__(self, key):
@@ -92,8 +114,8 @@ class ImmutableDict(dict):
         raise NotImplementedError, "dict is immutable"
     def __hash__(self):
         if self._hash is None:
-            # must be sorted (could give different results for dicts that should be the same
-            # if it's not).
+            #must be sorted (could give different results for dicts that should be the same
+            #if it's not).
             self._hash = hash(tuple(sorted(self.iteritems())))
 
         return self._hash

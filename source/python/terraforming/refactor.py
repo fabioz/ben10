@@ -1,12 +1,9 @@
 '''
 This module provides instruments to perform code refactoring.
 '''
-from ._lib2to3 import MyRefactoringTool, ParseString, WalkLeafs
-from .refactor_imports import ReorganizeImports
 from ben10.filesystem import CreateFile, EOL_STYLE_UNIX, GetFileContents, GetFileLines
 from ben10.foundation.reraise import Reraise
 from copy import copy, deepcopy
-from lib2to3.fixer_base import BaseFix
 import re
 
 
@@ -118,6 +115,8 @@ class TerraForming(object):
         :return boolean:
             Returns True if the file was changed.
         '''
+        from .refactor_imports import ReorganizeImports
+
         try:
             changed, output = ReorganizeImports(filename, refactor=refactor, python_path=python_path)
             CreateFile(filename, output, eol_style=EOL_STYLE_UNIX)
@@ -136,6 +135,8 @@ class TerraForming(object):
 
         .. seealso:: ReorganizeImports
         '''
+        from .refactor_imports import ReorganizeImports
+
         try:
             changed, _output = ReorganizeImports(
                 filename,
@@ -238,6 +239,8 @@ class TerraForming(object):
         :return:
             Parsed lib2to3 syntax tree.
         '''
+        from ._lib2to3 import ParseString, WalkLeafs
+
         code += '\n' # Append EOL so ParseString works
         try:
             result = ParseString(code)
@@ -275,6 +278,8 @@ class TerraForming(object):
         :param next_lines_prefix:
             The prefix for the next lines.
         '''
+        from ._lib2to3 import WalkLeafs
+
         # Fist line
         tree.prefix = first_line_prefix
 
@@ -300,6 +305,7 @@ class TerraForming(object):
 
 
     def _ConvertToPytestImpl(self, source_code, refactor={}):
+        from ._lib2to3 import BaseFix, MyRefactoringTool, ParseString, WalkLeafs
 
         class ConvertPyTestFix(BaseFix):
 

@@ -1,14 +1,7 @@
-from _lib2to3 import MyRefactoringTool, ParseString, WalkLeafs
 from ben10.filesystem import GetFileContents
 from ben10.foundation.reraise import Reraise
 from ben10.module_finder import ModuleFinder
-from lib2to3 import pygram
-from lib2to3.fixer_base import BaseFix
-from lib2to3.fixer_util import Name, Newline
-from lib2to3.pgen2 import token
-from lib2to3.pytree import Leaf, Node
 import os
-
 
 
 PYTHON_EXT = '.py'
@@ -141,6 +134,9 @@ class ImportStatements(object):
 
         :return tuple(ImportStatements, Node):
         '''
+        from lib2to3 import pygram
+        from lib2to3.pytree import Leaf
+
         def _Walk(nodes):
             for i_node in nodes:
                 if isinstance(i_node, Leaf):
@@ -371,6 +367,10 @@ class ImportStatements(object):
             :return lib2to3.pytree.Node:
                 Return a simple_stmt parser-node with the import statement code.
             '''
+            from lib2to3 import pygram
+            from lib2to3.fixer_util import Name, Newline
+            from lib2to3.pytree import Node
+
             if i_symbol.import_as is not None:
                 node = Node(
                     pygram.python_symbols.import_as_name,
@@ -418,6 +418,8 @@ class ImportStatements(object):
             :param str end_at:
                 The value of the node to disable the wrapping.
             '''
+            from _lib2to3 import WalkLeafs
+
             started = False
             cumulative_len = 0
             symbols_count = 0
@@ -473,6 +475,10 @@ class ImportStatements(object):
                 The comment for the import statement.
                 The comment is placed in the end of the line.
             '''
+            from lib2to3 import pygram
+            from lib2to3.fixer_util import Name, Newline
+            from lib2to3.pytree import Node
+
             # children: the children nodes for the final from-import statement
             children = [
                 Name('from', prefix=' ' * indent),
@@ -588,117 +594,6 @@ class ImportStatements(object):
 
 
 #===================================================================================================
-# ImportSymbolsExtractor
-#===================================================================================================
-class ImportSymbolsExtractor(BaseFix):
-    '''
-    A lib2to3.pytree.Node:
-                Return a simple_stmt parser-node with the import statement code. fix that extracts the import-symbols from a AST tree replacing them with
-    place-holders for future replacement (see ImportSymbolsInjector).
-
-    Stores the symbols in the options dictionary, under the key "isymbols".
-    '''
-
-    _accept_type = token.NAME
-
-    IMPORT_PLACEHOLDER = '(IMPORT-PLACEHOLDER)'
-
-
-    def start_tree(self, tree, filename):
-        self.import_placeholder_id = 0
-        return BaseFix.start_tree(self, tree, filename)
-
-
-    def match(self, node):
-        if node.value == 'import':
-            import_statements, node = ImportStatements.CreateFromNode(node)
-            if import_statements is None:
-                return
-            self.import_placeholder_id += 1
-            groups = self.options['isymbols']
-            cur_import_statements = groups.get(self.import_placeholder_id)
-            if cur_import_statements is None:
-                groups[self.import_placeholder_id] = import_statements
-            else:
-                cur_import_statements.symbols += import_statements.symbols
-            return node
-
-
-    def transform(self, node, results):
-        # Place only on "IMPORT_PLACEHOLDER" at a time.
-        cur = node.parent.parent
-        prev = cur.prev_sibling
-        if prev is not None:
-            # Merge IMPORT_PLACEHOLDER only if we have no comments in the prefix.
-            has_comments = '#' in node.parent.children[0].prefix
-            prev_is_placeholder = prev.type == 1 and prev.value == self.IMPORT_PLACEHOLDER
-            if prev_is_placeholder and not has_comments:
-                cur_index = self.import_placeholder_id
-                prev_index = self.import_placeholder_id - 1
-
-                isymbols = self.options['isymbols']
-                cur_import_statements = isymbols[cur_index]
-                prev_import_statements = isymbols[prev_index]
-                prev_import_statements.symbols += cur_import_statements.symbols
-                del isymbols[cur_index]
-                self.import_placeholder_id -= 1
-                cur.remove()
-                return
-        cur.replace(Name(self.IMPORT_PLACEHOLDER, prefix=results.prefix))
-
-
-
-#===================================================================================================
-# ImportSymbolsInjector
-#===================================================================================================
-class ImportSymbolsInjector(BaseFix):
-    '''
-    Replaces place-holders in the AST tree by new nodes with all import statements
-    reorganized.
-
-    Gets the symbols from the options dictionary, under the key "isymbols".
-    '''
-
-    _accept_type = token.NAME
-
-
-    def start_tree(self, tree, filename):
-        self.import_placeholder_id = 0
-        return BaseFix.start_tree(self, tree, filename)
-
-
-    def match(self, node):
-        if node.value == ImportSymbolsExtractor.IMPORT_PLACEHOLDER:
-            self.import_placeholder_id += 1
-            return self.import_placeholder_id
-
-
-    def transform(self, node, results):
-        def InsertAfter(node, new_nodes):
-            if node.parent:
-                for i, i_node in enumerate(node.parent.children):
-                    if i_node is not node:
-                        continue
-
-                    node.parent.changed()
-                    for j_new_node in reversed(new_nodes):
-                        node.parent.children.insert(i, j_new_node)
-                        j_new_node.parent = node.parent
-                    return i
-
-        import_statements = self.options['isymbols'][results]
-        nodes = import_statements.CreateNodes(
-            self.options.get('page_width'),
-            self.options.get('refactor'),
-            filename=self.options['filename'],
-        )
-        nodes[0].prefix = node.prefix
-        InsertAfter(node, nodes)
-        node.remove()
-
-
-
-#===================================================================================================
 # GetParseTree
 #===================================================================================================
 def GetParseTree(filename, source_code=None):
@@ -716,6 +611,8 @@ def GetParseTree(filename, source_code=None):
     :return lib2to3.pytree.Node:
                 Return a simple_stmt parser-node with the import statement code..pytree.Node:
     '''
+    from ._lib2to3 import ParseString
+
     try:
         if filename is None:
             assert source_code is not None, "Parameter source_code is mandatory if filename is not given."
@@ -738,6 +635,130 @@ def GetParseTree(filename, source_code=None):
 
 
 
+IMPORT_PLACEHOLDER = '(IMPORT-PLACEHOLDER)'
+
+
+
+#===================================================================================================
+# _CreateImportMyRefactoringTool
+#===================================================================================================
+def _CreateImportMyRefactoringTool(options):
+    from ._lib2to3 import MyRefactoringTool, BaseFix
+    from lib2to3.pgen2 import token
+    from lib2to3.fixer_util import Name
+
+    class ImportSymbolsExtractor(BaseFix):
+        '''
+        A lib2to3.pytree.Node:
+                    Return a simple_stmt parser-node with the import statement code. fix that extracts the import-symbols from a AST tree replacing them with
+        place-holders for future replacement (see ImportSymbolsInjector).
+
+        Stores the symbols in the options dictionary, under the key "isymbols".
+        '''
+
+        _accept_type = token.NAME
+
+        def start_tree(self, tree, filename):
+            self.import_placeholder_id = 0
+            return BaseFix.start_tree(self, tree, filename)
+
+
+        def match(self, node):
+            if node.value == 'import':
+                import_statements, node = ImportStatements.CreateFromNode(node)
+                if import_statements is None:
+                    return
+                self.import_placeholder_id += 1
+                groups = self.options['isymbols']
+                cur_import_statements = groups.get(self.import_placeholder_id)
+                if cur_import_statements is None:
+                    groups[self.import_placeholder_id] = import_statements
+                else:
+                    cur_import_statements.symbols += import_statements.symbols
+                return node
+
+
+        def transform(self, node, results):
+            # Place only on "IMPORT_PLACEHOLDER" at a time.
+            cur = node.parent.parent
+            prev = cur.prev_sibling
+            if prev is not None:
+                # Merge IMPORT_PLACEHOLDER only if we have no comments in the prefix.
+                has_comments = '#' in node.parent.children[0].prefix
+                prev_is_placeholder = prev.type == 1 and prev.value == IMPORT_PLACEHOLDER
+                if prev_is_placeholder and not has_comments:
+                    cur_index = self.import_placeholder_id
+                    prev_index = self.import_placeholder_id - 1
+
+                    isymbols = self.options['isymbols']
+                    cur_import_statements = isymbols[cur_index]
+                    prev_import_statements = isymbols[prev_index]
+                    prev_import_statements.symbols += cur_import_statements.symbols
+                    del isymbols[cur_index]
+                    self.import_placeholder_id -= 1
+                    cur.remove()
+                    return
+            cur.replace(Name(IMPORT_PLACEHOLDER, prefix=results.prefix))
+
+
+    return MyRefactoringTool([ImportSymbolsExtractor], options=options)
+
+
+#===================================================================================================
+# _CreateInjectorMyRefactoringTool
+#===================================================================================================
+def _CreateInjectorMyRefactoringTool(options):
+    from ._lib2to3 import MyRefactoringTool, BaseFix
+    from lib2to3.pgen2 import token
+
+    class ImportSymbolsInjector(BaseFix):
+        '''
+        Replaces place-holders in the AST tree by new nodes with all import statements
+        reorganized.
+
+        Gets the symbols from the options dictionary, under the key "isymbols".
+        '''
+
+        _accept_type = token.NAME
+
+        def start_tree(self, tree, filename):
+            self.import_placeholder_id = 0
+            return BaseFix.start_tree(self, tree, filename)
+
+
+        def match(self, node):
+            if node.value == IMPORT_PLACEHOLDER:
+                self.import_placeholder_id += 1
+                return self.import_placeholder_id
+
+
+        def transform(self, node, results):
+            def InsertAfter(node, new_nodes):
+                if node.parent:
+                    for i, i_node in enumerate(node.parent.children):
+                        if i_node is not node:
+                            continue
+
+                        node.parent.changed()
+                        for j_new_node in reversed(new_nodes):
+                            node.parent.children.insert(i, j_new_node)
+                            j_new_node.parent = node.parent
+                        return i
+
+            import_statements = self.options['isymbols'][results]
+            nodes = import_statements.CreateNodes(
+                self.options.get('page_width'),
+                self.options.get('refactor'),
+                filename=self.options['filename'],
+            )
+            nodes[0].prefix = node.prefix
+            InsertAfter(node, nodes)
+            node.remove()
+
+    return MyRefactoringTool([ImportSymbolsInjector], options=options)
+
+
+
 #===================================================================================================
 # GetImportSymbols
 #===================================================================================================
@@ -753,7 +774,7 @@ def GetImportSymbols(filename):
     '''
     tree = GetParseTree(filename, None)
     options = {'isymbols' : {}}
-    rt = MyRefactoringTool([ImportSymbolsExtractor], options=options)
+    rt = _CreateImportMyRefactoringTool(options)
     rt.refactor_tree(tree, 'ImportSymbolsExtractor')
     result = {}
     for i_import_statements in options['isymbols'].itervalues():
@@ -791,6 +812,7 @@ def ReorganizeImports(filename, source_code=None, refactor={}, python_path='', p
         Returns True if any changes were made.
         Returns the reorganized source code.
     '''
+
     if source_code is None:
         source_code = GetFileContents(filename)
 
@@ -805,10 +827,10 @@ def ReorganizeImports(filename, source_code=None, refactor={}, python_path='', p
         'refactor' : refactor,
     }
 
-    rt = MyRefactoringTool([ImportSymbolsExtractor], options=options)
+    rt = _CreateImportMyRefactoringTool(options)
     rt.refactor_tree(tree, 'ImportSymbolsExtractor')
 
-    rt = MyRefactoringTool([ImportSymbolsInjector], options=options)
+    rt = _CreateInjectorMyRefactoringTool(options)
     rt.refactor_tree(tree, 'ImportSymbolsInjector')
 
     result = unicode(tree).encode('latin1')

@@ -126,63 +126,68 @@ class ModuleFinder(object):
         return sorted(finder.modules.keys() + finder.badmodules.keys())
 
 
-# TODO: BEN-20: Check imported code for applicability.
-#       This is no longer necessary on ben10 since it was used to check dependencies and we now
-#       use snakefood and aa project.module_deps.
-#     @classmethod
-#     def GetEsssImports(cls, path):
-#         '''
-#         List ESSS project python imports found in a path.
-#
-#         :param str path:
-#             A path to be searched recursively for imports
-#
-#         :rtype: set(str)
-#         :returns:
-#             A set containing project names for all ESSS imports found in the given path
-#
-#             e.g. set(['coilib50', 'sharedscripts10'])
-#
-#
-#         TODO: EDEN-257: Move GetEsssImports from coilib50 to sharedscripts10
-#         '''
-#
-#         def IsEsssProject(module_path):
-#             '''
-#             Identifies if the given module_path represents a ESSS project (or application).
-#
-#             Modules are recognized as ESSS projects if they match the regular expression
-#                 [a-zA-Z]+\d\d
-#
-#                 Which means a sequence of letters followed by two numbers.
-#
-#             :param str module_path:
-#                 A module path in import format.
-#                 Ex.:
-#                   coilib50.basic
-#
-#             :rtype: str | None
-#             :returns:
-#                 Returns the first part of the module if it is a esss module and None otherwise.
-#             '''
-#             import re
-#             m = re.match('([a-zA-Z]+\d\d)\.', module_path)
-#             if m is None:
-#                 return None
-#             return m.group(1)
-#
-#         python_dir = path[:path.find('python') + len('python')]
-#
-#         # List all modules imported in coilib50's python dir
-#         all_modules = cls.GetImports(python_dir, out_filters=[])
-#
-#         # Filter modules that are ESSS projects
-#         result = set()
-#         for module in all_modules:
-#             m = IsEsssProject(module)
-#             if m is not None:
-#                 result.add(m)
-#         return result
+    @classmethod
+    def GetMatchingImports(cls, path, regex_):
+        '''
+        List projects in the given path matching the given regex..
+
+        :param str path:
+            A path to be searched recursively for imports
+
+        :param str regex:
+            A python regular expression to match each found import.
+            Modules are recognized as ESSS projects if they match the regular expression
+
+                '[a-zA-Z]+\d\d'
+
+                Which means a sequence of letters followed by two numbers.
+
+        :rtype: set(str)
+        :returns:
+            A set containing project names for all ESSS imports found in the given path
+
+            e.g. set(['coilib50', 'sharedscripts10'])
+
+
+        TODO: EDEN-257: Move GetEsssImports from coilib50 to sharedscripts10
+        '''
+
+        def IsMatch(module_path, regex_):
+            '''
+            Identifies if the given module_path represents a ESSS project (or application).
+
+            Modules are recognized as ESSS projects if they match the regular expression
+                [a-zA-Z]+\d\d
+
+                Which means a sequence of letters followed by two numbers.
+
+            :param str module_path:
+                A module path in import format.
+                Ex.:
+                  coilib50.basic
+
+            :rtype: str | None
+            :returns:
+                Returns the first part of the module if it is a esss module and None otherwise.
+            '''
+            import re
+            m = re.match(regex_, module_path)
+            if m is None:
+                return None
+            return m.group(1)
+
+        python_dir = path[:path.find('python') + len('python')]
+
+        # List all modules imported in coilib50's python dir
+        all_modules = cls.GetImports(python_dir, out_filters=[])
+
+        # Filter modules that are ESSS projects
+        result = set()
+        for module in all_modules:
+            m = IsMatch(module, regex_)
+            if m is not None:
+                result.add(m)
+        return result
 
 
     def SystemPath(self, directories=()):

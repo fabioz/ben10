@@ -1,11 +1,9 @@
-from ben10.foundation import callback, handle_exception
-from ben10.foundation.callback import (After, Before, Callback, Callbacks,
-    ErrorNotHandledInCallback, PriorityCallback, Remove, _CallbackWrapper)
+from ben10.foundation.callback import (After, Remove, Before, Callback, Callbacks, FunctionNotRegisteredError, _CallbackWrapper)
 from ben10.foundation.types_ import Null
 from ben10.foundation.weak_ref import WeakMethodRef
-import pytest
 import weakref
-
+import mock
+import pytest
 
 
 #===================================================================================================
@@ -24,7 +22,7 @@ class _MyClass(object):
 #===================================================================================================
 # Test
 #===================================================================================================
-class Test(object):
+class Test:
 
     def setup_method(self, method):
         class C(object):
@@ -55,8 +53,8 @@ class Test(object):
 
 
     def testClassOverride(self):
-        callback.Before(self.C.foo, self.before)
-        callback.After(self.C.foo, self.after)
+        Before(self.C.foo, self.before)
+        After(self.C.foo, self.after)
 
         self.a.foo(1)
         assert self.foo_called == (self.a, 1)
@@ -72,7 +70,7 @@ class Test(object):
         assert self.before_called == (self.b, 2)
         assert self.before_count == 2
 
-        callback.Remove(self.C.foo, self.before)
+        Remove(self.C.foo, self.before)
 
         self.a.foo(3)
         assert self.foo_called == (self.a, 3)
@@ -83,8 +81,8 @@ class Test(object):
 
 
     def testInstanceOverride(self):
-        callback.Before(self.a.foo, self.before)
-        callback.After(self.a.foo, self.after)
+        Before(self.a.foo, self.before)
+        After(self.a.foo, self.after)
 
         self.a.foo(1)
         assert self.foo_called == (self.a, 1)
@@ -100,7 +98,7 @@ class Test(object):
         assert self.after_count == 1
         assert self.before_count == 1
 
-        assert callback.Remove(self.a.foo, self.before) == True
+        assert Remove(self.a.foo, self.before) == True
 
         self.a.foo(2)
         assert self.foo_called == (self.a, 2)
@@ -109,8 +107,8 @@ class Test(object):
         assert self.after_count == 2
         assert self.before_count == 1
 
-        callback.Before(self.a.foo, self.before)
-        callback.Before(self.a.foo, self.before)  # Registering twice has no effect the 2nd time
+        Before(self.a.foo, self.before)
+        Before(self.a.foo, self.before)  # Registering twice has no effect the 2nd time
 
         self.a.foo(5)
         assert self.before_called == (5,)
@@ -119,8 +117,8 @@ class Test(object):
 
     def testBoundMethodsWrong(self):
         foo = self.a.foo
-        callback.Before(foo, self.before)
-        callback.After(foo, self.after)
+        Before(foo, self.before)
+        After(foo, self.after)
 
         foo(10)
         assert 0 == self.before_count
@@ -129,8 +127,8 @@ class Test(object):
 
     def testBoundMethodsRight(self):
         foo = self.a.foo
-        foo = callback.Before(foo, self.before)
-        foo = callback.After(foo, self.after)
+        foo = Before(foo, self.before)
+        foo = After(foo, self.after)
 
         foo(10)
         assert self.before_count == 1
@@ -149,7 +147,7 @@ class Test(object):
         self.before_args = None
 
         foo = self.a.foo
-        foo = callback.Before(foo, rec.before)
+        foo = Before(foo, rec.before)
 
         foo(10)
         assert self.before_args == (10,)
@@ -173,7 +171,7 @@ class Test(object):
         self.sender_died = False
         s = Sender()
         w = weakref.ref(s)
-        callback.Before(s.foo, self.before)
+        Before(s.foo, self.before)
         s.foo(10)
         f = s.foo  # hold a strong reference to s
         assert self.before_count == 1
@@ -185,7 +183,6 @@ class Test(object):
 
         with pytest.raises(ReferenceError):
             f(10)  # must have already died: we don't have a strong reference
-
         assert w() is None
 
 
@@ -210,9 +207,9 @@ class Test(object):
 
         c = C()
 
-        callback.After(c.foo, after_2)
-        callback.After(c.foo, after_1)
-        callback.After(c.foo, after_0)
+        After(c.foo, after_2)
+        After(c.foo, after_1)
+        After(c.foo, after_0)
 
         c.foo(10, 20, foo=1)
         assert self.after_2_res == (10, 20)
@@ -232,7 +229,7 @@ class Test(object):
 
         s = Stub()
         a = Aux()
-        callback.After(s.call, a)
+        After(s.call, a)
         s.call(True)
 
         assert a.called
@@ -245,61 +242,29 @@ class Test(object):
             self.args[0] = args
 
         def f2(*args):
-            'Never called!'
+            self.args[1] = args
 
-        my_callback = callback.Callback()
-        assert len(my_callback) == 0
-        my_callback.Register(f1)
-        assert len(my_callback) == 1
 
-        my_callback(1, 2)
+        c = Callback()
+        c.Register(f1)
+
+        c(1, 2)
 
         assert self.args[0] == (1, 2)
 
-        my_callback.Unregister(f1)
+        c.Unregister(f1)
         self.args[0] = None
-        my_callback(10, 20)
-        assert self.args[0] is None
+        c(10, 20)
+        assert self.args[0] == None
 
         def foo(): pass
-        my_callback.Unregister(foo)  # Not raises
+        #self.assertNotRaises(FunctionNotRegisteredError, c.Unregister, foo)
+        c.Unregister(foo)
 
 
-    def testBeforeAfter(self):
-
-        callback_args = []
-
-        def AfterCallback():
-            callback_args.append('after')
-
-        def BeforeCallback():
-            callback_args.append('before')
-
-        class MyClass:
-
-            def Hooked(self):
-                callback_args.append('hooked')
-
-        my_obj = MyClass()
-
-        callback_args = []
-        my_obj.Hooked()
-        assert callback_args == ['hooked']
-
-        callback_args = []
-        After(my_obj.Hooked, AfterCallback)
-        my_obj.Hooked()
-        assert callback_args == ['hooked', 'after']
-
-        callback_args = []
-        Before(my_obj.Hooked, BeforeCallback)
-        my_obj.Hooked()
-        assert callback_args == ['before', 'hooked', 'after']
-
-
-    def testExtraArgs(self):
+    def test_extra_args(self):
         '''
-            Tests the extra-args parameter in Callback.Register method.
+            Tests the extra-args parameter in Register method.
         '''
         self.zulu_calls = []
 
@@ -309,25 +274,34 @@ class Test(object):
         def zulu_too(*args):
             self.zulu_calls.append(args)
 
-        alpha = callback.Callback()
+        alpha = Callback()
         alpha.Register(zulu_one, [1, 2])
 
         assert self.zulu_calls == []
 
         alpha('a')
-        assert self.zulu_calls == [(1, 2, 'a')]
+        assert self.zulu_calls == [
+            (1, 2, 'a')
+            ]
 
         alpha('a', 'b', 'c')
-        assert self.zulu_calls, [(1, 2, 'a'), (1, 2, 'a', 'b', 'c')]
+        assert self.zulu_calls == [
+            (1, 2, 'a'),
+            (1, 2, 'a', 'b', 'c')
+            ]
 
         # Test a second method with extra-args
         alpha.Register(zulu_too, [9])
 
         alpha('a')
-        assert self.zulu_calls == [(1, 2, 'a'), (1, 2, 'a', 'b', 'c'), (1, 2, 'a'), (9, 'a'), ]
+        assert self.zulu_calls == [
+            (1, 2, 'a'),
+            (1, 2, 'a', 'b', 'c'),
+            (1, 2, 'a'),
+            (9, 'a'),
+            ]
 
-
-    def testSenderAsParameter(self):
+    def test_sender_as_parameter(self):
         self.zulu_calls = []
 
         def zulu_one(*args):
@@ -336,14 +310,14 @@ class Test(object):
         def zulu_two(*args):
             self.zulu_calls.append(args)
 
-        callback.Before(self.a.foo, zulu_one, sender_as_parameter=True)
+        Before(self.a.foo, zulu_one, sender_as_parameter=True)
 
         assert self.zulu_calls == []
         self.a.foo(0)
         assert self.zulu_calls == [(self.a, 0)]
 
         # The second method registered with the sender_as_parameter on did not receive it.
-        callback.Before(self.a.foo, zulu_two, sender_as_parameter=True)
+        Before(self.a.foo, zulu_two, sender_as_parameter=True)
 
         self.zulu_calls = []
         self.a.foo(1)
@@ -359,19 +333,20 @@ class Test(object):
         def zulu_too(*args):
             self.zulu_calls.append((2, args))
 
-        callback.Before(self.a.foo, zulu_one, sender_as_parameter=True)
-        callback.After(self.a.foo, zulu_too)
+        Before(self.a.foo, zulu_one, sender_as_parameter=True)
+        After(self.a.foo, zulu_too)
 
         assert self.zulu_calls == []
         self.a.foo(0)
         assert self.zulu_calls == [(1, (self.a, 0)), (2, (0,))]
 
 
+
     def testContains(self):
         def foo(x):
-            'Never called!'
+            pass
 
-        c = callback.Callback()
+        c = Callback()
         assert not c.Contains(foo)
         c.Register(foo)
 
@@ -390,7 +365,7 @@ class Test(object):
         a = A()
         weak_a = weakref.ref(a)
 
-        foo = callback.Callback()
+        foo = Callback()
         foo.Register(a.on_foo)
 
         foo(1, 2)
@@ -419,7 +394,7 @@ class Test(object):
 
         a = A()
         weak_a = weakref.ref(a)
-        callback.After(a.foo, FooAfter)
+        After(a.foo, FooAfter)
         a.foo()
 
         assert self.after_exec == 1
@@ -443,15 +418,15 @@ class Test(object):
         a = A()
 
         def FooAfter1():
-            callback.Remove(a.foo, FooAfter1)
+            Remove(a.foo, FooAfter1)
             self.after_exec += 1
 
         def FooAfter2():
             self.after_exec += 1
 
         self.after_exec = 0
-        callback.After(a.foo, FooAfter1)
-        callback.After(a.foo, FooAfter2)
+        After(a.foo, FooAfter1)
+        After(a.foo, FooAfter2)
         a.foo()
 
         # it was iterating in the original after, so, this case
@@ -463,14 +438,14 @@ class Test(object):
         a.foo()
         assert 4 == self.after_exec
 
-        callback.After(a.foo, FooAfter2)
-        callback.After(a.foo, FooAfter2)
-        callback.After(a.foo, FooAfter2)
+        After(a.foo, FooAfter2)
+        After(a.foo, FooAfter2)
+        After(a.foo, FooAfter2)
 
         a.foo()
         assert 5 == self.after_exec
 
-        callback.Remove(a.foo, FooAfter2)
+        Remove(a.foo, FooAfter2)
         a.foo()
         assert 5 == self.after_exec
 
@@ -489,25 +464,25 @@ class Test(object):
         def FooAfterSelfMethod():
             self.after_exec_self_method += 1
 
-        callback.After(A.foo, FooAfterClassMethod)
+        After(A.foo, FooAfterClassMethod)
 
         a = A()
-        callback.After(a.foo, FooAfterSelfMethod)
+        After(a.foo, FooAfterSelfMethod)
 
         a.foo()
         assert 1 == self.after_exec_class_method
         assert 1 == self.after_exec_self_method
 
-        callback.Remove(A.foo, FooAfterClassMethod)
+        Remove(A.foo, FooAfterClassMethod)
         a.foo()
         assert 1 == self.after_exec_class_method
         assert 2 == self.after_exec_self_method
 
 
     def testSenderDies2(self):
-        callback.After(self.a.foo, self.after, True)
+        After(self.a.foo, self.after, True)
         self.a.foo(1)
-        assert self.after_called == (self.a, 1)
+        assert (self.a, 1) == self.after_called
 
         a = weakref.ref(self.a)
         self.after_called = None
@@ -517,25 +492,19 @@ class Test(object):
 
 
     def testCallbacks(self):
-        self.called = []
+        self.called = 0
         def bar(*args):
-            self.called.append(args)
+            self.called += 1
 
         callbacks = Callbacks()
         callbacks.Before(self.a.foo, bar)
         callbacks.After(self.a.foo, bar)
 
         self.a.foo(1)
-        assert self.called == [
-            (1,),
-            (1,),
-        ]
+        assert 2 == self.called
         callbacks.RemoveAll()
         self.a.foo(1)
-        assert self.called == [
-            (1,),
-            (1,),
-        ]
+        assert 2 == self.called
 
 
     def testAfterRemove(self):
@@ -544,12 +513,12 @@ class Test(object):
         my_object.SetAlpha(0)
         my_object.SetBravo(0)
 
-        callback.After(my_object.SetAlpha, my_object.SetBravo)
+        After(my_object.SetAlpha, my_object.SetBravo)
 
         my_object.SetAlpha(1)
         assert my_object.bravo == 1
 
-        callback.Remove(my_object.SetAlpha, my_object.SetBravo)
+        Remove(my_object.SetAlpha, my_object.SetBravo)
 
         my_object.SetAlpha(2)
         assert my_object.bravo == 1
@@ -561,14 +530,14 @@ class Test(object):
         my_object.SetBravo(0)
 
         # Test After/Remove with a callback
-        event = callback.Callback()
-        callback.After(my_object.SetAlpha, event)
+        event = Callback()
+        After(my_object.SetAlpha, event)
         event.Register(my_object.SetBravo)
 
         my_object.SetAlpha(3)
         assert my_object.bravo == 3
 
-        callback.Remove(my_object.SetAlpha, event)
+        Remove(my_object.SetAlpha, event)
 
         my_object.SetAlpha(4)
         assert my_object.bravo == 3
@@ -583,16 +552,16 @@ class Test(object):
             self._value = value
 
         # Test After/Remove with a callback and sender_as_parameter
-        callback.After(my_object.SetAlpha, event, sender_as_parameter=True)
+        After(my_object.SetAlpha, event, sender_as_parameter=True)
 
         my_object.SetAlpha(3)
 
-        assert self._value == 3
+        assert 3 == self._value
 
-        callback.Remove(my_object.SetAlpha, event)
+        Remove(my_object.SetAlpha, event)
 
         my_object.SetAlpha(4)
-        assert self._value == 3
+        assert 3 == self._value
 
     def testDeadCallbackCleared(self):
         my_object = _MyClass()
@@ -612,8 +581,8 @@ class Test(object):
         b = B()
 
         # Test After/Remove with a callback and sender_as_parameter
-        callback.After(my_object.SetAlpha, a.event, sender_as_parameter=True)
-        callback.After(my_object.SetAlpha, b.event, sender_as_parameter=False)
+        After(my_object.SetAlpha, a.event, sender_as_parameter=True)
+        After(my_object.SetAlpha, b.event, sender_as_parameter=False)
 
         w = weakref.ref(a)
         my_object.SetAlpha(3)
@@ -633,35 +602,35 @@ class Test(object):
                 self.name = name
 
             def OnCallback(self):
-                'Never called!'
+                pass
 
             def __eq__(self, other):
                 return self.name == other.name
 
             def __ne__(self, other):
-                '''
-                Never called!
                 return not self == other
-                '''
 
         instance1 = C('instance')
         instance2 = C('instance')
         assert instance1 == instance2
 
-        c = callback.Callback()
+        c = Callback()
         c.Register(instance1.OnCallback)
         c.Register(instance2.OnCallback)
 
         # removing first callback, and checking that it was actually removed as expected
         c.Unregister(instance1.OnCallback)
-        assert c.Contains(instance1.OnCallback) == False
-        # self.assertNotRaises(RuntimeError,
+        assert not c.Contains(instance1.OnCallback) == True
+
+        #self.assertNotRaises(RuntimeError, c.Unregister, instance1.OnCallback)
         c.Unregister(instance1.OnCallback)
+
 
         # removing second callback, and checking that it was actually removed as expected
         c.Unregister(instance2.OnCallback)
-        assert c.Contains(instance2.OnCallback) == False
-        # self.assertNotRaises(RuntimeError
+        assert not c.Contains(instance2.OnCallback) == True
+
+        #self.assertNotRaises(RuntimeError, c.Unregister, instance2.OnCallback)
         c.Unregister(instance2.OnCallback)
 
 
@@ -670,7 +639,7 @@ class Test(object):
         def After(*args):
             self.called += 1
 
-        c = callback.Callback()
+        c = Callback()
         c.Register(After)
         c.Register(After)
         c.Register(After)
@@ -678,59 +647,47 @@ class Test(object):
         assert self.called == 1
 
 
-    def testHandleErrorOnCallback(self, monkeypatch):
-        self.called = 0
-        def After(*args, **kwargs):
-            self.called += 1
-            raise RuntimeError('test')
+    def testHandleErrorOnCallback(self):
+        Callback.DEFAULT_HANDLE_ERRORS = False
+        try:
 
-        def After2(*args, **kwargs):
-            self.called += 1
-            raise RuntimeError('test2')
+            self.called = 0
+            def After(*args, **kwargs):
+                self.called += 1
+                raise RuntimeError('test')
 
-        c = callback.Callback(handle_errors=True)
-        c.Register(After)
-        c.Register(After2)
+            def After2(*args, **kwargs):
+                self.called += 1
+                raise RuntimeError('test2')
 
-        error_handled_on = []
-        def MyHandleException(msg):
-            error_handled_on.append(msg)
+            c = Callback(handle_errors=True)
+            c.Register(After)
+            c.Register(After2)
 
-        monkeypatch.setattr(handle_exception, 'HandleException', MyHandleException)
-        c()
-        assert len(error_handled_on) == 2
-        assert self.called == 2
+            from ben10.foundation import callback
+            with mock.patch('ben10.foundation.callback._callback.HandleErrorOnCallback', autospec=True) as mocked:
+                c()
+                assert self.called == 2
+            assert mocked.call_count == 2
 
-        c(1, a=2)
-        assert len(error_handled_on) == 4
-        assert self.called == 4
+            with mock.patch('ben10.foundation.callback._callback.HandleErrorOnCallback', autospec=True) as mocked:
+                c(1, a=2)
+                assert self.called == 4
+            assert mocked.call_count == 2
 
-        # test the default behaviour: errors are not handled and stop execution as usual
-        self.called = 0
-        c = callback.Callback()
-        c.Register(After)
-        c.Register(After2)
-        with pytest.raises(RuntimeError):
-            c()
-        assert self.called == 1
-
-
-    def testErrorNotHandledInCallback(self, monkeypatch):
-
-        class MyError(ErrorNotHandledInCallback):
-            pass
-
-        def After(*args, **kwargs):
-            raise MyError()
-
-        c = callback.Callback(handle_errors=True)
-        c.Register(After)
-
-        with pytest.raises(MyError):
-            c()
+            # test the default behaviour: errors are not handled and stop execution as usual
+            self.called = 0
+            c = Callback()
+            c.Register(After)
+            c.Register(After2)
+            with pytest.raises(RuntimeError):
+                c()
+            assert self.called == 1
+        finally:
+            Callback.DEFAULT_HANDLE_ERRORS = True
 
 
-    def testAfterBeforeHandleError(self, monkeypatch):
+    def testAfterBeforeHandleError(self):
 
         class C(object):
             def Method(self, x):
@@ -748,37 +705,20 @@ class Test(object):
         self.after_called = 0
 
         c = C()
-        callback.Before(c.Method, BeforeMethod)
-        callback.After(c.Method, AfterMethod)
+        Before(c.Method, BeforeMethod)
+        After(c.Method, AfterMethod)
 
-        # handled_errors = []
-        # def HandleErrorOnCallback(func, *args, **kwargs):
-        #    handled_errors.append(func)
-#
-        # monkeypatch.setattr(callback, 'HandleErrorOnCallback', HandleErrorOnCallback)
+        with mock.patch('ben10.foundation.callback._callback.HandleErrorOnCallback', autospec=True) as mocked:
+            assert c.Method(10) == 20
+            assert self.before_called == 1
+            assert self.after_called == 1
+        assert mocked.call_count == 2
 
-        handled_errors = []
-        def HandleException(func, *args, **kwargs):
-            handled_errors.append(func)
-        monkeypatch.setattr(handle_exception, 'HandleException', HandleException)
-
-        assert c.Method(10) == 20
-        assert self.before_called == 1
-        assert self.after_called == 1
-        assert len(handled_errors) == 2
-
-        assert c.Method(20) == 40
-        assert self.before_called == 2
-        assert self.after_called == 2
-        assert len(handled_errors) == 4
-
-        # Testing with a non-function.
-        class Alpha:
-            pass
-
-        callback.After(c.Method, Alpha())
-        assert c.Method(20) == 40
-        assert len(handled_errors) == 7
+        with mock.patch('ben10.foundation.callback._callback.HandleErrorOnCallback', autospec=True) as mocked:
+            assert c.Method(20) == 40
+            assert self.before_called == 2
+            assert self.after_called == 2
+        assert mocked.call_count == 2
 
 
     def testKeyReusedAfterDead(self, monkeypatch):
@@ -787,15 +727,15 @@ class Test(object):
             self._gotten_key = True
             return 1
 
-        monkeypatch.setattr(callback.Callback, '_GetKey', GetKey)
+        monkeypatch.setattr(Callback, '_GetKey', GetKey)
 
         def AfterMethod(*args):
-            'Not called!'
+            pass
 
         def AfterMethodB(*args):
-            'Not called!'
+            pass
 
-        c = callback.Callback()
+        c = Callback()
 
         c.Register(AfterMethod)
         self._gotten_key = False
@@ -825,12 +765,6 @@ class Test(object):
             a = property(GetA, SetA)
 
         a = A()
-
-        # Coverage exercise
-        assert a.a == 0
-        a.a = 10
-        assert a.a == 10
-
         # If registering a bound, it doesn't contain the unbound
         c.Register(a.SetA)
         assert not c.Contains(AfterMethodB)
@@ -858,40 +792,36 @@ class Test(object):
 
 
     def testNeedsUnregister(self):
-        c = callback.Callback()
+        c = Callback()
         # Even when the function isn't registered, we not raise an error.
         def Func():
-            'Never called!'
-
-        # self.assertNotRaises(RuntimeError,
+            pass
+        #self.assertNotRaises(RuntimeError, c.Unregister, Func)
         c.Unregister(Func)
 
 
     def testUnregisterAll(self):
-        c = callback.Callback()
+        c = Callback()
 
-        # self.assertNotRaises(AttributeError,
+        #self.assertNotRaises(AttributeError, c.UnregisterAll)
         c.UnregisterAll()
 
-        self.called = 0
+        self.called = False
         def Func():
-            self.called += 1
+            self.called = True
 
         c.Register(Func)
-        c()
-        assert self.called == 1
-
         c.UnregisterAll()
+
         c()
-        assert self.called == 1
+        assert self.called == False
 
 
     def testOnClassAndOnInstance(self):
         vals = []
         class Stub(object):
             def call(self, *args, **kwargs):
-                'Never called!'
-
+                pass
 
         def OnCall1(instance, val):
             vals.append(('call_instance', val))
@@ -904,174 +834,43 @@ class Test(object):
         After(s.call, OnCall2)
 
         s.call(True)
-        assert vals == [('call_instance', True), ('call_class', True)]
-
-
-    def testRemove(self):
-
-        class Stub(object):
-            def Method(self, *args, **kwargs):
-                'Never called'
-
-        def Callback(instance, val):
-            ''
-
-        s = Stub()
-        assert Remove(s.Method, Callback) == False
+        assert [('call_instance', True), ('call_class', True)] == vals
 
 
     def testOnClassAndOnInstance2(self):
-
+        vals = []
         class Stub(object):
-            def Method(self, *args, **kwargs):
+            def call(self, *args, **kwargs):
                 pass
 
-        def OnCallClass(instance, val):
+        def OnCall1(instance, val):
             vals.append(('call_class', val))
 
-        def OnCallInstance(val):
+        def OnCall2(val):
             vals.append(('call_instance', val))
 
-        # Tricky thing here: because we added the callback in the class (2) after we added it to the
-        # instance (1), the callback on the instance cannot be rebound, thus, calling it on the instance
+        s = Stub()
+        After(s.call, OnCall2)
+        After(Stub.call, OnCall1)
+
+        # Tricky thing here: because we added the callback in the class after we added it to the
+        # instance, the callback on the instance cannot be rebound, thus, calling it on the instance
         # won't really trigger the callback on the class (not really what would be expected of the
         # after method, but I couldn't find a reasonable way to overcome that).
         # A solution could be keeping track of all callbacks and rebinding all existent ones in the
         # instances to the one in the class, but it seems overkill for such an odd situation.
-        vals = []
-        s = Stub()
-        After(s.Method, OnCallInstance)  # (1)
-        After(Stub.Method, OnCallClass)  # (2)
-        s.Method(1)
-        assert vals == [('call_instance', 1), ]
-        assert Remove(s.Method, OnCallInstance) == True
-        assert Remove(Stub.Method, OnCallClass) == True
-
-        vals = []
-        s = Stub()
-        s.Method(2)
-        assert vals == []
-
-        vals = []
-        s = Stub()
-        After(Stub.Method, OnCallClass)  # (2)
-        After(s.Method, OnCallInstance)  # (1)
-        s.Method(3)
-        assert vals == [('call_class', 3), ('call_instance', 3) ]
+        s.call(True)
+        assert [('call_instance', True), ] == vals
 
 
     def testOnNullClass(self):
-        '''
-        On Null classes, After/Before has no effect.
-        '''
 
-        class MyNullSubClass(Null):
-            ''
+        class _MyNullSubClass(Null):
 
-        count = [0]
-        def AfterSetIt():
-            count[0] += 1
+            def GetIstodraw(self):
+                return True
 
-
-        AfterSetIt()
-        assert count == [1]
-
-        s = Null()
-        After(s.SetIt, AfterSetIt)
-        s.SetIt()
-        assert count == [1]
-
-        s = MyNullSubClass()
-        After(s.SetIt, AfterSetIt)
-        s.SetIt()
-        assert count == [1]
-
-
-    def testUnbound(self):
-        '''
-        We don't accept unbound methods as callback listeners.
-        '''
-
-        output = []
-
-        class MyClass(object):
-
-            def MyMethod(self):
-                output.append('MyMethod')
-
-        class MyListener(object):
-
-            def Listen(self):
-                output.append('Listen')
-
-        a = MyClass()
-        a.MyMethod()
-        assert output == ['MyMethod']
-
-        # Registering bound method, OK
-        b = MyListener()
-        After(a.MyMethod, b.Listen)
-        a.MyMethod()
-        assert output == ['MyMethod', 'MyMethod', 'Listen']
-
-        # Registering unbound method, FAIL
-        with pytest.raises(AssertionError):
-            After(a.MyMethod, MyListener.Listen)
-        assert output == ['MyMethod', 'MyMethod', 'Listen']
-
-
-    def testPriorityCallback(self):
-        priority_callback = PriorityCallback()
-
-        called = []
-
-        def OnCall1(a, b, c):
-            called.append((a, b, c))
-
-        def OnCall2():
-            called.append(2)
-
-        def OnCall3():
-            called.append(3)
-
-        def OnCall4():
-            called.append(4)
-
-        def OnCall5():
-            called.append(5)
-
-        priority_callback.Register(OnCall1, (11, 12, 13), priority=2)
-        priority_callback.Register(OnCall2, priority=2)
-        priority_callback.Register(OnCall3, priority=1)
-        priority_callback.Register(OnCall4, priority=3)
-        priority_callback.Register(OnCall5, priority=2)
-
-        priority_callback()
-        assert called == [3, (11, 12, 13), 2, 5, 4]
-
-
-    def testCalculateToCall(self):
-
-        class MyClass(object):
-
-            def MyMethod(self):
-                ''
-
-        def Callable(*args, **kwargs):
-            ''
-
-        # Empty
-        c = Callback()
-        assert c._CalculateToCall() == []
-
-        # Register a function
-        c.Register(Callable)
-        assert c._CalculateToCall() == [(Callable, ())]
-
-        # Register a method
-        instance = MyClass()
-        c.Register(instance.MyMethod)
-        assert c._CalculateToCall() == [
-            (Callable, ()),
-            (instance.MyMethod, ()),
-        ]
+        s = _MyNullSubClass()
+        def AfterSetIstodraw():
+            pass
+        w = After(s.SetIstodraw, AfterSetIstodraw)

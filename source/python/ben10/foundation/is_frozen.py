@@ -37,30 +37,36 @@ def SetIsFrozen(is_frozen):
         _is_frozen = is_frozen
 
 
-
-#===================================================================================================
-# IsDevelopment
-# The is-development global flag signs we are working in a development environment. This flag is
-# used to enable/disable expansive checks during the development and testing phases.
-# Since we perform the application checks in the executable we can't use IsFrozen.
-# The following checks are tied to this flag:
-# - DevelopmentCheckType
-# - Interface class check
-#===================================================================================================
+_is_development = not _is_frozen
 def IsDevelopment():
     '''
     :rtype: bool
     :returns:
-        Returns whether we are working in a development (True) or release (False) environment.
+        Returns False if we are not working in a "development environment".
+
+        By default, the "development environment" is understood as not in frozen mode. However, be careful
+        not think that this will always be equivalent to 'not IsFrozen()'. This could also return True in
+        frozen environment, particularly when running tests on the executable.
+        ..seealso:: SetIsDevelopment to understand why.
     '''
-    return not _is_frozen
+    return _is_development
 
 
 def SetIsDevelopment(is_development):
     '''
-    Set the is-development global value.
-
     :param bool is_development:
-        The new is-development value
+        The new is-development value, which is returned by ..seealso:: IsDevelopment.
+
+    We wanted this method for the following reason:
+    Some methods we use in our codebase can make some checks/assertions that might be overly time-consuming to
+    have them running in production code. Therefore, the helper IsDevelopment is used to know if those methods
+    should run or not. However, due to the fact that we run tests on the executable and we want those methods
+    to be executed during testing, we need this method to make sure IsDevelopment returns true even in "frozen
+    environment".
+
+    DevelopmentCheckType is an example of a method using IsDevelopment to be enabled.
+
+    So always mind this difference and think
     '''
-    SetIsFrozen(not is_development)
+    global _is_development
+    _is_development = is_development

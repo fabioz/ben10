@@ -383,3 +383,20 @@ class Test:
             "for _i in xrange(%d): Foo('arg1'); Foo('arg1', arg2='arg2')" % (for_size,)
             )
         PrintPerformance(timing, 'call_passing_kwargs')
+
+
+    def profileMemoize(self):
+        from ben10.debug.profiling import PrintProfileMultiple, ProfileMethod
+
+        @Memoize(maxsize=1, prune_method=Memoize.LRU)
+        def Call():
+            return 1
+
+        @ProfileMethod('test.prof')
+        def Check():
+
+            for _i in xrange(100000):
+                Call()
+
+        Check()
+        PrintProfileMultiple('test.prof')

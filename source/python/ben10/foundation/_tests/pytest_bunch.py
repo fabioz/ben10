@@ -40,56 +40,6 @@ class Test:
         assert alpha.without_value == ()
 
 
-# TODO: BEN-18: Improve coverage.
-#       Not executed on tests, might as well be commented. Create a test for it.
-#     def probeBunchMemory(self):
-#         # Slots
-#         #
-#         # Ellapsed Time: 0.14 seconds
-#         # Memory delta: 4,38 MB (4.595.712 bytes)
-#         #
-#         # NoBunch
-#         #
-#         # Ellapsed Time: 0.31 seconds
-#         # Memory delta: 17,81 MB (18.673.664 bytes)
-#         #
-#         # Bunch
-#         # Ellapsed Time: 0.36 seconds
-#         # Memory delta: 4,43 MB (4.644.864 bytes)
-#
-#         class BarBunch(Bunch):
-#             x = 0.0
-#             y = 0.0
-#             width = 1.0
-#             height = 1.0
-#
-#         class BarNoBunch(object):
-#
-#             def __init__(self):
-#                 self.x = 0.0
-#                 self.y = 0.0
-#                 self.width = 1.0
-#                 self.height = 1.0
-#
-#         class BarSlots(object):
-#
-#             __slots__ = ['x', 'y', 'width', 'height']
-#
-#             def __init__(self):
-#                 self.x = 0.0
-#                 self.y = 0.0
-#                 self.width = 1.0
-#                 self.height = 1.0
-#
-#         Bar = BarNoBunch  # @UnusedVariable
-#         Bar = BarSlots  # @UnusedVariable
-#         Bar = BarBunch
-#
-#         memory_probe = MemoryProbe()
-#         bunches = [Bar() for x in xrange(100000)]  # @UnusedVariable
-#         memory_probe.PrintMemory()
-
-
     def testBunchSubclassing(self):
 
         class Item(Bunch):
@@ -286,3 +236,53 @@ class Test:
         assert d[my_hash1] is my_hash1b
         assert d[my_hash1b] is my_hash1b
         assert d[my_hash2] is my_hash2
+
+
+# TODO: BEN-18: Improve coverage.
+#       Not executed on tests, might as well be commented. Create a test for it.
+#     def probeBunchMemory(self):
+#         # Slots
+#         #
+#         # Ellapsed Time: 0.14 seconds
+#         # Memory delta: 4,38 MB (4.595.712 bytes)
+#         #
+#         # NoBunch
+#         #
+#         # Ellapsed Time: 0.31 seconds
+#         # Memory delta: 17,81 MB (18.673.664 bytes)
+#         #
+#         # Bunch
+#         # Ellapsed Time: 0.36 seconds
+#         # Memory delta: 4,43 MB (4.644.864 bytes)
+#
+#         class BarBunch(Bunch):
+#             x = 0.0
+#             y = 0.0
+#             width = 1.0
+#             height = 1.0
+#
+#         class BarNoBunch(object):
+#
+#             def __init__(self):
+#                 self.x = 0.0
+#                 self.y = 0.0
+#                 self.width = 1.0
+#                 self.height = 1.0
+#
+#         class BarSlots(object):
+#
+#             __slots__ = ['x', 'y', 'width', 'height']
+#
+#             def __init__(self):
+#                 self.x = 0.0
+#                 self.y = 0.0
+#                 self.width = 1.0
+#                 self.height = 1.0
+#
+#         Bar = BarNoBunch  # @UnusedVariable
+#         Bar = BarSlots  # @UnusedVariable
+#         Bar = BarBunch
+#
+#         memory_probe = MemoryProbe()
+#         bunches = [Bar() for x in xrange(100000)]  # @UnusedVariable
+#         memory_probe.PrintMemory()

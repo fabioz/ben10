@@ -72,13 +72,14 @@ class Singleton(object):
             # Make common case faster.
             return cls.__singleton_singleton_stack__[-1]
         except (AttributeError, IndexError):
-            # Only lock if the 'fast path' did not work.
-            stack = cls._ObtainStack()
+            with cls.__lock:
+                # Only lock if the 'fast path' did not work.
+                stack = cls._ObtainStack()
 
-            if not stack:  # Faster than doing len(stack) == 0
-                return cls.SetSingleton(None)
+                if not stack:  # Faster than doing len(stack) == 0
+                    return cls.SetSingleton(None)
 
-            return stack[-1]
+                return stack[-1]
 
 
     @classmethod
@@ -110,11 +111,12 @@ class Singleton(object):
             instance = cls.CreateDefaultSingleton()
 
         # Set the stack[0] as the singleton
-        if not stack:
+        if len(stack) == 0:
             stack.append(instance)
             cls.__singleton_stack_start_index = 1
         else:
             stack[0] = instance
+
         assert cls.__singleton_stack_start_index == 1
 
         return instance

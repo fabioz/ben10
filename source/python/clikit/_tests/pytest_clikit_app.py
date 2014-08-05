@@ -182,6 +182,7 @@ class Test:
         self._TestMain(app, 'case3', 'Hello from case 3\n')
         self._TestMain(app, 'c3', 'Hello from case 3\n')
         self._TestMain(app, 'cs3', 'Hello from case 3\n')
+        self._TestMain(app, 'four', 'Hello from case 4 (AKA: four)\n')
 
         # Tests output when an invalid command is requested
         self._TestMain(app, 'INVALID', Dedent(
@@ -284,6 +285,47 @@ class Test:
         app.TestScript(inspect.getdoc(self.testPositionalArgs))
 
 
+    def testConsolePluginVerbosity(self):
+        '''
+        >test command
+        quiet
+        normal
+        >test command --verbose
+        quiet
+        normal
+        verbose
+        >test command --quiet
+        quiet
+        '''
+        app = App('test', color=False, buffered_console=True)
+
+        def Command(console_):
+            console_.PrintQuiet('quiet')
+            console_.Print('normal')
+            console_.PrintVerbose('verbose')
+
+        app.Add(Command)
+
+        app.TestScript(inspect.getdoc(self.testConsolePluginVerbosity))
+
+
+    def testConsolePluginNoColor(self):
+        '''
+        >test command
+        console.color = False
+        >test command --no-color
+        console.color = False
+        '''
+        app = App('test', color=False, buffered_console=True)
+
+        def Command(console_):
+            console_.Print('console.color = %s' % console_.color)
+
+        app.Add(Command)
+
+        app.TestScript(inspect.getdoc(self.testConsolePluginNoColor))
+
+
     def testPositionalArgsWithDefaults(self):
         '''
         >test hello
@@ -337,9 +379,11 @@ class Test:
 
 
     def testUnknownOptionArgs(self):
-        app = App('test', color=False, buffered_console=True)
+
         def Command(console_):
-            console_.Print('hello')
+            ''
+
+        app = App('test', color=False, buffered_console=True)
         app.Add(Command)
 
         app.TestScript(Dedent(
@@ -374,11 +418,12 @@ class Test:
 
 
     def testBoolArgTrue(self):
+
+        def Command(console_, option=True):
+            ''
+
         # We cannot have a command with boolean default True
         app = App('test', color=False, buffered_console=True)
-        def Command(console_, option=True):
-            console_.Print(option)
-
         with pytest.raises(RuntimeError) as e:
             app.Add(Command)
 

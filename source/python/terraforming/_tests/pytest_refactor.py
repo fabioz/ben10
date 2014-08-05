@@ -1,3 +1,9 @@
+'''
+IMPORTANT:
+    Avoid importing lib2to3 on module level becase this makes multi-processing test execution fail.
+    This is because lib2to3 have a mechanism of generating a syntax file (pickle) in module level
+    that crashes when executing in parallel.
+'''
 from ben10.filesystem import CreateFile, EOL_STYLE_NONE, EOL_STYLE_UNIX, GetFileContents
 from ben10.foundation.pushpop import PushPop
 from ben10.foundation.reraise import Reraise
@@ -10,12 +16,10 @@ import pytest
 import sys
 
 
-
 #===================================================================================================
 # Test
 #===================================================================================================
 class Test(object):
-
 
     def testFixAll(self, embed_data):
         terra = TerraForming()

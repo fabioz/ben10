@@ -151,11 +151,11 @@ def CheckType(object_, type_, message=None):
 #===================================================================================================
 def CreateDevelopmentCheckType():
     if IsFrozen():
-        return lambda * args, **kwargs: None  # it's a no-op if we're not in dev mode!
+        return lambda *args, **kwargs: None  # it's a no-op if we're not in dev mode!
     else:
         return CheckType
 
-DevelopmentCheckType = CreateDevelopmentCheckType
+DevelopmentCheckType = CreateDevelopmentCheckType()
 
 
 

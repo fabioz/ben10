@@ -2,32 +2,22 @@ from ben10.foundation.is_frozen import IsDevelopment, IsFrozen, SetIsDevelopment
 
 
 
-#===================================================================================================
-# Test
-#===================================================================================================
-class Test:
+def testIsFrozenIsDevelopment():
+    assert IsFrozen() == False
+    assert IsDevelopment() == True
 
-    def testIsFrozen(self):
-        is_frozen = IsFrozen()
-        try:
-            assert not IsFrozen() == IsDevelopment()
+    SetIsDevelopment(False)
+    assert IsFrozen() == False
+    assert IsDevelopment() == False
 
-            SetIsDevelopment(True)
-            assert IsFrozen() == False
-            assert not IsFrozen() == IsDevelopment()
+    SetIsDevelopment(True)
+    assert IsFrozen() == False
+    assert IsDevelopment() == True
 
-            SetIsDevelopment(False)
-            assert IsFrozen() == True
-            assert not IsFrozen() == IsDevelopment()
+    SetIsFrozen(True)
+    assert IsFrozen() == True
+    assert IsDevelopment() == True
 
-            SetIsFrozen(False)
-            assert IsFrozen() == False
-            assert not IsFrozen() == IsDevelopment()
-
-            SetIsFrozen(True)
-            assert IsFrozen() == True
-            assert not IsFrozen() == IsDevelopment()
-        finally:
-            SetIsFrozen(is_frozen)
-
-
+    SetIsFrozen(False)
+    assert IsFrozen() == False
+    assert IsDevelopment() == True

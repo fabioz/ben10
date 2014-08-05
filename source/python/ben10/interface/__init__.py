@@ -16,7 +16,8 @@
     If Foo doesn't implement some method from IFoo, an exception is raised at class creation time.
 '''
 from _adaptable_interface import IAdaptable
-from _cached_method import AttributeBasedCachedMethod, CachedMethod, LastResultCachedMethod
+from _cached_method import (AttributeBasedCachedMethod, CachedMethod, ImmutableParamsCachedMethod,
+    LastResultCachedMethod)
 from _interface import (AssertDeclaresInterface, AssertImplements, AssertImplementsFullChecking,
     Attribute, BadImplementationError, CacheInterfaceAttrs, DeclareClassImplements,
     GetImplementedInterfaces, ImplementsInterface, Interface, InterfaceError,
@@ -38,9 +39,9 @@ __all__ = [
     'InterfaceImplementorStub',
     'IsImplementation',
     'ReadOnlyAttribute',
-    'ScalarAttribute',
     # _cached_method
-    'CachedMethod',
-    'LastResultCachedMethod',
     'AttributeBasedCachedMethod',
+    'CachedMethod',
+    'ImmutableParamsCachedMethod',
+    'LastResultCachedMethod',
 ]

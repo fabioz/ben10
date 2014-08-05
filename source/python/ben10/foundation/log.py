@@ -26,8 +26,6 @@ AddDebugStreamHandler()
 import StringIO
 import logging
 
-
-
 # Levels
 DEBUG = logging.DEBUG
 INFO = logging.INFO
@@ -92,9 +90,6 @@ def AddDebugStreamHandler(logger=''):
 
     :param str logger:
         The logger to which the handler should be added.
-
-    :returns:
-        Return a logger with the specified name, creating it if necessary.
     '''
     result = GetLogger(logger)
     result.AddHandler(StreamHandler())
@@ -178,3 +173,25 @@ def StartLogging(logger=''):
 # By default add a NullHandler to the logging, otherwise, when something is logged the first time,
 # it'll print to stderr (if such a logger is wanted, it has to be explicitly added).
 GetLogger('').AddHandler(NullHandler())
+
+
+
+#===================================================================================================
+# _ExceptionWithDetailedTraceback
+#===================================================================================================
+def _ExceptionWithDetailedTraceback(logger, msg):
+    '''
+    Writes the current exception as a detailed traceback into the log.
+
+    It is similar to exception, but using coilib's detailed traceback.
+
+    :param str msg:
+        Message to display before traceback.
+    '''
+    from ben10.debug.print_detailed_traceback import PrintDetailedTraceback
+    stream = StringIO.StringIO()
+    PrintDetailedTraceback(stream=stream)
+    logger.error(msg + '\n' + stream.getvalue())
+
+
+logging.Logger.ExceptionWithDetailedTraceback = _ExceptionWithDetailedTraceback

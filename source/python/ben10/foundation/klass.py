@@ -124,3 +124,52 @@ def GetClassHierarchy(class_):
         return __hierarchy_cache.setdefault(class_, set(_IterClassHierarchy(class_)))
 
 
+#===================================================================================================
+# CheckOverridden
+#===================================================================================================
+def CheckOverridden(instance, current_method_class, method_name):
+    '''
+    Checks if the current instance has overridden the given method from the passed class (to check
+    if a method has a mandatory override).
+
+    :param object instance:
+        The instance we're checking.
+
+    :param type current_method_class:
+        The class we're checking for the override.
+
+    :param str method_name:
+        The name of the method to be overridden.
+
+    :raises AssertionError:
+        If the method is not overridden in a subclass.
+
+    I.e.:
+
+    class A(object):
+
+        def method(self):
+            CheckOverridden(self, A, 'method)
+
+    class B(A):
+        ...
+
+    If B().method() is called in this case it'll throw an error.
+
+    This is meant for non abstract methods where the usually usually must override calling and
+    super().
+    '''
+    if instance.__class__ == current_method_class:
+        return
+
+    assert isinstance(instance, current_method_class), 'Expected %s to be a subclass of: %s' % (
+        instance, current_method_class)
+
+    from_instance = getattr(instance.__class__, method_name)
+    from_class = getattr(current_method_class, method_name)
+
+    if from_instance == from_class:
+        assert instance.__class__ == current_method_class, \
+            'The method %s should be overridden in %s' % (method_name, instance.__class__,)
+
+

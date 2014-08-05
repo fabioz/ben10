@@ -1,0 +1,13 @@
+Traceback (most recent call last):
+  File "/path_to_file/file.py", line XX, in testPrintDetailedTraceback
+    PrintDetailedTraceback(max_levels=2, stream=stream, max_line_width=100)
+            Pad = <function Pad at 0x0>
+            data = ['0', '1', '2', 3, '4', '5', '6', '7', ... '93', '94', '95', '96', '97', '98', '99']
+            embed_data = <ben10.fixtures._EmbedDataFixture object at 0x0>
+            stream = <StringIO.StringIO instance at 0x0>
+  File "/path_to_file/file.py", line XX, in Pad
+    raise TypeError("object of type 'int' has no len()")
+            result = ['0000', '0001', '0002']
+            seq = ['0', '1', '2', 3, '4', '5', '6', '7', ... '93', '94', '95', '96', '97', '98', '99']
+            value = 3
+TypeError: object of type 'int' has no len()
