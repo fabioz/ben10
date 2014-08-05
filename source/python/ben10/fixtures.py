@@ -324,8 +324,20 @@ def performance(embed_data):
     from timeit import Timer
     import tempfile
 
-    baseline_setup = 'from random import Random;r = Random(1)'
-    baseline_stmt = 'for _i in xrange(1000): r.random()'
+    baseline_setup = Dedent(
+        '''
+        string = ''
+        list = []
+        float = 5.43
+        '''
+    )
+    baseline_stmt = Dedent(
+        '''
+        string += 'hello' + 'world'
+        list.append(5)
+        float *= 7.67
+        '''
+    )
 
     def ShowGraph(setup, stmt):
         fd, output_filename = tempfile.mkstemp(dir=embed_data.GetDataDirectory())
@@ -349,8 +361,8 @@ def performance(embed_data):
         stmt,
         expected_performance,
         accepted_variance=0.5,
-        number=10,
-        repeat=7,
+        number=5,
+        repeat=25,
         show_graph=False):
         '''
         .. seealso::
@@ -358,7 +370,7 @@ def performance(embed_data):
         '''
 
         # Compare baseline results with stmt we received
-        baseline = min(Timer(baseline_stmt, baseline_setup).repeat(repeat, number))
+        baseline = min(Timer(baseline_stmt, baseline_setup).repeat(10, 10000))
         test = min(Timer(Dedent(stmt), Dedent(setup)).repeat(repeat, number))
         performance = test / baseline
 
