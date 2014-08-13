@@ -108,7 +108,6 @@ class _EmbedDataFixture(object):
         '''
         from ben10.filesystem import CopyDirectory, CreateDirectory, DeleteDirectory, IsDir
         from ben10.foundation.is_frozen import IsFrozen
-        import os
 
         assert not self._finalized, "Oops. Finalizer has been called in the middle. Something is wrong."
         if self._created:
@@ -149,7 +148,6 @@ class _EmbedDataFixture(object):
 
         if absolute:
             from ben10.filesystem import StandardizePath
-            import os
             return StandardizePath(os.path.abspath(self._data_dir))
 
         return self._data_dir
@@ -180,7 +178,6 @@ class _EmbedDataFixture(object):
 
         if 'absolute' in kwargs and kwargs['absolute']:
             from ben10.filesystem import StandardizePath
-            import os
             result = StandardizePath(os.path.abspath(result))
 
         return result
@@ -215,7 +212,6 @@ class _EmbedDataFixture(object):
             The resulting lines will be used to compare with the contents of filename2.
         '''
         from ben10.filesystem import GetFileLines
-        import os
 
         def FindFile(filename):
             # See if this path exists in the data dir
@@ -260,128 +256,3 @@ def embed_data(request):  # pylint: disable=C0103
 def platform():
     from ben10.foundation.platform_ import Platform
     return Platform.GetCurrentPlatform()
-
-
-
-#===================================================================================================
-# performance
-#===================================================================================================
-@pytest.fixture
-def performance(embed_data):
-    '''
-    Tests performance of a statement.
-
-    This fixture gives you a function with these parameters:
-
-        :param str setup:
-            Setup to be executed once before `stmt`.
-            This can be a string or a function.
-            .. seealso:: timeit.Timer
-
-        :param str stmt:
-            Statement to be executed many times by timeit.Timer
-            This can be a string or a function.
-            .. seealso:: timeit.Timer
-
-        :param float expected_performance:
-            Expected performance for the given `stmt`. This a number relative to a baseline
-            calculated by this fixture.
-
-            Normally you would create a performance test and let it fail to see what is your
-            current performance, then set that value as `expected_performance`. If your code changes
-            and this performance changes too much, the test will fail.
-
-        :param float accepted_variance:
-            How much your performance can vary without breaking the test.
-
-            This can break the test if your `stmt` is too slow, or too fast (which means you should
-            probably update your `expected_performance`)
-
-            Acceptable range is calculated with:
-                max_accepted_performance = `expected_performance` * (1 + `accepted_variance`)
-                min_accepted_performance = `expected_performance` / (1 + `accepted_variance`)
-
-            e.g.:
-                `expected_performance` = 100
-                `accepted_variance` = 0.5
-
-                Acceptable range = (66, 150)
-
-        :param int number:
-            .. seealso:: timeit.Timer
-
-        :param int repeat:
-            .. seealso:: timeit.Timer
-
-        :param bool show_graph:
-            If True, shows a performance graph of a single timeit.Timer call. You can use this
-            to identify what part of your execution is taking the longest.
-
-            .. seealso:: ben10.foundation.profiling.ProfileMethod
-    '''
-    from ben10.debug.profiling import ProfileMethod
-    from ben10.foundation.string import Dedent
-    from timeit import Timer
-    import tempfile
-
-    baseline_setup = Dedent(
-        '''
-        string = ''
-        list = []
-        float = 5.43
-        '''
-    )
-    baseline_stmt = Dedent(
-        '''
-        string += 'hello' + 'world'
-        list.append(5)
-        float *= 7.67
-        '''
-    )
-
-    def ShowGraph(setup, stmt):
-        fd, output_filename = tempfile.mkstemp(dir=embed_data.GetDataDirectory())
-
-        try:
-            from ben10.foundation.redirect_output import CaptureStd
-            with CaptureStd():  # ProfileMethod likes to print things to stdout...
-                TestFunction = lambda: Timer(Dedent(stmt), Dedent(setup)).repeat(1, 1)
-                TestFunction = ProfileMethod(output_filename, show_graph=True)(TestFunction)
-                TestFunction()
-        finally:
-            # Give some time for graph to be opened
-            import time
-            time.sleep(0.5)
-
-            # Close the file. embed_data will be responsible for deleting everything.
-            os.close(fd)
-
-    def PerformanceTester(
-        setup,
-        stmt,
-        expected_performance,
-        accepted_variance=0.5,
-        number=5,
-        repeat=25,
-        show_graph=False):
-        '''
-        .. seealso::
-            Docs for this fixture
-        '''
-
-        # Compare baseline results with stmt we received
-        baseline = min(Timer(baseline_stmt, baseline_setup).repeat(10, 10000))
-        test = min(Timer(Dedent(stmt), Dedent(setup)).repeat(repeat, number))
-        performance = test / baseline
-
-        if show_graph:
-            ShowGraph(setup, stmt)
-
-        max_accepted_performance = expected_performance * (1 + accepted_variance)
-        min_accepted_performance = expected_performance / (1 + accepted_variance)
-
-        assert min_accepted_performance < performance < max_accepted_performance, \
-            'Obtained performance (%.2f) is not in accepted range (%.2f, %.2f)' \
-            % (performance, min_accepted_performance, max_accepted_performance)
-
-    return PerformanceTester
