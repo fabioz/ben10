@@ -130,39 +130,3 @@ class Test(object):
             embed_data.Finalizer()
 
         assert os.path.isdir('data_fixtures__testEmbedDataFixture') == False
-
-
-    @pytest.mark.performance
-    def testPerformance(self, performance):
-        setup = \
-            '''
-            def hello():
-                for i in range(5000):
-                    hello_world = 'hello' + 'world'
-            '''
-        stmt = 'hello()'
-
-        PERF = 0.17  # Real expected performance
-
-        # This should pass
-        performance(setup, stmt, expected_performance=PERF, accepted_variance=1)
-
-        # This should fail because we were too slow
-        with pytest.raises(AssertionError):
-            performance(setup, stmt, expected_performance=PERF / 10, accepted_variance=1)
-
-        # This should pass because we were too slow, but we accept a huge variance
-        performance(setup, stmt, expected_performance=PERF / 10, accepted_variance=100)
-
-        # This should fail because we were too fast!
-        with pytest.raises(AssertionError):
-            performance(setup, stmt, expected_performance=PERF * 10, accepted_variance=1)
-
-        # This should pass because we were too fast, but we accept a huge variance
-        performance(setup, stmt, expected_performance=PERF * 10, accepted_variance=100)
-
-        # Check show_graph option
-        import mock
-        with mock.patch('ben10.debug.profiling.ShowGraph', autospec=True) as mock_show_graph:
-            performance(setup, stmt, expected_performance=PERF, accepted_variance=1, show_graph=True)
-        assert mock_show_graph.call_count == 1
