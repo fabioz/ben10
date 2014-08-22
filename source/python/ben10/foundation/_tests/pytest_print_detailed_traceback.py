@@ -1,7 +1,7 @@
 from StringIO import StringIO
-from ben10.debug.print_detailed_traceback import PrintDetailedTraceback
-import re
 from ben10.filesystem import CreateFile
+from ben10.foundation.print_detailed_traceback import PrintDetailedTraceback
+import re
 
 
 def testPrintDetailedTraceback(embed_data):

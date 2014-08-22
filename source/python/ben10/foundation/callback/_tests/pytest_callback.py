@@ -1,9 +1,10 @@
-from ben10.foundation.callback import (After, Remove, Before, Callback, Callbacks, FunctionNotRegisteredError, _CallbackWrapper)
+from ben10.foundation.callback import (After, Before, Callback, Callbacks,
+    FunctionNotRegisteredError, Remove, _CallbackWrapper)
 from ben10.foundation.types_ import Null
 from ben10.foundation.weak_ref import WeakMethodRef
-import weakref
 import mock
 import pytest
+import weakref
 
 
 #===================================================================================================

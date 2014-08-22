@@ -1,7 +1,7 @@
-from ben10.foundation.immutable import AsImmutable
-from ben10.foundation.odict import odict
-from ben10.foundation.types_ import Method
-from ben10.foundation.weak_ref import WeakMethodRef
+from .immutable import AsImmutable
+from .odict import odict
+from .types_ import Method
+from .weak_ref import WeakMethodRef
 
 
 

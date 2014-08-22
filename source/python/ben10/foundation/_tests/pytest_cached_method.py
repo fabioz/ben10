@@ -1,4 +1,5 @@
-from ben10.interface import AttributeBasedCachedMethod, CachedMethod, LastResultCachedMethod
+from ben10.foundation.cached_method import (AttributeBasedCachedMethod, CachedMethod,
+    LastResultCachedMethod)
 import pytest
 
 

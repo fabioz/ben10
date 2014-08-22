@@ -188,7 +188,7 @@ def _ExceptionWithDetailedTraceback(logger, msg):
     :param str msg:
         Message to display before traceback.
     '''
-    from ben10.debug.print_detailed_traceback import PrintDetailedTraceback
+    from .print_detailed_traceback import PrintDetailedTraceback
     stream = StringIO.StringIO()
     PrintDetailedTraceback(stream=stream)
     logger.error(msg + '\n' + stream.getvalue())

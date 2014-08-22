@@ -34,7 +34,7 @@ AssertImplements(impl, IMyCalculator)
 
 
 '''
-from ben10.foundation.decorators import Deprecated, Override
+from ben10.foundation.decorators import Deprecated
 from ben10.foundation.is_frozen import IsDevelopment
 from ben10.foundation.reraise import Reraise
 from ben10.foundation.singleton import Singleton
@@ -43,6 +43,7 @@ from new import classobj
 import inspect
 import sys
 import warnings
+
 
 
 
@@ -531,7 +532,7 @@ class CacheInterfaceAttrs(object):
             cache = self.cache
         except AttributeError:
             # create it on the 1st access
-            from ._cached_method import ImmutableParamsCachedMethod
+            from ben10.foundation.cached_method import ImmutableParamsCachedMethod
             cache = self.cache = ImmutableParamsCachedMethod(self.__GetInterfaceMethodsAndAttrs)
         return cache(interface)
 

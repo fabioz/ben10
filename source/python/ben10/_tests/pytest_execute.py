@@ -1,4 +1,4 @@
-from ben10.execute import Execute, ExecuteNoWait, PrintEnvironment, EnvironmentContextManager
+from ben10.execute import EnvironmentContextManager, Execute, ExecuteNoWait, PrintEnvironment
 from ben10.filesystem import CreateFile
 from ben10.foundation.string import Dedent
 from cStringIO import StringIO

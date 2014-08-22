@@ -643,9 +643,9 @@ IMPORT_PLACEHOLDER = '(IMPORT-PLACEHOLDER)'
 # _CreateImportMyRefactoringTool
 #===================================================================================================
 def _CreateImportMyRefactoringTool(options):
-    from ._lib2to3 import MyRefactoringTool, BaseFix
-    from lib2to3.pgen2 import token
+    from ._lib2to3 import BaseFix, MyRefactoringTool
     from lib2to3.fixer_util import Name
+    from lib2to3.pgen2 import token
 
     class ImportSymbolsExtractor(BaseFix):
         '''
@@ -708,7 +708,7 @@ def _CreateImportMyRefactoringTool(options):
 # _CreateInjectorMyRefactoringTool
 #===================================================================================================
 def _CreateInjectorMyRefactoringTool(options):
-    from ._lib2to3 import MyRefactoringTool, BaseFix
+    from ._lib2to3 import BaseFix, MyRefactoringTool
     from lib2to3.pgen2 import token
 
     class ImportSymbolsInjector(BaseFix):

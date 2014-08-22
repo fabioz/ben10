@@ -1,7 +1,7 @@
-import pytest
 from ben10.fixtures import SkipIfImportError
-from ben10.foundation.klass import AllBasesNames, GetClassHierarchy, IsInstance, IsSubclass, \
-    CheckOverridden
+from ben10.foundation.klass import (AllBasesNames, CheckOverridden, GetClassHierarchy, IsInstance,
+    IsSubclass)
+import pytest
 
 
 class _A(object):
