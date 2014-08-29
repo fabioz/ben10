@@ -271,3 +271,13 @@ def ParseString(s):
 
     driver_ = driver.Driver(grammar, pytree.convert)
     return driver_.parse_string(s, True)
+
+
+
+def GetNodeLineNumber(node):
+    parent = node
+    while parent:
+        if hasattr(parent, 'lineno'):
+            return parent.lineno
+        parent = parent.parent
+    return 0

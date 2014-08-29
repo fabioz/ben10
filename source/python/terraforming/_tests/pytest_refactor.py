@@ -4,12 +4,10 @@ IMPORTANT:
     This is because lib2to3 have a mechanism of generating a syntax file (pickle) in module level
     that crashes when executing in parallel.
 '''
-from ben10.filesystem import CreateFile, EOL_STYLE_NONE, EOL_STYLE_UNIX, GetFileContents
-from ben10.foundation.pushpop import PushPop
+from ben10.filesystem import CreateFile, EOL_STYLE_NONE, EOL_STYLE_UNIX
 from ben10.foundation.reraise import Reraise
 from ben10.foundation.string import Dedent
 from terraforming.refactor import TerraForming
-from terraforming.refactor_imports import ReorganizeImports
 import difflib
 import inspect
 import pytest
@@ -160,93 +158,6 @@ class Test(object):
             return output.split('\n')[:-1]
 
         self._TestLines(inspect.getdoc(self.testConvertToPytestImpl), Doit)
-
-
-    def testReorganizeImports(self, embed_data):
-        terra = TerraForming()
-        terra.ReorganizeImports(embed_data['testReorganizeImports.py_'])
-
-        embed_data.AssertEqualFiles(
-            'testReorganizeImports.py_',
-            'testReorganizeImports.expected.py_'
-        )
-
-
-    def testReorganizeImportsImpl(self, embed_data):
-        '''
-        Unsuported cases:
-            * Import with dots:
-                import .alpha
-                ---
-                import .alpha
-            * Different imports that are re-factored to the same package don't get merged
-                # With refactoring
-                #  alpha.Alpha -> zulu.Alpha
-                #  bravo.Bravo -> zulu.Bravo
-                from alpha import Alpha
-                from bravo import Bravo
-                ---
-                # With refactoring
-                #  alpha.Alpha -> zulu.Alpha
-                #  bravo.Bravo -> zulu.Bravo
-                from zulu import Alpha, Bravo
-            * Import, then comment, then import
-                import alpha
-
-                # Comment
-                import bravo
-                bravo.Bravo()
-                ---
-                import alpha
-
-                # Comment
-                import bravo
-                bravo.Bravo()
-        '''
-        terra = TerraForming()
-
-        def Doit(lines):
-            source_code = ''.join([i + '\n' for i in lines])
-            changed, output = ReorganizeImports(
-                filename=None,
-                source_code=source_code,
-                refactor={
-                    'coilib50.basic.implements': 'etk11.foundation.interface',
-                    'coilib50.basic.inter': 'etk11.foundation.interface',
-                }
-            )
-            return output.splitlines()
-
-        self._TestLines(
-            GetFileContents(embed_data['reorganize_imports.txt']),
-            Doit,
-        )
-
-
-    def testLocalImports(self, monkeypatch, embed_data):
-        from terraforming import refactor_imports
-
-        monkeypatch.setattr(refactor_imports, 'PYTHON_EXT', '.py_')
-        terra = TerraForming()
-
-        def TestIt(filename):
-            terra.ReorganizeImports(
-                embed_data['testLocalImports/alpha/%s.py_' % filename],
-                python_path=embed_data['testLocalImports']
-            )
-            embed_data.AssertEqualFiles(
-                embed_data['testLocalImports/alpha/%s.py_' % filename],
-                embed_data['testLocalImports/alpha.expected/%s.py_' % filename]
-            )
-
-        import sys
-        sys_path = [embed_data.GetDataFilename('testLocalImports', absolute=True)] + sys.path[:]
-        with PushPop(sys, 'path', sys_path):
-            TestIt('__init__')
-            TestIt('_yankee')
-            TestIt('_alpha_core')
-            TestIt('simentar_test_base')
-
 
 
     # TestLines ====================================================================================

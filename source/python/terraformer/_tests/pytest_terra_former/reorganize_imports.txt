@@ -1,3 +1,29 @@
+---
+===
+from charlie import Charlie
+import echo as Echo
+from alpha import bravo as Bravo
+---
+from alpha import bravo as Bravo
+from charlie import Charlie
+import echo as Echo
+===
+import echo
+from alpha import bravo, charlie
+from foxtrot import (golf,
+    hotel,
+    italy
+)
+from foxtrot import alpha, \
+    bravo, \
+    charlie
+self.assertTrue(Call(1,"value"),True)
+---
+from alpha import bravo, charlie
+from foxtrot import alpha, bravo, charlie, golf, hotel, italy
+import echo
+self.assertTrue(Call(1,"value"),True)
+===
 import bravo
 import alpha
 
@@ -394,9 +420,9 @@ from charlie import (ChThisIsAlphaFromCharliePackage, ChThisIsBravoFromCharliePa
     ChThisIsCharlieFromCharliePackage, ChThisIsDeltaFromCharlie, ChThisIsLongSoCommentWontFit)  # Comment
 import alpha  # This is Alpha
 ===
-frase = "Ação é Ação"
+frase = "Aï¿½ï¿½o ï¿½ Aï¿½ï¿½o"
 ---
-frase = "Ação é Ação"
+frase = "Aï¿½ï¿½o ï¿½ Aï¿½ï¿½o"
 ===
 from alpha.bravo.charlie.delta.echo.foxtrot.golf.hotel.india.juliet.kilo.lima.mike.november.oscar.papa import zulu
 ---
@@ -412,10 +438,6 @@ import alpha
 import charlie
 import zulu
 import bravo  # @terraforming:last-import
-===
-import alpha;alpha.Execute()
----
-import alpha;alpha.Execute()
 ===
 from plugins10.plugins.tree import (ITreeContentProvider11, ITreeContentProvider12, ITreeContentProvider13, ITreeContentProvider14, ITreeContentProvider15, ITreeContentProvider16, ITreeContentProvider17, ITreeContentProvider18, ITreeContentProvider19, ITreeContentProvider20, ITreeContentProvider70)
 ---
@@ -439,3 +461,91 @@ p = print
 ---
 from __future__ import print_function
 p = print
+===
+import alpha;alpha.Execute()
+---
+import alpha;alpha.Execute()
+===
+from before_refactor_alpha import Alpha
+from before_refactor_bravo import Bravo
+---
+from after_refactor import Alpha, Bravo
+===
+from alpha import Alpha
+from __future__ import with_statement
+import charlie, delta
+from bravo import Bravo
+---
+from __future__ import with_statement
+from alpha import Alpha
+from bravo import Bravo
+import charlie
+import delta
+===
+def Method3(self):
+
+    if True:
+        import inside_if
+
+    import outside_if
+---
+def Method3(self):
+
+    if True:
+        import inside_if
+
+    import outside_if
+===
+if __name__ == '__main__':
+    import zulu
+    import bravo
+    import alpha
+---
+if __name__ == '__main__':
+    import alpha
+    import bravo
+    import zulu
+===
+from alpha import *
+---
+from alpha import *
+===
+from alpha import Alpha  # Comment
+raise Exception()
+---
+from alpha import Alpha  # Comment
+raise Exception()
+===
+from alpha import Alpha  # Comment
+alpha = Alpha()
+
+
+
+from bravo import Bravo  # Comment
+
+bravo = Bravo()
+---
+from alpha import Alpha  # Comment
+alpha = Alpha()
+
+
+
+from bravo import Bravo  # Comment
+
+bravo = Bravo()
+===
+if e.errno == errno.ENOENT:  # File does not exist
+    from _filesystem_exceptions import FileNotFoundError  # @Reimport
+    raise FileNotFoundError(filename)
+
+if 'proxy' in str(e.strerror):
+    from _filesystem_exceptions import CantOpenFileThroughProxyError
+    raise CantOpenFileThroughProxyError(filename)
+---
+if e.errno == errno.ENOENT:  # File does not exist
+    from _filesystem_exceptions import FileNotFoundError  # @Reimport
+    raise FileNotFoundError(filename)
+
+if 'proxy' in str(e.strerror):
+    from _filesystem_exceptions import CantOpenFileThroughProxyError
+    raise CantOpenFileThroughProxyError(filename)

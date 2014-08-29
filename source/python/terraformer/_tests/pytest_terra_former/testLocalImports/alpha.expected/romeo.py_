@@ -1,5 +1,5 @@
 from __future__ import with_statement
-from alpha import Alpha
+from _alpha import Alpha
 from bravo import Bravo
 import charlie
 import delta

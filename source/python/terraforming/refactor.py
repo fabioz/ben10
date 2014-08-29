@@ -85,7 +85,7 @@ class TerraForming(object):
             Reraise(e, "While processing file: %s" % filename)
 
 
-    def ReorganizeImports(self, filename, refactor={}, python_path=''):
+    def ReorganizeImports(self, filename, refactor={}):
         '''
         Reorganizes all import statements in the given filename, optionally performing a "move"
         refactoring.
@@ -109,16 +109,14 @@ class TerraForming(object):
             Note that we do not support symbol renaming, only move. This means that the last part of
             the string must be the same. In the example, "Bunch" and "interface".
 
-        :param str python_path:
-            An alternative python_path for testing.
-
         :return boolean:
             Returns True if the file was changed.
         '''
-        from .refactor_imports import ReorganizeImports
+        from terraformer import TerraFormer
 
         try:
-            changed, output = ReorganizeImports(filename, refactor=refactor, python_path=python_path)
+            terra = TerraFormer(filename=filename)
+            changed, output = terra.ReorganizeImports(refactor=refactor)
             CreateFile(filename, output, eol_style=EOL_STYLE_UNIX)
             return changed
         except Exception, e:
@@ -135,14 +133,11 @@ class TerraForming(object):
 
         .. seealso:: ReorganizeImports
         '''
-        from .refactor_imports import ReorganizeImports
+        from terraformer import TerraFormer
 
         try:
-            changed, _output = ReorganizeImports(
-                filename,
-                source_code=source_code,
-                refactor=refactor,
-                python_path=python_path)
+            terra = TerraFormer(source=source_code, filename=filename)
+            changed, _output = terra.ReorganizeImports(refactor=refactor)
             return changed
         except Exception, e:
             Reraise(e, 'On TerraForming.CheckImports with filename: %s' % filename)
