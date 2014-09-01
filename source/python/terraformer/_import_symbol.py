@@ -95,4 +95,4 @@ class ImportSymbol(object):
         '''
         Implements @Comparable._cmpkey.
         '''
-        return self.symbol
+        return (self.symbol, self.kind)

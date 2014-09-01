@@ -7,60 +7,63 @@ from ._astvisitor import ASTVisitor
 #===================================================================================================
 class ImportVisitor(ASTVisitor):
 
-    IMPORT_BLOCK = '(IMPORT-BLOCK #%d)'
-
     def __init__(self):
         ASTVisitor.__init__(self)
-        self.symbols = []
+        self.symbols = set()
         self.import_blocks = []
         self._first_leaf = None
-        self._last_leaf = None
+        self._current_import_block = None
 
 
-    def visit_end(self, tree):
-        from lib2to3.pgen2 import token
-        from lib2to3.pytree import Leaf
+    def visit_start(self, tree):
         from ._import_block import ImportBlock
+        from lib2to3.pygram import python_symbols
+        from lib2to3.pytree import Leaf
 
-        if not self.import_blocks:
-            assert self._first_leaf is not None
-            value = self.IMPORT_BLOCK % 0
-            leaf = Leaf(token.NAME, value)
+        # Find the code-position for the import-block. Either a leaf or an import statement.
+        types=(python_symbols.import_from, python_symbols.import_name)
+        code_position = tree
+        while not isinstance(code_position, Leaf) and code_position.type not in types:
+            code_position = code_position.children[0]
 
-            lineno = self._GetImportBlockLineNumber(self._first_leaf)
+        # Line number is based on the first leaf.
+        first_leaf = self._GetFirstLeaf(tree)
+        lineno = self._GetImportBlockLineNumber(first_leaf)
 
-            self._first_leaf.parent.insert_child(0, leaf)
-
-            import_block = ImportBlock(leaf, len(self.import_blocks), lineno, 0, [])
-            self.import_blocks.append(import_block)
+        # Create import-block zero, a place-holder for import-symbols additions.
+        self._current_import_block = ImportBlock(
+            code_position,
+            [],
+            0,
+            lineno,
+            0,
+            []
+        )
+        self.import_blocks.append(self._current_import_block)
 
 
     def visit_leaf(self, leaf):
-        from lib2to3.pgen2 import token
+        if self._current_import_block:
+            # Append 'intermediate' tokens to the import-block or reset it.
+            if leaf.value in (u'\n', u'\r\n', u';'):
+                self._current_import_block._code_replace.append(leaf)
+            else:
+                self._current_import_block = None
 
-        # Keep the last-leaf to enable the creation of import-blocks from multiple
-        # import-symbols.
-        if self._first_leaf is None:
-            if leaf.type not in (token.STRING, token.NEWLINE):
-                self._first_leaf = leaf
-
-        if leaf.value not in ('\r\n', '\n'):
-            self._last_leaf = leaf
 
     def visit_import(self, names, import_from, body):
         from ._import_symbol import ImportSymbol
+        from terraforming._lib2to3 import GetNodeLineNumber
 
         # Get prefix, indent and comment
-        first_leaf = body
-        while first_leaf.children:
-            first_leaf = first_leaf.children[0]
+        first_leaf = self._GetFirstLeaf(body)
         next_node = body.next_sibling
         # ...
         prefix = first_leaf.prefix
+        lineno = GetNodeLineNumber(first_leaf)
         indent = first_leaf.column
         inline_comment = next_node.prefix
         has_line_comment = '#' in prefix
-        has_eol = next_node.value == u'\n'
 
         # Get symbols
         symbols = []
@@ -75,31 +78,32 @@ class ImportVisitor(ASTVisitor):
             else:
                 symbol = i_name
                 kind = ImportSymbol.KIND_IMPORT_NAME
-            symbols.append(
-                ImportSymbol(
-                    symbol,
-                    import_as=import_as,
-                    comment=inline_comment,
-                    kind=kind
-                )
+            symbol = ImportSymbol(
+                symbol,
+                import_as,
+                inline_comment,
+                kind,
+                lineno
             )
+            symbols.append(symbol)
 
-        # Import Block:
-        if inline_comment:
-            next_node.prefix = ''
-            next_node.changed()
-
-        is_import_block = self._last_leaf and self._last_leaf.value.startswith('(IMPORT-BLOCK #')
-        if is_import_block and not has_line_comment:
-            import_block = self.import_blocks[-1]
+        if self._current_import_block and not has_line_comment:
+            import_block = self._current_import_block
             if import_block.indent != indent:
-                self._CreateNewImportBlock(body, symbols, prefix, indent)
+                self._current_import_block = self._CreateNewImportBlock(body, symbols, prefix, indent)
             else:
-                self._MergeImportBlock(body, symbols, import_block)
-        else:
-            self._CreateNewImportBlock(body, symbols, prefix, indent)
+                code_replace = [body]
+                connection_node = body.next_sibling
+                while connection_node and connection_node.value in (u'\n'):
+                    code_replace.append(connection_node)
+                    connection_node = connection_node.next_sibling
 
-        self.symbols += symbols
+                import_block._code_replace += code_replace
+                import_block.symbols.update(set(symbols))
+        else:
+            self._current_import_block = self._CreateNewImportBlock(body, symbols, prefix, indent)
+
+        self.symbols.update(set(symbols))
 
 
     def _GetImportBlockLineNumber(self, node):
@@ -110,20 +114,16 @@ class ImportVisitor(ASTVisitor):
         '''
         from terraforming._lib2to3 import GetNodeLineNumber
 
-        if node.next_sibling:
-            node = node.next_sibling
         return GetNodeLineNumber(node) - node.prefix.count('\n')
 
 
-    def _MergeImportBlock(self, body, symbols, import_block):
-        '''
-        Merges the symbols into another import-block.
-        '''
-        next = body.next_sibling
-        if next and next.value in ('\n','\r\n'):
-            next.remove()
-        body.remove()
-        import_block.symbols += symbols
+    def _GetFirstLeaf(self, node):
+        from lib2to3.pytree import Leaf
+
+        r_leaf = node
+        while not isinstance(r_leaf, Leaf):
+            r_leaf = r_leaf.children[0]
+        return r_leaf
 
 
     def _CreateNewImportBlock(self, body, symbols, prefix, indent):
@@ -131,19 +131,21 @@ class ImportVisitor(ASTVisitor):
         Create a new import-block.
         '''
         from ._import_block import ImportBlock
-        from lib2to3.pgen2 import token
-        from lib2to3.pytree import Leaf
 
-        value = self.IMPORT_BLOCK % (len(self.import_blocks) + 1)
-        self._last_leaf = Leaf(token.NAME, value, prefix=prefix)
+        code_replace = [body]
+        connection_node = body.next_sibling
+        while connection_node and connection_node.value in (u'\n', u'\r\n'):
+            code_replace.append(connection_node)
+            connection_node = connection_node.next_sibling
 
-        body.replace(self._last_leaf)
         import_block = ImportBlock(
-            self._last_leaf,
+            body,
+            code_replace,
             len(self.import_blocks),
-            self._GetImportBlockLineNumber(self._last_leaf),
+            symbols[0].lineno,
             indent,
             symbols
         )
+
         self.import_blocks.append(import_block)
         return import_block

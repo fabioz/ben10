@@ -209,4 +209,5 @@ def Comparable(cls):
     setter(cls, '__ge__', lambda s, o: _compare(s, o, lambda s,o: s >= o))
     setter(cls, '__gt__', lambda s, o: _compare(s, o, lambda s,o: s > o))
     setter(cls, '__ne__', lambda s, o: _compare(s, o, lambda s,o: s != o))
+    setter(cls, '__hash__', lambda s: hash(s._cmpkey()))
     return cls

@@ -29,7 +29,7 @@ class TerraFormer(object):
 
         self.filename = filename
         self.source = source
-        self.symbols = []
+        self.symbols = set()
         self.import_blocks = []
 
         self.code = self._Parse(self.source)
@@ -109,11 +109,7 @@ class TerraFormer(object):
             Returns the reorganized source code.
         '''
         for i_import_block in self.import_blocks:
-            i_import_block.Reorganize(
-                page_width,
-                refactor=refactor,
-                filename=self.filename,
-            )
+            i_import_block.Reorganize(page_width, refactor, self.filename)
         try:
             output = unicode(self.code)
         except:
@@ -124,11 +120,18 @@ class TerraFormer(object):
         return changed, output
 
 
-    def GetImportSymbols(self):
-        '''
-        Returns the import-symbols for the given python module.
+    def Save(self):
+        from ben10.filesystem import CreateFile, EOL_STYLE_UNIX
 
-        :return dict(str:ImportSymbol):
-            Maps the symbol token to a Symbol instance
-        '''
-        return {i.GetToken() : i for i in self.symbols}
+        changed, output = self.ReorganizeImports()
+
+        if changed:
+            assert self.filename is not None, "No filename set on TerraFormer."
+            CreateFile(self.filename, output, eol_style=EOL_STYLE_UNIX)
+
+        return changed
+
+
+    def AddImportSymbol(self, import_symbol):
+        symbol = self.import_blocks[0].AddImportSymbol(import_symbol)
+        self.symbols.add(symbol)

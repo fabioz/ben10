@@ -1,9 +1,6 @@
-from ben10.filesystem import FindFiles, GetFileContents, IsDir, StandardizePath
+from ben10.filesystem import FindFiles, IsDir, StandardizePath
 from clikit.app import App
 from functools import partial
-from terraforming._lib2to3 import MyRefactoringTool
-from terraforming.refactor import TerraForming
-from terraforming.refactor_imports import GetImportSymbols, GetParseTree
 import sys
 
 
@@ -12,36 +9,22 @@ app = App('terraforming')
 
 
 
+EXTENSIONS = {'.py', '.cpp', '.c', '.h', '.hpp', '.hxx', '.cxx', '.java', '.js'}
+PYTHON_EXT = '.py'
+
+
 @app
 def Symbols(console_, filename):
-    from lib2to3 import fixer_util
-    import_symbols = GetImportSymbols(filename)
-    for i_import_symbol in sorted(import_symbols.itervalues()):
+    '''
+    List all symbols in the given python source code. Currently only lists IMPORTS.
+
+    :param filename: Python source code.
+    '''
+    from terraformer import TerraFormer
+
+    terra = TerraFormer(filename=filename)
+    for i_import_symbol in terra.symbols:
         console_.Print('%d: IMPORT %s' % (i_import_symbol.lineno, i_import_symbol.symbol))
-
-
-
-@app
-def PrintAst(console_, filename):
-    from terraforming._lib2to3 import BaseFix, GetNodeLineNumber
-
-    class PrintAst(BaseFix):
-
-        _accept_type = 23
-
-        def match(self, node):
-            if node.prev_sibling is None:
-                prev = node.parent.prev_sibling
-                if hasattr(prev, 'value'):
-                    symbol = (prev.value, node.next_sibling.value)
-                    console_.Print(
-                        '%d: %s' % (GetNodeLineNumber(node), symbol)
-                    )
-
-    source_code = GetFileContents(filename)
-    tree = GetParseTree(filename, source_code)
-    tool = MyRefactoringTool([PrintAst])
-    tool.refactor_tree(tree, 'PrintAst')
 
 
 
@@ -101,11 +84,33 @@ def FixFormat(console_, source, refactor=None, python_only=False, single_job=Fal
     _Map(console_, partial_fix_format, filenames, sorted, single_job)
 
 
+@app
+def AddImportSymbol(console_, source, import_symbol, single_job=False):
+
+    def GetFilenames(paths, extensions):
+        result = []
+        for i_path in paths:
+            if IsDir(i_path):
+                extensions = ['*%s' % i for i in extensions]
+                result += FindFiles(i_path, extensions)
+            else:
+                result += [i_path]
+        result = map(StandardizePath, result)
+        return result
+
+    filenames = GetFilenames((source,), [PYTHON_EXT])
+    partial_add_import_symbol = partial(_AddImportSymbol, import_symbol=import_symbol)
+    _Map(console_, partial_add_import_symbol, filenames, sorted, single_job)
+
+
 
 @app
-def FixCommit(console_, source, refactor=None, python_only=False, single_job=False, sorted=False):
+def FixCommit(console_, source, single_job=False):
     '''
     Perform the format fixes on sources files on a git repository modified files.
+
+    :param source: A local git repository working directory.
+    :param single_job: Avoid using multithread (for testing purposes).
     '''
 
     def GetFilenames(cwd):
@@ -120,7 +125,7 @@ def FixCommit(console_, source, refactor=None, python_only=False, single_job=Fal
         r_filenames = staged_filenames + changed_filenames
         r_filenames = set(r_filenames)
         r_filenames = sorted(r_filenames)
-        r_filenames = TerraForming.FilterFilenames(r_filenames)
+        r_filenames = _FilterFilenames(r_filenames)
         return r_working_dir, r_filenames
 
     working_dir, filenames = GetFilenames(source)
@@ -138,7 +143,7 @@ def _FixFormat(filename, refactor):
     terra = TerraForming()
     try:
         changed = terra.FixAll(filename)
-        if filename.endswith(TerraForming.PYTHON_EXT):
+        if filename.endswith(PYTHON_EXT):
             changed = terra.ReorganizeImports(filename, refactor=refactor) or changed
     except Exception, e:
         result = '- %s: ERROR:\n  %s' % (filename, e)
@@ -161,7 +166,7 @@ def _FixCommit(filename, cwd):
     try:
         fullname = cwd + '/' + filename
         changed = terra.FixAll(fullname)
-        if filename.endswith(TerraForming.PYTHON_EXT):
+        if filename.endswith(PYTHON_EXT):
             changed = terra.ReorganizeImports(fullname) or changed
     except Exception, e:
         result = '- %s: ERROR:\n  %s' % (filename, e)
@@ -171,6 +176,33 @@ def _FixCommit(filename, cwd):
         else:
             result = '- %s: skipped' % filename
     return result
+
+
+def _AddImportSymbol(filename, import_symbol):
+    from terraformer import ImportSymbol, TerraFormer
+
+    terra = TerraFormer(filename=filename)
+    terra.AddImportSymbol(import_symbol)
+    changed = terra.Save()
+
+    if changed:
+        result = '- %s: FIXED' % filename
+    else:
+        result = '- %s: skipped' % filename
+
+    return result
+
+
+def _FilterFilenames(filenames, extensions=EXTENSIONS):
+    import os
+
+    if extensions is None:
+        return filenames
+    else:
+        return [
+            i for i in filenames
+            if os.path.splitext(i)[1] in extensions
+        ]
 
 
 
@@ -200,9 +232,9 @@ def _GetStatusColor(output):
 
 def _GetExtensions(python_only):
     if python_only:
-        return {TerraForming.PYTHON_EXT}
+        return {PYTHON_EXT}
     else:
-        return TerraForming.EXTENSIONS
+        return EXTENSIONS
 
 
 def _Map(console_, func, func_params, _sorted, single_job):

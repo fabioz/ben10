@@ -5,35 +5,8 @@ import warnings
 
 
 
-#===================================================================================================
-# Test
-#===================================================================================================
-class Test():
-
-    def testImplements(self):
-        with pytest.raises(AssertionError):
-            self.CreateClass()
-
-        class IFoo(object):
-            def Foo(self):
-                '''
-                docstring
-                '''
-
-        class Impl(object):
-
-            @Implements(IFoo.Foo)
-            def Foo(self):
-                return self.__class__.__name__
-
-        assert IFoo.Foo.__doc__ == Impl.Foo.__doc__
-
-        # Just for 100% coverage.
-        assert Impl().Foo() == 'Impl'
-
-
-    def CreateClass(self):
-
+def testImplements():
+    with pytest.raises(AssertionError):
         class IFoo(object):
 
             def DoIt(self):
@@ -45,152 +18,170 @@ class Test():
             def DoNotDoIt(self):
                 ''
 
+    class IFoo(object):
+        def Foo(self):
+            '''
+            docstring
+            '''
 
-    def testOverride(self):
+    class Impl(object):
 
-        def TestOK():
+        @Implements(IFoo.Foo)
+        def Foo(self):
+            return self.__class__.__name__
 
-            class A(object):
+    assert IFoo.Foo.__doc__ == Impl.Foo.__doc__
 
-                def Method(self):
-                    '''
-                    docstring
-                    '''
-
-
-            class B(A):
-
-                @Override(A.Method)
-                def Method(self):
-                    return 2
-
-            b = B()
-            assert b.Method() == 2
-            assert A.Method.__doc__ == B.Method.__doc__
+    # Just for 100% coverage.
+    assert Impl().Foo() == 'Impl'
 
 
-        def TestERROR():
+def testOverride():
 
-            class A(object):
+    def TestOK():
 
-                def MyMethod(self):
-                    ''
+        class A(object):
 
-
-            class B(A):
-
-                @Override(A.Method)  # it will raise an error at this point
-                def Method(self):
-                    ''
-
-        def TestNoMatch():
-
-            class A(object):
-
-                def Method(self):
-                    ''
+            def Method(self):
+                '''
+                docstring
+                '''
 
 
-            class B(A):
+        class B(A):
 
-                @Override(A.Method)
-                def MethodNoMatch(self):
-                    ''
+            @Override(A.Method)
+            def Method(self):
+                return 2
 
-
-        TestOK()
-        with pytest.raises(AttributeError):
-            TestERROR()
-
-        with pytest.raises(AssertionError):
-            TestNoMatch()
+        b = B()
+        assert b.Method() == 2
+        assert A.Method.__doc__ == B.Method.__doc__
 
 
-#     def setUp(self):
-#         unittest.TestCase.setUp(self)
-#         unittest.installMocks(warnings, warn=self._warn)
-#
-#     def tearDown(self):
-#         unittest.TestCase.tearDown(self)
-#         unittest.uninstallMocks(warnings)
+    def TestERROR():
 
-    def testDeprecated(self, monkeypatch):
+        class A(object):
 
-        def MyWarn(*args, **kwargs):
-            warn_params.append((args, kwargs))
-
-        monkeypatch.setattr(warnings, 'warn', MyWarn)
-
-        old_is_frozen = is_frozen.SetIsFrozen(False)
-        try:
-            # Emit messages when in development (not frozen)
-            warn_params = []
-
-            # ... deprecation with alternative
-            @Deprecated('OtherMethod')
-            def Method1():
-                pass
-
-            # ... deprecation without alternative
-            @Deprecated()
-            def Method2():
-                pass
-
-            Method1()
-            Method2()
-            assert warn_params == [
-                (("DEPRECATED: 'Method1' is deprecated, use 'OtherMethod' instead",), {'stacklevel': 2}),
-                (("DEPRECATED: 'Method2' is deprecated",), {'stacklevel': 2})
-            ]
-
-            # No messages on release code (frozen)
-            is_frozen.SetIsFrozen(True)
-
-            warn_params = []
-
-            @Deprecated()
-            def FrozenMethod():
-                pass
-
-            FrozenMethod()
-            assert warn_params == []
-        finally:
-            is_frozen.SetIsFrozen(old_is_frozen)
+            def MyMethod(self):
+                ''
 
 
-    def testAbstract(self):
+        class B(A):
 
-        class Alpha(object):
-
-            @Abstract
+            @Override(A.Method)  # it will raise an error at this point
             def Method(self):
                 ''
 
-        alpha = Alpha()
-        with pytest.raises(NotImplementedError):
-            alpha.Method()
+    def TestNoMatch():
+
+        class A(object):
+
+            def Method(self):
+                ''
 
 
-    def testAbstract(self):
+        class B(A):
 
-        @Comparable
-        class Alpha(object):
+            @Override(A.Method)
+            def MethodNoMatch(self):
+                ''
 
-            def __init__(self, v):
-                self.v = v
 
-            def _cmpkey(self):
-                return self.v
+    TestOK()
+    with pytest.raises(AttributeError):
+        TestERROR()
 
-        a = Alpha(1)
-        b = Alpha(2)
-        c = Alpha(2)
+    with pytest.raises(AssertionError):
+        TestNoMatch()
 
-        assert a < b
-        assert a <= b
-        assert b > a
-        assert b >= a
 
-        assert b == c
-        assert b >= c
-        assert b <= c
+
+def testDeprecated(monkeypatch):
+
+    def MyWarn(*args, **kwargs):
+        warn_params.append((args, kwargs))
+
+    monkeypatch.setattr(warnings, 'warn', MyWarn)
+
+    old_is_frozen = is_frozen.SetIsFrozen(False)
+    try:
+        # Emit messages when in development (not frozen)
+        warn_params = []
+
+        # ... deprecation with alternative
+        @Deprecated('OtherMethod')
+        def Method1():
+            pass
+
+        # ... deprecation without alternative
+        @Deprecated()
+        def Method2():
+            pass
+
+        Method1()
+        Method2()
+        assert warn_params == [
+            (("DEPRECATED: 'Method1' is deprecated, use 'OtherMethod' instead",), {'stacklevel': 2}),
+            (("DEPRECATED: 'Method2' is deprecated",), {'stacklevel': 2})
+        ]
+
+        # No messages on release code (frozen)
+        is_frozen.SetIsFrozen(True)
+
+        warn_params = []
+
+        @Deprecated()
+        def FrozenMethod():
+            pass
+
+        FrozenMethod()
+        assert warn_params == []
+    finally:
+        is_frozen.SetIsFrozen(old_is_frozen)
+
+
+def testAbstract():
+
+    class Alpha(object):
+
+        @Abstract
+        def Method(self):
+            ''
+
+    alpha = Alpha()
+    with pytest.raises(NotImplementedError):
+        alpha.Method()
+
+
+def testComparable():
+
+    @Comparable
+    class Alpha(object):
+
+        def __init__(self, v):
+            self.v = v
+
+        def _cmpkey(self):
+            return self.v
+
+    a = Alpha(1)
+    b = Alpha(2)
+    c = Alpha(2)
+
+    assert a < b
+    assert a <= b
+    assert b > a
+    assert b >= a
+
+    assert b == c
+    assert b >= c
+    assert b <= c
+
+    s = set()
+    s.add(a)
+    assert len(s) == 1
+
+    a1 = Alpha(1)
+    s.add(a1)
+    assert len(s) == 1

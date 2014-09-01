@@ -48,8 +48,6 @@ import zulu
 from charlie import CHA
 from delta import DEL
 ===
----
-===
 '''
     Doc
 '''
@@ -65,13 +63,13 @@ import alpha
 import alpha
 from bravo import b_symbol
 
-def Method():
+def Method1():
     import charlie
 
-def Method():
+def Method2():
     from echo import e_symbol
 
-def Method():
+def Method3():
     '''
     Docs
     '''
@@ -81,7 +79,7 @@ def Method():
     # Comment
     from foxtrot import ff_symbol
 
-def Method():
+def Method4():
     '''
     Docs
     '''
@@ -98,13 +96,13 @@ def Method():
 from bravo import b_symbol
 import alpha
 
-def Method():
+def Method1():
     import charlie
 
-def Method():
+def Method2():
     from echo import e_symbol
 
-def Method():
+def Method3():
     '''
     Docs
     '''
@@ -114,7 +112,7 @@ def Method():
     # Comment
     from foxtrot import ff_symbol
 
-def Method():
+def Method4():
     '''
     Docs
     '''
@@ -464,7 +462,8 @@ p = print
 ===
 import alpha;alpha.Execute()
 ---
-import alpha;alpha.Execute()
+import alpha
+alpha.Execute()
 ===
 from before_refactor_alpha import Alpha
 from before_refactor_bravo import Bravo

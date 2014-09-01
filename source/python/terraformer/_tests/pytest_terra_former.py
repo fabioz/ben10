@@ -8,11 +8,42 @@ import pytest
 
 def testImportBlockZero(monkeypatch, embed_data):
 
-    def TestIt(input, output, import_blocks):
-        terra_former = TerraFormer(Dedent(input))
+    def TestIt(input, expected, import_blocks):
+        input = Dedent(input)
+        expected = Dedent(expected) + '\n'
+        terra_former = TerraFormer(input)
         assert map(str, terra_former.import_blocks) == import_blocks
+
+        terra_former.AddImportSymbol('__future__.unicode_literals')
+        terra_former.ReorganizeImports()
+
+        # Make sure that creating a TerraFormer won't make any changes to the AST
         obtained = str(terra_former.code)
-        assert obtained == Dedent(output)
+        assert obtained == expected
+
+    TestIt(
+        '''
+        from __future__ import unicode_literals
+        ''',
+        '''
+        from __future__ import unicode_literals
+        ''',
+        [
+            '<ImportBlock #0 (1, 0): __future__.unicode_literals>',
+        ]
+    )
+
+    TestIt(
+        '''
+
+        ''',
+        '''
+        from __future__ import unicode_literals
+        ''',
+        [
+            '<ImportBlock #0 (1, 0): >',
+        ]
+    )
 
     TestIt(
         '''
@@ -20,9 +51,9 @@ def testImportBlockZero(monkeypatch, embed_data):
             pass
         ''',
         '''
-        (IMPORT-BLOCK #0)def Function():
+        from __future__ import unicode_literals
+        def Function():
             pass
-
         ''',
         [
             '<ImportBlock #0 (1, 0): >',
@@ -39,16 +70,16 @@ def testImportBlockZero(monkeypatch, embed_data):
             pass
         ''',
         '''
+        from __future__ import unicode_literals
         """
         Docs
         """
-        (IMPORT-BLOCK #0)
+
         def Function():
             pass
-
         ''',
         [
-            '<ImportBlock #0 (5, 0): >',
+            '<ImportBlock #0 (1, 0): >',
         ]
     )
 
@@ -60,17 +91,91 @@ def testImportBlockZero(monkeypatch, embed_data):
             pass
         ''',
         '''
-        (IMPORT-BLOCK #0)# Comments
+        from __future__ import unicode_literals
+        # Comments
 
         def Function():
             pass
-
         ''',
         [
-            '<ImportBlock #0 (3, 0): >',
+            '<ImportBlock #0 (1, 0): >',
         ]
     )
 
+    TestIt(
+        '''
+        #===================================================================================================
+        # PrintLine
+        #===================================================================================================
+        def PrintLine(s):
+            """
+            Docs
+            """
+            print s
+        ''',
+        '''
+        from __future__ import unicode_literals
+        #===================================================================================================
+        # PrintLine
+        #===================================================================================================
+        def PrintLine(s):
+            """
+            Docs
+            """
+            print s
+        ''',
+        [
+            '<ImportBlock #0 (1, 0): >',
+        ]
+    )
+
+    TestIt(
+        '''
+        def Function(s):
+            import alpha
+        ''',
+        '''
+        from __future__ import unicode_literals
+        def Function(s):
+            import alpha
+        ''',
+        [
+            '<ImportBlock #0 (1, 0): >',
+            '<ImportBlock #1 (2, 4): alpha>',
+        ]
+    )
+
+    TestIt(
+        '''
+        # [[[cog
+        # from coilib50.cpp.import_bindings import RepublishCppSymbols
+        # cog.out(RepublishCppSymbols(
+        #     'coilib50._coilib50_cpp_module',
+        #     ['RedirectOutput'],
+        # ))
+        # ]]]
+        from coilib50 import _coilib50_cpp_module
+        RedirectOutput = _coilib50_cpp_module.RedirectOutput
+        # [[[end]]] (checksum: e19f682169067c207e055a3a169feba7)
+        ''',
+        '''
+        from __future__ import unicode_literals
+        # [[[cog
+        # from coilib50.cpp.import_bindings import RepublishCppSymbols
+        # cog.out(RepublishCppSymbols(
+        #     'coilib50._coilib50_cpp_module',
+        #     ['RedirectOutput'],
+        # ))
+        # ]]]
+        from coilib50 import _coilib50_cpp_module
+        RedirectOutput = _coilib50_cpp_module.RedirectOutput
+        # [[[end]]] (checksum: e19f682169067c207e055a3a169feba7)
+        ''',
+        [
+            '<ImportBlock #0 (1, 0): >',
+            '<ImportBlock #1 (8, 0): coilib50._coilib50_cpp_module>',
+        ]
+    )
 
 
 def testTerraFormer(monkeypatch, embed_data):
@@ -138,30 +243,8 @@ def testTerraFormer(monkeypatch, embed_data):
         '<ImportBlock #4 (25, 4): india_out>',
     ]
 
-    assert str(terra_former.code) == Dedent(
-        '''
-            (IMPORT-BLOCK #1)
-            # Delta Comment
-            (IMPORT-BLOCK #2)
-
-            def Func():
-                """
-                Func is king.
-                """
-                (IMPORT-BLOCK #3)
-                var_alpha = alpha.AlphaClass()
-
-                if True:
-                    (IMPORT-BLOCK #4)
-
-                (IMPORT-BLOCK #5)
-
-            var_bravo = bravo.BravoClass()
-
-        '''
-    )
-
     changed, output = terra_former.ReorganizeImports()
+    print output
 
     assert output == Dedent(
         '''

@@ -2,6 +2,27 @@ from ._import_symbol import ImportSymbol
 import os
 
 
+def index(node):
+    return node.parent.children.index(node)
+
+def insert_before(node, code):
+    if not node.parent:
+        raise TypeError("Can't insert before node that doesn't have a parent.")
+    if not isinstance(code, list):
+        code = [code]
+
+    pos = index(node)
+    new_children = []
+    for i, i_child in enumerate(node.parent.children):
+        if i == pos:
+            new_children += code
+        new_children.append(i_child)
+
+    for j_node in code:
+        j_node.parent = node.parent
+    node.parent.children = new_children
+    node.parent.changed()
+
 
 #===================================================================================================
 # ImportBlock
@@ -10,12 +31,15 @@ class ImportBlock(object):
 
     PYTHON_EXT = '.py'
 
-    def __init__(self, code, id, lineno, indent, symbols):
-        self._code = code
+    def __init__(self, code_position, code_replace, id, lineno, indent, symbols):
+        # The new import-block will be inserted BEFORE this code. The code will not be altered.
+        self._code_position = code_position
+        # The new import-block will REPLACE this node(s).
+        self._code_replace = code_replace
         self.id = id
         self.lineno = lineno
         self.indent = indent
-        self.symbols = symbols
+        self.symbols = set(symbols)
 
 
     def __str__(self):
@@ -36,10 +60,25 @@ class ImportBlock(object):
                 refactor=refactor,
                 filename=filename,
             )
-            nodes[0].prefix = self._code.prefix
-            self._code.replace(nodes)
+
+            if self._code_replace:
+                nodes[0].prefix = self._code_replace[0].prefix
+
+            insert_before(self._code_position, nodes)
+            for i_node in self._code_replace:
+                i_node.remove()
+
+            self._code_position = nodes[0]
+            self._code_replace = nodes
         else:
-            self._code.remove()
+            for i_node in self._code_replace:
+                i_node.remove()
+
+
+    def AddImportSymbol(self, import_symbol):
+        result = ImportSymbol(import_symbol, kind=ImportSymbol.KIND_IMPORT_FROM)
+        self.symbols.add(result)
+        return result
 
 
     @classmethod
@@ -131,7 +170,7 @@ class ImportBlock(object):
             # CASE: The symbol is not available in the package
             from ._terra_former import TerraFormer
             package_terra_former = TerraFormer(filename=package_init_filename)
-            package_import_symbols = package_terra_former.GetImportSymbols()
+            package_import_symbols = {i.GetToken() : i for i in package_terra_former.symbols}
             init_import_symbol = package_import_symbols.get(working_token)
             if init_import_symbol is None:
                 return import_symbol
@@ -425,16 +464,6 @@ class ImportBlock(object):
         # Generates "import X" statements
         for _sort_index, i_symbol in sorted(import_names):
             result.append(GenerateImportNode(i_symbol, indent, i_symbol.comment))
-
-        # Remove last eol from the block.
-        if result and result[-1].children:
-            last_leaf = result[-1].children[-1]
-            if last_leaf.value == u'\n':
-                if last_leaf.prefix:
-                    last_leaf.value = ''
-                    last_leaf.changed()
-                else:
-                    last_leaf.remove()
 
         return result
 
