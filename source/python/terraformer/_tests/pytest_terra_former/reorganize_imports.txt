@@ -462,8 +462,25 @@ p = print
 ===
 import alpha;alpha.Execute()
 ---
-import alpha
-alpha.Execute()
+import alpha;alpha.Execute()
+===
+if True:
+    if False:
+        import alpha;alpha.Execute()
+---
+if True:
+    if False:
+        import alpha;alpha.Execute()
+===
+if True:
+    if False:
+        # This condition
+        import alpha;alpha.Execute()
+---
+if True:
+    if False:
+        # This condition
+        import alpha;alpha.Execute()
 ===
 from before_refactor_alpha import Alpha
 from before_refactor_bravo import Bravo

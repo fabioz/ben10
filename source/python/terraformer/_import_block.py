@@ -43,6 +43,12 @@ class ImportBlock(object):
 
 
     def __str__(self):
+        '''
+        The string representation for import-block contains:
+            - The import-block id (sequential number in the module)
+            - The coordinates: line number and indent
+            - A list of import-symbols.
+        '''
         return "<ImportBlock #%d (%d, %d): %s>" % (
             self.id,
             self.lineno,
@@ -51,8 +57,17 @@ class ImportBlock(object):
         )
 
 
-    def Reorganize(self, page_width=80, refactor=None, filename=None):
+    def Reorganize(self, page_width=100, refactor=None, filename=None):
+        '''
+        Reorganize the import-statements replacing the previous code by brand new import-statements
+
+        :param page_width:
+        :param refactor:
+        :param filename:
+        :return:
+        '''
         if self.symbols:
+            # Create new nodes with all the import-statements.
             nodes = self.CreateNodes(
                 self.symbols,
                 self.indent,
@@ -61,10 +76,20 @@ class ImportBlock(object):
                 filename=filename,
             )
 
+            # Some extra fixes on new created nodes.
             if self._code_replace:
+                # Copies the prefix from the replaced code.
                 nodes[0].prefix = self._code_replace[0].prefix
 
+                # Remove EOL from new nodes under certain conditions:
+                next_node = self._code_replace[-1].next_sibling
+                if next_node and next_node.value == ';':
+                    del nodes[-1].children[-1]
+
+            # Insert new nodes before the marked position.
             insert_before(self._code_position, nodes)
+
+            # Delete the code this code block replaces.
             for i_node in self._code_replace:
                 i_node.remove()
 
@@ -301,7 +326,7 @@ class ImportBlock(object):
             started = False
             cumulative_len = 0
             symbols_count = 0
-            for i_leaf in cls.WalkLeafs(node):
+            for i_leaf in cls._WalkLeafs(node):
                 # TODO: BEN-28: [terraformer] Consider the EOL prefix in the cumulative_len, since it can contain comments
                 if i_leaf.value == '\n':
                     break
@@ -468,12 +493,12 @@ class ImportBlock(object):
         return result
 
     @classmethod
-    def WalkLeafs(cls, node):
+    def _WalkLeafs(cls, node):
         from lib2to3.pytree import Leaf
 
         if isinstance(node, Leaf):
             yield node
         else:
             for i_child in node.children:
-                for j_leaf in cls.WalkLeafs(i_child):
+                for j_leaf in cls._WalkLeafs(i_child):
                     yield j_leaf

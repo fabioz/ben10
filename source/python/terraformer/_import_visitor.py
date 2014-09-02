@@ -45,7 +45,7 @@ class ImportVisitor(ASTVisitor):
     def visit_leaf(self, leaf):
         if self._current_import_block:
             # Append 'intermediate' tokens to the import-block or reset it.
-            if leaf.value in (u'\n', u'\r\n', u';'):
+            if leaf.value in (u'\n', u'\r\n'):
                 self._current_import_block._code_replace.append(leaf)
             else:
                 self._current_import_block = None
