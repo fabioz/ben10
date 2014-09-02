@@ -1,9 +1,57 @@
-from ben10.filesystem import CreateFile, EOL_STYLE_UNIX
+from lib2to3.pgen2.parse import ParseError
 from ben10.foundation.pushpop import PushPop
 from ben10.foundation.string import Dedent
 from terraformer import ImportBlock, TerraFormer
 import pytest
 
+
+def testAstVisitor():
+    from terraformer._astvisitor import ASTVisitor
+
+    class LogVisitor(ASTVisitor):
+
+        def __init__(self):
+            ASTVisitor.__init__(self)
+            self.log = []
+
+        def visit_start(self, tree):
+            self.log.append('visit_start')
+
+        def visit_end(self, tree):
+            self.log.append('visit_end')
+
+        def visit_class(self, name, bases, body):
+            self.log.append('visit_class: %s' % name)
+            ASTVisitor.visit_class(self, name, bases, body)
+
+        def visit_function(self, name, args, body):
+            self.log.append('visit_function: %s' % name)
+            ASTVisitor.visit_function(self, name, args, body)
+
+        def visit_import(self, names, import_from, body):
+            self.log.append('visit_import: %s' % ','.join(map(str, names)))
+
+    code = TerraFormer._Parse(Dedent(
+        '''
+        from alpha import Alpha
+
+        class Zulu(Alpha):
+
+            def __init__(self, name):
+                self.name = name
+        '''
+    ))
+
+    visitor = LogVisitor()
+    visitor.visit(code)
+
+    assert visitor.log == [
+        'visit_start',
+        'visit_import: Alpha',
+        'visit_class: Zulu',
+        'visit_function: __init__',
+        'visit_end',
+    ]
 
 
 def testImportBlockZero(monkeypatch, embed_data):
@@ -297,14 +345,24 @@ def testReorganizeImports(embed_data, line_tester):
     )
 
 
+def testQuotedBlock():
+    assert TerraFormer._QuotedBlock(
+        'alpha\nbravo\ncharlie\n'
+    ) == '> alpha\n> bravo\n> charlie\n'
+
+
+def testParse():
+    with pytest.raises(ParseError):
+        TerraFormer._Parse('class Class:\n')
+
+
 def testLocalImports(monkeypatch, embed_data):
     monkeypatch.setattr(ImportBlock, 'PYTHON_EXT', '.py_')
 
     def TestIt(filename):
         full_filename=embed_data['testLocalImports/alpha/%s.py_' % filename]
         terra = TerraFormer(filename=full_filename)
-        changed, output = terra.ReorganizeImports()
-        CreateFile(full_filename, output, eol_style=EOL_STYLE_UNIX)
+        terra.Save()
         embed_data.AssertEqualFiles(
             embed_data['testLocalImports/alpha/%s.py_' % filename],
             embed_data['testLocalImports/alpha.expected/%s.py_' % filename]
@@ -319,6 +377,11 @@ def testLocalImports(monkeypatch, embed_data):
         TestIt('simentar_test_base')
         TestIt('romeo')
         TestIt('quilo')
+
+        # Test MAX_FILE_SIZE
+        with pytest.raises(RuntimeError):
+            monkeypatch.setattr(TerraFormer, 'MAX_FILE_SIZE', 5)
+            TestIt('quilo')
 
 
 
@@ -374,10 +437,13 @@ def line_tester():
     return LineTester()
 
 
-def test_line_tester(line_tester):
+def testLineTester(line_tester):
 
     def Doit(lines):
         return ['(%s)' % i for i in lines]
+
+    def RaiseException(lines):
+        raise TypeError()
 
     line_tester.TestLines('===\nalpha\n---\n(alpha)', Doit)
 
@@ -388,3 +454,7 @@ def test_line_tester(line_tester):
 
     with pytest.raises(AssertionError):
         line_tester.TestLines('===\nalpha\n---\nERROR', Doit)
+
+    with pytest.raises(Exception) as excinfo:
+        line_tester.TestLines('===\nalpha\n\n\n---\n(alpha)\n()\n()', RaiseException)
+    assert "While processing lines::" in str(excinfo.value)

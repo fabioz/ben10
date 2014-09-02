@@ -19,13 +19,16 @@ class TerraFormer(object):
 
     '''
 
+    MAX_FILE_SIZE = 500000
+
     def __init__(self, source=None, filename=None):
         if source is None:
             source = GetFileContents(filename)
 
-        if len(source) > 500000:
+        file_size = len(source)
+        if file_size > self.MAX_FILE_SIZE:
             # Some big files make the Parse algorithm get stuck.
-            raise RuntimeError('File too big: %d' % len(self.source))
+            raise RuntimeError('File too big: %d' % file_size)
 
         self.filename = filename
         self.source = source
@@ -92,7 +95,7 @@ class TerraFormer(object):
 
     def ReorganizeImports(
             self,
-            refactor={},
+            refactor=None,
             page_width=100
         ):
         '''
@@ -110,10 +113,8 @@ class TerraFormer(object):
         '''
         for i_import_block in self.import_blocks:
             i_import_block.Reorganize(page_width, refactor, self.filename)
-        try:
-            output = unicode(self.code)
-        except:
-            raise
+
+        output = unicode(self.code)
         output = output.encode('latin1')
         changed = output != self.source
 

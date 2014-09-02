@@ -2,16 +2,16 @@ from ._import_symbol import ImportSymbol
 import os
 
 
-def index(node):
-    return node.parent.children.index(node)
 
-def insert_before(node, code):
+def _InsertCodeBeforeNode(node, code):
+
     if not node.parent:
         raise TypeError("Can't insert before node that doesn't have a parent.")
+
     if not isinstance(code, list):
         code = [code]
 
-    pos = index(node)
+    pos = node.parent.children.index(node)
     new_children = []
     for i, i_child in enumerate(node.parent.children):
         if i == pos:
@@ -87,7 +87,7 @@ class ImportBlock(object):
                     del nodes[-1].children[-1]
 
             # Insert new nodes before the marked position.
-            insert_before(self._code_position, nodes)
+            _InsertCodeBeforeNode(self._code_position, nodes)
 
             # Delete the code this code block replaces.
             for i_node in self._code_replace:
@@ -186,9 +186,8 @@ class ImportBlock(object):
                 return import_symbol
 
             # Obtain the package __init__.py filename
-            package_init_filename = os.path.abspath(
-                os.path.dirname(filename)
-            ) + '/__init__' + cls.PYTHON_EXT
+            package_init_filename = os.path.abspath(os.path.dirname(filename))
+            package_init_filename += '/__init__' + cls.PYTHON_EXT
             if not os.path.isfile(package_init_filename):
                 return import_symbol
 

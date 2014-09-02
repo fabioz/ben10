@@ -565,3 +565,13 @@ if e.errno == errno.ENOENT:  # File does not exist
 if 'proxy' in str(e.strerror):
     from _filesystem_exceptions import CantOpenFileThroughProxyError
     raise CantOpenFileThroughProxyError(filename)
+===
+import alpha
+if True:
+    import bravo
+import charlie
+---
+import alpha
+if True:
+    import bravo
+import charlie

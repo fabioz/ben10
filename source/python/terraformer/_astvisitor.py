@@ -1,46 +1,14 @@
-"""
-Module containing ASTVistor class and helpers useful for traversing
-and extracting information from an AST.
-"""
 
-def descend(tree, visitor_type):
-    """Walk over the AST using a visitor of a given type and return the visitor
-    object once done.
-    """
-    visitor = visitor_type()
-    visitor._visit(tree)
-    return visitor
-
-def find_last_leaf(node):
-    from lib2to3.pytree import Leaf
-
-    if isinstance(node, Leaf):
-        return node
-    else:
-        return find_last_leaf(node.children[-1])
-
-def get_starting_whitespace(code):
-    from lib2to3.pgen2 import token
-
-    whitespace = ""
-    for child in code.children:
-        if is_leaf_of_type(child, token.NEWLINE, token.INDENT):
-            whitespace += child.value
-        else:
-            break
-    return whitespace
-
-def remove_trailing_whitespace(code):
-    leaf = find_last_leaf(code)
-    leaf.prefix = leaf.prefix.replace(' ', '').replace('\t', '')
 
 class ASTError(Exception):
     pass
+
 
 def is_leaf_of_type(leaf, *types):
     from lib2to3.pytree import Leaf
 
     return isinstance(leaf, Leaf) and leaf.type in types
+
 
 def is_node_of_type(node, *types):
     from lib2to3 import pytree
@@ -48,8 +16,10 @@ def is_node_of_type(node, *types):
 
     return isinstance(node, Node) and pytree.type_repr(node.type) in types
 
+
 def leaf_value(leaf):
     return leaf.value
+
 
 def remove_commas(nodes):
     from lib2to3.pgen2 import token
@@ -57,6 +27,7 @@ def remove_commas(nodes):
     def isnt_comma(node):
         return not is_leaf_of_type(node, token.COMMA)
     return filter(isnt_comma, nodes)
+
 
 def remove_defaults(nodes):
     from lib2to3.pgen2 import token
@@ -71,8 +42,10 @@ def remove_defaults(nodes):
             continue
         yield node
 
+
 def derive_class_name(node):
     return str(node).strip()
+
 
 def derive_class_names(node):
     if node is None:
@@ -82,14 +55,20 @@ def derive_class_names(node):
     else:
         return [derive_class_name(node)]
 
+
 def derive_argument(node):
     from lib2to3.pgen2 import token
 
     if is_leaf_of_type(node, token.NAME):
         return node.value
     elif is_node_of_type(node, 'tfpdef'):
-        return tuple(map(derive_argument,
-                         remove_commas(node.children[1].children)))
+        return tuple(
+            map(
+                derive_argument,
+                remove_commas(node.children[1].children)
+            )
+        )
+
 
 def derive_arguments_from_typedargslist(typedargslist):
     from lib2to3.pgen2 import token
@@ -106,6 +85,7 @@ def derive_arguments_from_typedargslist(typedargslist):
         else:
             yield derive_argument(node)
 
+
 def derive_arguments(node):
     if node == []:
         return []
@@ -113,6 +93,7 @@ def derive_arguments(node):
         return list(derive_arguments_from_typedargslist(node))
     else:
         return [derive_argument(node)]
+
 
 def derive_import_name(node):
     from lib2to3.pgen2 import token
@@ -129,29 +110,30 @@ def derive_import_name(node):
     else:
         raise ASTError("derive_import_name: unknown node type: %r." % node)
 
+
 def derive_import_names(node):
     if node is None:
         return None
     elif is_node_of_type(node, 'dotted_as_names', 'import_as_names'):
-        return map(derive_import_name,
-                   remove_commas(node.children))
+        return map(
+            derive_import_name,
+            remove_commas(node.children)
+        )
     else:
         return [derive_import_name(node)]
 
 
 class ASTVisitor(object):
     DEFAULT_PATTERNS = [
-#        ('_visit_all', "file_input< nodes=any* >"),
-#        ('_visit_all', "suite< nodes=any* >"),
-#        ('_visit_class', "body=classdef< 'class' name=NAME ['(' bases=any ')'] ':' any >"),
-#        ('_visit_function', "body=funcdef< 'def' name=NAME parameters< '(' [args=any] ')' > ':' any >"),
+        ('_visit_all', "file_input< nodes=any* >"),
+        ('_visit_all', "suite< nodes=any* >"),
+        ('_visit_class', "body=classdef< 'class' name=NAME ['(' bases=any ')'] ':' any >"),
+        ('_visit_function', "body=funcdef< 'def' name=NAME parameters< '(' [args=any] ')' > ':' any >"),
         ('_visit_import',
             "body=import_name< 'import' names=any > | "
             "body=import_from< 'from' import_from=any 'import' names=any > | "
             "body=import_from< 'from' import_from=any 'import' '(' names=any ')' >"
         ),
-#        ('_visit_lambda_assign', "expr_stmt< name=NAME '=' lambdef< 'lambda' [args=any] ':' any > >"),
-#        ('_visit_main_snippet', "body=if_stmt< 'if' comparison< '__name__' '==' (\"'__main__'\" | '\"__main__\"' ) > ':' any >"),
     ]
 
     def __init__(self):
@@ -171,21 +153,6 @@ class ASTVisitor(object):
         result = self._visit(tree)
         self.visit_end(tree)
         return result
-
-    def _visit(self, tree):
-        """Main entry point of the ASTVisitor class.
-        """
-        from lib2to3.pytree import Leaf, Node
-
-        if isinstance(tree, Leaf):
-            self.visit_leaf(tree)
-        elif isinstance(tree, Node):
-            self.visit_node(tree)
-        elif isinstance(tree, list):
-            for subtree in tree:
-                self._visit(subtree)
-        else:
-            raise ASTError("Unknown tree type: %r." % tree)
 
     def visit_start(self, tree):
         pass
@@ -213,26 +180,39 @@ class ASTVisitor(object):
         self._visit(body.children)
 
     def visit_import(self, names, import_from, body):
-        pass
+        ''
 
-    def visit_lambda_assign(self, name, args):
-        pass
+    def _visit(self, tree):
+        """Main entry point of the ASTVisitor class.
+        """
+        from lib2to3.pytree import Leaf, Node
 
-    def visit_main_snippet(self, body):
-        pass
+        if isinstance(tree, Leaf):
+            self.visit_leaf(tree)
+        elif isinstance(tree, Node):
+            self.visit_node(tree)
+        elif isinstance(tree, list):
+            for subtree in tree:
+                self._visit(subtree)
+        else:
+            raise ASTError("Unknown tree type: %r." % tree)
 
     def _visit_all(self, results):
         self._visit(results['nodes'])
 
     def _visit_class(self, results):
-        self.visit_class(name=results['name'].value,
-                         bases=derive_class_names(results.get('bases')),
-                         body=results['body'])
+        self.visit_class(
+            name=results['name'].value,
+            bases=derive_class_names(results.get('bases')),
+            body=results['body']
+        )
 
     def _visit_function(self, results):
-        self.visit_function(name=results['name'].value,
-                            args=derive_arguments(results.get('args', [])),
-                            body=results['body'])
+        self.visit_function(
+            name=results['name'].value,
+            args=derive_arguments(results.get('args', [])),
+            body=results['body']
+        )
 
     def _visit_import(self, results):
         self.visit_import(
@@ -240,10 +220,3 @@ class ASTVisitor(object):
             import_from=derive_import_name(results.get('import_from')),
             body=results['body']
         )
-
-    def _visit_lambda_assign(self, results):
-        self.visit_lambda_assign(name=results['name'].value,
-                                 args=derive_arguments(results.get('args', [])))
-
-    # def _visit_main_snippet(self, results):
-    #     self.visit_main_snippet(body=results['body'])
