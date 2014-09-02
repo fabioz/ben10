@@ -41,9 +41,9 @@ def EndIgnoreHandleException():
 #===================================================================================================
 @contextmanager
 def IgnoringHandleException():
-    """
+    '''
     Ignores exception handling during context.
-    """
+    '''
     StartIgnoreHandleException()
     yield
     EndIgnoreHandleException()
@@ -63,7 +63,7 @@ def HandleException(msg=''):
     on_exception_handled()
 
     if _ignore_expected_exception > 0:
-        return #Don't log nor call excepthook.
+        return  # Don't log nor call excepthook.
 
     if LOG_ERRORS:
         #Log it

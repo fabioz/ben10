@@ -38,18 +38,18 @@ The contents of this library is composed by all code from coilib50 that is commo
         * **enum.py**: Enumerate implementation.
         * **fifo.py**: "First In First Out" stack implementation.
         * **handle_exception.py**: Handles an exception, printing the traceback without breaking the process.
-        * **hash.py**: ?
-        * **immutable.py**: ?
+        * **hash.py**: Utilities to create hashes for files.
+        * **immutable.py**: Implements AsImmutable function.
         * **is_frozen.py**: Check if you're inside an excutable (cx_Freeze).
         * **klass.py**: Class related python extensions.
-        * **log.py**: ?
+        * **log.py**: Log related utilities.
         * **lru.py**: "Last Recently Used" implementation.
         * **memoize.py**: Simple way of caching a function;
         * **namedtuple.py**: A named tuple implementation in python.
-        * **odict.py**: ?
+        * **odict.py**: Ordered dict.
         * **platform_.py**: Platform class with our platform naming convention implemented.
         * **profiling.py**: Profiling utitilies.
-        * **pushpop.py**: 
+        * **pushpop.py**: Context managers for attributes and items.
         * **redirect_output.py**: Redirect stdout and stderr output using a context manager.
         * **reraise.py**: Reraise an exception adding some information to its backlog.
         * **singleton.py**: Implement singleton, including push and pop operations.
@@ -67,7 +67,8 @@ The contents of this library is composed by all code from coilib50 that is commo
     * **registry_dict.py**: A dict-like API to read/write on Windows registry.
 * **clikit/**: A command-line application generator based on fixtures;
 * **gitit/**: A Pythonic API to git;
-* **terraforming/**: Python code refactoring;
+* **terraforming/**: Python code refactoring (deprecated);
+* **terraformer/**: Python code refactoring.
 * **txtout/**: Console output API;
 * **xml_factory/**: A fast and simple API to create XML files.
 
@@ -86,5 +87,3 @@ The contents of this library is composed by all code from coilib50 that is commo
 * ben10.foundation.weak_ref
 * pytest (test only)
 * ben10.foundation.callback (test only)
-
-

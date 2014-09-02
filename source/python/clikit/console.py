@@ -192,11 +192,16 @@ class Console(object):
         '''
         Prints a message to the output.
 
-        :param str|list(str) message
+        :param str|list(str) message: the message to print.
         :param int verbosity:
+            The miminum verbosity value for this message to appear. See verbosity property.
         :param int newlines:
+            The number of new-lines to append to the message.
         :param int indent:
-        :paran bool stderr:
+            The message indentation.
+        :param bool stderr:
+            By default we print to the standar output. If this flag is set we print to the standard
+            error.
         '''
         if self.verbosity < verbosity:
             return
