@@ -5,28 +5,45 @@ import pytest
 
 
 #===================================================================================================
-# _Countcalls
-#===================================================================================================
-def _Countcalls(counts):
-    '''
-    Decorator to count calls to a function
-    '''
-    def decorate(func):
-        func_name = func.func_name
-        counts[func_name] = 0
-        def call(*args, **kwds):
-            counts[func_name] += 1
-            return func(*args, **kwds)
-        call.func_name = func_name
-        return call
-    return decorate
-
-
-
-#===================================================================================================
 # Test
 #===================================================================================================
 class Test:
+
+
+    def testMemoizeDefaults(self):
+        calls = [0]
+
+        @Memoize
+        def Foo(param_1, param_2=None, param_3='default'):
+            calls[0] += 1
+
+        Foo('param_1')
+        assert calls[0] == 1
+
+        Foo('param_1', None)
+        assert calls[0] == 1
+
+
+    def testMemoizeKwargs(self):
+        calls = [0]
+
+        @Memoize
+        def Foo(param_1, param_2=None, param_3='default'):
+            calls[0] += 1
+
+        Foo('param_1')
+        assert calls[0] == 1
+
+        Foo('param_1', param_2=None)
+        assert calls[0] == 1
+
+        # Test different call
+        Foo('param_1', 'param_2')
+        assert calls[0] == 2
+
+        Foo('param_1', param_2='param_2')
+        assert calls[0] == 2
+
 
     def testMemoizeAndClassmethod(self):
         self._calls = 0
@@ -94,35 +111,6 @@ class Test:
         assert _calls == ['F1', 'F2', 'F3', 'F1', 'G1', 'G2']  # Cache HIT because F and G have a separated cache.
 
 
-    def testMemoizeBoundMethod(self):
-        _calls = []
-
-        class F(object):
-
-            def __init__(self, name):
-                self.name = name
-
-            @Memoize(2)
-            def GetName(self, param):
-                result = self.name + param
-                _calls.append(result)
-                return result
-
-        # Testing memozoize in a bound method
-        f = F('F')
-        m = Memoize(2)
-        m(f.GetName)
-
-        f.GetName('1')
-        f.GetName('1')
-        f.GetName('2')
-        f.GetName('2')
-        f.GetName('3')
-        f.GetName('3')
-        f.GetName('1')
-        assert _calls == ['F1', 'F2', 'F3', 'F1']
-
-
     def testMemoizeErrors(self):
         with pytest.raises(TypeError):
             class MyClass(object):
@@ -147,11 +135,13 @@ class Test:
 
 
     def testMemoizeLRU(self):
-        counts = {}
+        counts = {
+            'Double' : 0,
+        }
 
         @Memoize(2, Memoize.LRU)  # Just 2 values kept
-        @_Countcalls(counts)
         def Double(x):
+            counts['Double'] += 1
             return x * 2
         assert Double.func_name == 'Double'
 
@@ -180,24 +170,27 @@ class Test:
 
 
     def testMemoize(self):
-        counts = {}
+        counts = {
+            'Double' : 0,
+        }
 
         @Memoize(2, Memoize.FIFO)  # Just 2 values kept
-        @_Countcalls(counts)
         def Double(x):
+            counts['Double'] += 1
             return x * 2
         assert Double.func_name == 'Double'
 
         assert counts == dict(Double=0)
 
         # Only the first call with a given argument bumps the call count:
-        #
         assert Double(2) == 4
         assert counts['Double'] == 1
         assert Double(2) == 4
         assert counts['Double'] == 1
         assert Double(3) == 6
         assert counts['Double'] == 2
+
+        counts['NoArgs'] = 0
 
         # Unhashable keys: an error is raised!
         with pytest.raises(TypeError):
@@ -211,11 +204,10 @@ class Test:
         Double(2)  # It has discarded this one, so, it has to be added again!
         assert counts['Double'] == 4
 
-
         # Check if it works without any arguments.
         @Memoize
-        @_Countcalls(counts)
         def NoArgs():
+            counts['NoArgs'] += 1
             return 1
         NoArgs()
         NoArgs()
@@ -296,6 +288,28 @@ class Test:
         assert self._called == 2
         b.m1(1)
         assert self._called == 2
+
+
+    def testNonDeclaredKeywordArguments(self):
+        # Can't declare non-declared keyword arguments.
+        def Foo(**args):
+            return object()
+
+        with pytest.raises(Exception) as exception_info:
+            Memoize(Foo)
+        message = 'Non-declared keyword arguments (`**kwargs`) not supported. Note that Memoize must be the first decorator (nearest to the function) used.'
+        assert message in str(exception_info.value)
+
+        # Can't try to call with non-declared keyword arguments.
+        @Memoize
+        def Bar(a=0):
+            return object()
+        Bar(1)
+        Bar(a=1)
+        with pytest.raises(Exception) as exception_info:
+            Bar(s=2)
+        message = 'Can\'t use non-declared keyword arguments.'
+        assert message in str(exception_info.value)
 
 
     def testPerformance__flaky(self):

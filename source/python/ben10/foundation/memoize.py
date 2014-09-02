@@ -30,6 +30,9 @@ class Memoize(object):
     or a function (It'll just check if the 1st parameter is 'self', and if it is, an
     instance method is used). If this behavior is not wanted, the memo_target must be forced
     to MEMO_INSTANCE_METHOD or MEMO_FUNCTION.
+
+    Note that non-declared keyword arguments (`**kwargs`) are forbidden. Offer proper support for it may cause a
+    prohibitive overhead.
     '''
 
     # This should be the simplest (and fastest) way of caching things: what gets in first
@@ -105,21 +108,73 @@ class Memoize(object):
             This tuple is normalized with values for all arguments that the function receives,
             based on `args` and `kwargs` passed in this call, in addition to any default values.
         '''
-        argspec = self._argspec
+        # `argspec` list explicitly declared parameters and their default values.
+        has_default, argspec = self._argspec
 
         if kwargs:
-            # If we received kwargs, set them in our argspec, as if that was the default value
+            named_arguments_count = len(argspec)
+            # If we received kwargs, set them in our argspec, as if that was the default value.
             argspec = argspec.copy()
             for k, v in kwargs.iteritems():
                 argspec[k] = v
+            # If argspec have been extended we got non-declared keyword arguments. And that is forbidden.
+            if named_arguments_count != len(argspec):
+                raise ValueError('Can\'t use non-declared keyword arguments.')
 
-        elif not argspec:
-            # If we got not kwargs, and argspec is empty, we are dealing with a simple function,
-            # where all parameters are positional and we are calling them based on position.
+        elif not has_default:
+            # If we got not kwargs, and there is no default all parameters must be present (and maybe some varargs).
+            # The calling arguments alone are a good cache key.
             return args
 
-        # Obtain key from the args we received, plus whatever defaults we have in our argspec
+        # Obtain key from the args we received, plus whatever defaults we have in our argspec.
         return args + tuple(argspec.values()[len(args):])
+
+
+    def _GetArgspecObject(self, args, trail, kwargs, defaults):
+        '''
+        Create the argspec object that helps when creating the cache key. Subclasses may want to customize the argspec
+        object to help offer customized cache key generation algorithm.
+
+        :param list(str) args:
+            The names of the explicit arguments.
+        :param str trail:
+            The variable name used to store varargs.
+            `None` if no varargs are accepted.
+        :param str kwargs:
+            The variable name used to store non-explict keyword arguments.
+             `None` if no non-explicit keyword arguments are accepted.
+        :param tuple(object) defaults:
+            The default values (when existent) for the variable listed in the `args` parameter.
+            When not all parameter have default values this tuple will have less elements than `args`. Given the
+            function `def Foo(a, b, c=3, d=4): pass` than `args == ['a', 'b', 'c', 'd']` and `defaults == (3, 4)`.
+            `None` if there are no defaults.
+        :rtype: object
+        :return:
+            This object will be set as `self._argspec`, this object can be used by `self._GetCacheKey`.
+            The base class uses a tuple with a bool indication if default are present and a `coilib50.basic.odict.odict`
+            that is a mapping of "parameter name" -> "default value" (a string is used when the is no default).
+        '''
+        from ben10.foundation.odict import odict
+        named_arguments = odict()
+        if kwargs is not None:
+            raise TypeError(
+                'Non-declared keyword arguments (`**kwargs`) not supported.'
+                ' Note that Memoize must be the first decorator (nearest to the function) used.'
+            )
+        if defaults is None:
+            has_defaults = False
+            defaults = ()
+        else:
+            has_defaults = True
+        if self._memo_target == self.MEMO_INSTANCE_METHOD:
+            args = args[1:]  # Ignore self when dealing with instance method
+        first_default = len(args) - len(defaults)
+        for i, arg in enumerate(args):
+            if i < first_default:
+                named_arguments[arg] = '@Memoize: no_default'
+            else:
+                named_arguments[arg] = defaults[i - first_default]
+        return has_defaults, named_arguments
 
 
     def __call__(self, func):
@@ -153,21 +208,8 @@ class Memoize(object):
                     # be used as a part of the cache key, so, all should work properly).
                     self._memo_target = self.MEMO_FUNCTION
 
-
         # Register argspec details, these are used to normalize cache keys
-        from ben10.foundation.odict import odict
-        args, _trail, _kwargs, defaults = inspect.getargspec(func)
-
-        self._argspec = odict()
-        if defaults is not None:
-            if self._memo_target == self.MEMO_INSTANCE_METHOD:
-                args = args[1:]  # Ignore self when dealing with instance method
-            first_default = len(args) - len(defaults)
-            for i, arg in enumerate(args):
-                if i < first_default:
-                    self._argspec[arg] = '@Memoize: no_default'
-                else:
-                    self._argspec[arg] = defaults[i - first_default]
+        self._argspec = self._GetArgspecObject(*inspect.getargspec(func))
 
         # Create call wrapper, and make it look like the real function
         call = self._CreateCallWrapper(func)
@@ -255,3 +297,5 @@ class Memoize(object):
 
         else:
             raise AssertionError("Don't know how to deal with memo target: %s" % self._memo_target)
+
+

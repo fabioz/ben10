@@ -1,4 +1,4 @@
-from ._interface import Interface
+from _interface import Interface
 
 
 

@@ -1,4 +1,4 @@
-from ben10.execute import EnvironmentContextManager, Execute, ExecuteNoWait, PrintEnvironment
+from ben10.execute import Execute, ExecuteNoWait, PrintEnvironment
 from ben10.filesystem import CreateFile
 from ben10.foundation.string import Dedent
 from cStringIO import StringIO
@@ -61,20 +61,6 @@ class Test(object):
             ),
             'python %(testExecute.py_)s alpha bravo "charlie is number three" delta' % embed_data,
         )
-
-
-    def testExecuteError(self, embed_data):
-        '''
-        TODO: BEN-31: Refactor ben10.execute.Execute and derivates (git, scons, etc).
-        Improve Execute error code and test.
-        * We should use PrintEnvironment when Execute fails on the code.
-        * We should check the error output whe Execute fails on the test.
-        '''
-        with pytest.raises(RuntimeError):
-            self._AssertExecute(
-                '',
-                ['invalid_command']
-            )
 
 
     @pytest.mark.skipif('sys.platform != "win32"')
@@ -192,10 +178,3 @@ class Test(object):
             obtained,
             'testPrintEnvironment.expected.txt'
         )
-
-
-    def testEnvironmentContextManager(self):
-        assert 'testEnvironmentContextManager' not in os.environ
-        with EnvironmentContextManager({'testEnvironmentContextManager' : 'ALPHA'}):
-            assert os.environ['testEnvironmentContextManager'] == 'ALPHA'
-        assert 'testEnvironmentContextManager' not in os.environ
