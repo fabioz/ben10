@@ -8,8 +8,11 @@ import sys
 app = App('terraforming')
 
 
-
+# Valid extensions for fix-format.
 EXTENSIONS = {'.py', '.cpp', '.c', '.h', '.hpp', '.hxx', '.cxx', '.java', '.js'}
+
+# Python excentions.
+# This is overridden for test purposes.
 PYTHON_EXT = '.py'
 
 
@@ -29,7 +32,7 @@ def Symbols(console_, filename):
 
 
 @app
-def FixFormat(console_, source, refactor=None, python_only=False, single_job=False, sorted=False):
+def FixFormat(console_, source, refactor=None, python_only=False, single_job=False, sorted=False, inverted_refactor=False):
     '''
     Perform the format fixes on sources files, including tabs, eol, eol-spaces and imports.
 
@@ -58,50 +61,56 @@ def FixFormat(console_, source, refactor=None, python_only=False, single_job=Fal
     '''
     from functools import partial
 
-    def GetFilenames(paths, extensions):
-        result = []
-        for i_path in paths:
-            if IsDir(i_path):
-                extensions = ['*%s' % i for i in extensions]
-                result += FindFiles(i_path, extensions)
-            else:
-                result += [i_path]
-        result = map(StandardizePath, result)
-        return result
-
-    def GetRefactorDict(refactor_filename):
-        from sharedscripts10.string_dict_io import StringDictIO
+    def GetRefactorDict(refactor_filename, inverted):
+        from ben10.foundation.types_ import StringDictIO
 
         result = None
         if refactor is not None:
-            result = StringDictIO.Load(refactor_filename)
+            result = StringDictIO.Load(refactor_filename, inverted=inverted)
         return result
 
     extensions = _GetExtensions(python_only)
-    filenames = GetFilenames((source,), extensions)
-    refactor = GetRefactorDict(refactor)
+    filenames = _GetFilenames((source,), extensions)
+    refactor = GetRefactorDict(refactor, inverted_refactor)
     partial_fix_format = partial(_FixFormat, refactor=refactor)
     _Map(console_, partial_fix_format, filenames, sorted, single_job)
 
 
 @app
 def AddImportSymbol(console_, source, import_symbol, single_job=False):
+    '''
+    Adds an import-symbol in all files.
+    The import statement is added in the first line of the code, before comments and string docs.
 
-    def GetFilenames(paths, extensions):
-        result = []
-        for i_path in paths:
-            if IsDir(i_path):
-                extensions = ['*%s' % i for i in extensions]
-                result += FindFiles(i_path, extensions)
-            else:
-                result += [i_path]
-        result = map(StandardizePath, result)
-        return result
-
-    filenames = GetFilenames((source,), [PYTHON_EXT])
+    :param source: Source directory or file.
+    :param import_symbol: The symbol to import. Ex. "__future__.unicode_literals"
+    :param single_job: Avoid using multithread (for testing purposes).
+    '''
+    filenames = _GetFilenames((source,), [PYTHON_EXT])
     partial_add_import_symbol = partial(_AddImportSymbol, import_symbol=import_symbol)
     _Map(console_, partial_add_import_symbol, filenames, sorted, single_job)
 
+
+def _GetFilenames(paths, extensions):
+    '''
+    Lists filenames matching the given paths and extensions.
+
+    :param paths:
+        List of paths or filenames to match.
+    :param extensions:
+        List of extensions to match. Ex.: .py, .cpp.
+    :return list:
+        Returns a list of matching paths.
+    '''
+    result = []
+    for i_path in paths:
+        if IsDir(i_path):
+            extensions = ['*%s' % i for i in extensions]
+            result += FindFiles(i_path, extensions)
+        else:
+            result += [i_path]
+    result = map(StandardizePath, result)
+    return result
 
 
 @app
@@ -118,25 +127,27 @@ def FixCommit(console_, source, single_job=False):
 
         git = Git.GetSingleton()
 
-        r_working_dir = git.GetWorkingDir(cwd)
-        staged_filenames = git.Execute('diff --name-only --diff-filter=ACM --staged', repo_path=r_working_dir)
-        changed_filenames = git.Execute('diff --name-only --diff-filter=ACM', repo_path=r_working_dir)
+        working_dir = git.GetWorkingDir(cwd)
+        staged_filenames = git.Execute('diff --name-only --diff-filter=ACM --staged', repo_path=working_dir)
+        changed_filenames = git.Execute('diff --name-only --diff-filter=ACM', repo_path=working_dir)
 
         r_filenames = staged_filenames + changed_filenames
         r_filenames = set(r_filenames)
         r_filenames = sorted(r_filenames)
         r_filenames = _FilterFilenames(r_filenames)
-        return r_working_dir, r_filenames
+        r_filenames = [working_dir + '/' + i for i in r_filenames]
+        return r_filenames
 
-    working_dir, filenames = GetFilenames(source)
-    partial_fix_commit = partial(_FixCommit, cwd=working_dir)
-    _Map(console_, partial_fix_commit, filenames, sorted, single_job)
-
+    filenames = GetFilenames(source)
+    partial_fix_format = partial(_FixFormat, refactor={})
+    _Map(console_, partial_fix_format, filenames, sorted, single_job)
 
 
 def _FixFormat(filename, refactor):
     '''
     Perform the operation in a multi-threading friendly global function.
+
+    The operation is to perform format fixes in the given python source code.
     '''
     from terraforming.refactor import TerraForming
 
@@ -155,31 +166,13 @@ def _FixFormat(filename, refactor):
     return result
 
 
-
-def _FixCommit(filename, cwd):
+def _AddImportSymbol(filename, import_symbol):
     '''
     Perform the operation in a multi-threading friendly global function.
+
+    The operation is add a import-symbol to a filename.
     '''
-    from terraforming.refactor import TerraForming
-
-    terra = TerraForming()
-    try:
-        fullname = cwd + '/' + filename
-        changed = terra.FixAll(fullname)
-        if filename.endswith(PYTHON_EXT):
-            changed = terra.ReorganizeImports(fullname) or changed
-    except Exception, e:
-        result = '- %s: ERROR:\n  %s' % (filename, e)
-    else:
-        if changed:
-            result = '- %s: FIXED' % filename
-        else:
-            result = '- %s: skipped' % filename
-    return result
-
-
-def _AddImportSymbol(filename, import_symbol):
-    from terraformer import ImportSymbol, TerraFormer
+    from terraformer import TerraFormer
 
     terra = TerraFormer(filename=filename)
     terra.AddImportSymbol(import_symbol)
@@ -194,6 +187,18 @@ def _AddImportSymbol(filename, import_symbol):
 
 
 def _FilterFilenames(filenames, extensions=EXTENSIONS):
+    '''
+    Filters the given filenames that don't match the given extensions.
+
+    :param list(str) filenames:
+        List of filenames.
+
+    :param list(str) extensions:
+        List of extensions.
+
+    :return:
+        List of filename.
+    '''
     import os
 
     if extensions is None:
@@ -205,10 +210,6 @@ def _FilterFilenames(filenames, extensions=EXTENSIONS):
         ]
 
 
-
-#===================================================================================================
-# _GetStatusColor
-#===================================================================================================
 def _GetStatusColor(output):
     """
     Returns the color to be used in the console for the given output from a TerraForming command.
@@ -231,6 +232,15 @@ def _GetStatusColor(output):
 
 
 def _GetExtensions(python_only):
+    '''
+    Returns a list of extensions based on command line options.
+
+    :param bool python_only:
+        Command line option to consider only python files.
+
+    :return list(str):
+        List of extensions selected by the user.
+    '''
     if python_only:
         return {PYTHON_EXT}
     else:
@@ -238,6 +248,23 @@ def _GetExtensions(python_only):
 
 
 def _Map(console_, func, func_params, _sorted, single_job):
+    '''
+    Executes func in parallel considering some options.
+
+    :param callable func:
+        The function to call.
+
+    :param list func_params:
+        List of parameters to execute the function with.
+
+    :param _sorted:
+        Sorts the output.
+
+    :param single_job:
+        Do not use multiprocessing algorithm.
+        This is used for debug purposes.
+    :return:
+    '''
 
     if single_job:
         import itertools
@@ -258,5 +285,9 @@ def _Map(console_, func, func_params, _sorted, single_job):
         console_.Print(i_output_line)  #, color=_GetStatusColor(i_output_line))
 
 
+
+#===================================================================================================
+# Entry Point
+#===================================================================================================
 if __name__ == '__main__':
     sys.exit(app.Main())

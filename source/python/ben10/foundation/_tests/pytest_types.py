@@ -1,8 +1,9 @@
+from ben10.filesystem import GetFileContents, CreateFile
 from ben10.fixtures import SkipIfImportError
 from ben10.foundation.is_frozen import SetIsFrozen
 from ben10.foundation.types_ import (AsList, Boolean, CheckBasicType, CheckEnum, CheckFormatString,
     CheckIsNumber, CheckType, CreateDevelopmentCheckType, Flatten, Intersection, IsBasicType,
-    IsNumber, MergeDictsRecursively, Null, OrderedIntersection, _GetKnownNumberTypes)
+    IsNumber, MergeDictsRecursively, Null, OrderedIntersection, _GetKnownNumberTypes, StringDictIO)
 import copy
 import pytest
 
@@ -387,3 +388,93 @@ class Test:
         n = Null()
         n1 = copy.copy(n)
         assert str(n) == str(n1)
+
+
+    def testStringDictIO(self, embed_data):
+        # Create a regular dict
+        dictionary = dict(foo='bar', key='value')
+
+        # Save it to a file
+        obtained_file = embed_data.GetDataFilename('obtained_file.txt')
+        StringDictIO.Save(dictionary, obtained_file)
+
+        # Create a file by hand
+        expected_file = embed_data.GetDataFilename('expected_file.txt')
+        CreateFile(expected_file, 'foo = bar\nkey = value\n')
+
+        # Syntax should match
+        embed_data.AssertEqualFiles(obtained_file, expected_file)
+
+        # Load a dict from our file
+        new_dictionary = StringDictIO.Load(obtained_file)
+
+        # That dict should match the original
+        assert new_dictionary == dictionary
+
+        filename = embed_data['testStringDictIO.txt']
+        CreateFile(filename, 'first=alpha\nsecond = bravo\nthird =   charlie')
+        loaded_dictionary = StringDictIO.Load(filename)
+        assert loaded_dictionary == dict(first='alpha', second='bravo', third='charlie')
+
+        loaded_dictionary = StringDictIO.Load(filename, inverted=True)
+        assert loaded_dictionary == dict(alpha='first', bravo='second', charlie='third')
+
+
+    def testStringDictIOEmptyFile(self, embed_data):
+        # Make sure this works with empty files.
+        filename = embed_data.GetDataFilename('empty_dict')
+        CreateFile(filename, contents='')
+
+        dictionary = StringDictIO.Load(filename)
+
+        assert len(dictionary) == 0
+
+
+    def testStringDictIODictWithSpaces(self, embed_data):
+        filename = embed_data.GetDataFilename('dict_with_spaces.txt')
+
+        dict_with_spaces = {'key with spaces' : 'value with spaces'}
+
+        StringDictIO.Save(dict_with_spaces, filename)
+
+        assert GetFileContents(filename) == 'key with spaces = value with spaces\n'
+        assert StringDictIO.Load(filename) == dict_with_spaces
+
+
+    def testStringDictIOOrderAndSorted(self, embed_data):
+        filename = embed_data.GetDataFilename('dict.txt')
+
+        from ben10.foundation import odict
+        ordered_dict = odict.odict()
+        ordered_dict['z'] = 'first'
+        ordered_dict['a'] = 'last'
+
+        # Test order
+        StringDictIO.Save(ordered_dict, filename)
+        assert GetFileContents(filename) == 'z = first\na = last\n'
+
+        # Test sorted
+        StringDictIO.Save(ordered_dict, filename, sort_items=True)
+        assert GetFileContents(filename) == 'a = last\nz = first\n'
+
+
+    def testStringDictIOUnicode(self, embed_data):
+        d = {
+            u'key' : 'value'
+        }
+        with pytest.raises(TypeError):
+            StringDictIO.Save(d, embed_data['testUnicode.txt'])
+
+        d = {
+            'key' : u'value'
+        }
+        with pytest.raises(TypeError):
+            StringDictIO.Save(d, embed_data['testUnicode.txt'])
+
+        d = {
+            'key' : u'a\xe7\xe3o'
+        }
+        with pytest.raises(TypeError) as excinfo:
+            StringDictIO.Save(d, embed_data['testUnicode.txt'])
+        assert str(excinfo.value) == 'The value of key "key", "a??o" is UNICODE!'
+
