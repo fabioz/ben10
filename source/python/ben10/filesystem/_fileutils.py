@@ -4,24 +4,29 @@ This module contains an open function that should be used with care.
 Reading files in windows can have a good performance gain is the reading is made sequentially and
 a flag is set in the file opened
 '''
-
 import os
-import sys
 
 # Access is intended to be sequential from beginning to end. The system can use this as a hint
 # to optimize file caching.
 # This flag should not be used if read-behind (that is, reverse scans) will be used.
 # This flag has no effect if the file system does not support cached I/O and
 # FILE_FLAG_NO_BUFFERING.
+#
 # Any other system than windows (linux) does not support such type of flags
 # In linux the random or sequential file access have the same performance
-FILE_FLAG_SEQUENTIAL = os.O_SEQUENTIAL if sys.platform == 'win32' else 0
-
+#
 # When opening a binary file, you should append 'b' to the mode value for improved portability.
 # (It's useful even on systems which don't treat binary and text files differently, where it
 # serves as documentation.)
+#
 # Any other system than windows (linux) have no such option
-FILE_FLAG_BINARY = os.O_BINARY if sys.platform == 'win32' else 0
+#
+try:
+    FILE_FLAG_SEQUENTIAL = os.O_SEQUENTIAL
+    FILE_FLAG_BINARY = os.O_BINARY
+except:
+    FILE_FLAG_SEQUENTIAL = 0
+    FILE_FLAG_BINARY = 0
 
 
 
