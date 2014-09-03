@@ -1,4 +1,4 @@
-from ben10.execute import Execute, ExecuteNoWait, PrintEnvironment
+from ben10.execute import Execute, ExecuteNoWait, PrintEnvironment, EnvironmentContextManager
 from ben10.filesystem import CreateFile
 from ben10.foundation.string import Dedent
 from cStringIO import StringIO
@@ -178,3 +178,12 @@ class Test(object):
             obtained,
             'testPrintEnvironment.expected.txt'
         )
+
+
+    def testEnvironmentContextManager(self, embed_data):
+        assert 'testEnvironmentContextManager' not in os.environ
+
+        with EnvironmentContextManager({'testEnvironmentContextManager':''}):
+            assert 'testEnvironmentContextManager' in os.environ
+
+        assert 'testEnvironmentContextManager' not in os.environ
