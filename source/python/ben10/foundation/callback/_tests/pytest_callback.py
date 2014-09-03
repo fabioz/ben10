@@ -1,5 +1,6 @@
 from ben10.foundation.callback import (After, Before, Callback, Callbacks,
     FunctionNotRegisteredError, Remove, _CallbackWrapper)
+from ben10.foundation.string import Dedent
 from ben10.foundation.types_ import Null
 from ben10.foundation.weak_ref import WeakMethodRef
 import mock
@@ -666,15 +667,18 @@ class Test:
             c.Register(After2)
 
             from ben10.foundation import callback
-            with mock.patch('ben10.foundation.callback._callback.HandleErrorOnCallback', autospec=True) as mocked:
+            with mock.patch('ben10.foundation.handle_exception.HandleException', autospec=True) as mocked:
                 c()
                 assert self.called == 2
             assert mocked.call_count == 2
 
-            with mock.patch('ben10.foundation.callback._callback.HandleErrorOnCallback', autospec=True) as mocked:
+            with mock.patch('ben10.foundation.handle_exception.HandleException', autospec=True) as mocked:
                 c(1, a=2)
                 assert self.called == 4
             assert mocked.call_count == 2
+            mocked.assert_called_with(
+                '''Error while trying to call \n  File "%s", line 661, in After2 (Called from Callback)\nArgs: (1,)\nKwargs: {\'a\': 2}\n''' % __file__
+            )
 
             # test the default behaviour: errors are not handled and stop execution as usual
             self.called = 0
