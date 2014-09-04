@@ -1,9 +1,9 @@
 colorama==0.3.1
 cov_core==1.14.0
-coverage=1.7.1
+coverage==3.7.1
 ftputil==3.0
 path.py==5.2
-py=1.4.23
+py==1.4.23
 pyftpdlib==0.6.0
 pytest-cov==1.8
 pytest-localserver==0.3.3
