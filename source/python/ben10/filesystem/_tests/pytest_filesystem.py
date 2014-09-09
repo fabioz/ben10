@@ -452,12 +452,12 @@ class Test:
 
 
     def testFTPFileContents(self, monkeypatch, embed_data, ftpserver):
-        obtained = GetFileContents(ftpserver.GetFTPUrl(embed_data['file.txt']))
+        obtained = GetFileContents(ftpserver.GetFTPUrl('file.txt'))
         expected = GetFileContents(embed_data['file.txt'])
         assert obtained == expected
 
         with pytest.raises(FileNotFoundError):
-            GetFileContents(ftpserver.GetFTPUrl(embed_data['missing_file.txt']))
+            GetFileContents(ftpserver.GetFTPUrl('missing_file.txt'))
 
 
     def testCreateFile(self, embed_data):
@@ -506,19 +506,19 @@ class Test:
         '''
         No FTP function supports non-ascii filenames / paths
         '''
-        filename1 = embed_data['a\xe7\xe3o.txt']
-        CreateFile(filename1, 'action in portuguese')
+        filename1 = 'a\xe7\xe3o.txt'
+        CreateFile(embed_data[filename1], 'action in portuguese')
         unicode_filename1 = ftpserver.GetFTPUrl(filename1).decode('latin1')
 
-        dirname1 = embed_data['a\xe7\xe3o_dir']
-        CreateDirectory(dirname1)
+        dirname1 = 'a\xe7\xe3o_dir'
+        CreateDirectory(embed_data[dirname1])
         unicode_dirname1 = ftpserver.GetFTPUrl(dirname1).decode('latin1')
 
-        dirname2 = embed_data['target_directory']
-        CreateDirectory(dirname2)
+        dirname2 = 'target_directory'
+        CreateDirectory(embed_data[dirname2])
         unicode_dirname2 = ftpserver.GetFTPUrl(dirname2).decode('latin1')
 
-        dirname3 = embed_data['moved_directory']
+        dirname3 = 'moved_directory'
         unicode_dirname3 = ftpserver.GetFTPUrl(dirname3).decode('latin1')
 
         def _TestUnicode(exception, func, *args, **kwargs):
@@ -609,7 +609,7 @@ class Test:
         finally:
             DeleteFile(single_file)
 
-        target_ftp_file = ftpserver.GetFTPUrl(embed_data['missing_ftp_dir/sub_dir/file.txt'])
+        target_ftp_file = ftpserver.GetFTPUrl('missing_ftp_dir/sub_dir/file.txt')
 
         with pytest.raises(FTPIOError):
             CreateFile(target_ftp_file, contents='contents', create_dir=False)
@@ -930,14 +930,14 @@ class Test:
 
 
     def testFTPIsDir(self, monkeypatch, embed_data, ftpserver):
-        assert IsDir(ftpserver.GetFTPUrl(embed_data.GetDataDirectory()))
-        assert not IsDir(ftpserver.GetFTPUrl(embed_data['missing_dir']))
-        assert not IsDir(ftpserver.GetFTPUrl(embed_data['missing_dir/missing_sub_dir']))
+        assert IsDir(ftpserver.GetFTPUrl('.'))
+        assert not IsDir(ftpserver.GetFTPUrl('missing_dir'))
+        assert not IsDir(ftpserver.GetFTPUrl('missing_dir/missing_sub_dir'))
 
 
     def testFTPCopyFiles(self, monkeypatch, embed_data, ftpserver):
         source_dir = embed_data['files/source']
-        target_dir = ftpserver.GetFTPUrl(embed_data['ftp_target_dir'])
+        target_dir = ftpserver.GetFTPUrl('ftp_target_dir')
 
         # Make sure that the target dir does not exist
         assert not os.path.isdir(target_dir)
@@ -953,8 +953,8 @@ class Test:
 
 
     def testMoveDirectoryFTP(self, monkeypatch, embed_data, ftpserver):
-        source_dir = ftpserver.GetFTPUrl(embed_data['files/source'])
-        target_dir = ftpserver.GetFTPUrl(embed_data['ftp_target_dir'])
+        source_dir = ftpserver.GetFTPUrl('files/source')
+        target_dir = ftpserver.GetFTPUrl('ftp_target_dir')
 
         # Make sure that the source exists, and target does not
         assert IsDir(source_dir)
@@ -974,7 +974,7 @@ class Test:
         assert ListFiles(target_dir) == source_files
 
         # Cannot rename a directory if the target dir already exists
-        source_dir = ftpserver.GetFTPUrl(embed_data['some_directory'])
+        source_dir = ftpserver.GetFTPUrl('some_directory')
         CreateDirectory(source_dir)
         with pytest.raises(DirectoryAlreadyExistsError):
             MoveDirectory(source_dir, target_dir)
@@ -991,26 +991,26 @@ class Test:
 
         # Upload file form local to FTP
         source_file = embed_data['files/source/alpha.txt']
-        target_file = ftpserver.GetFTPUrl(embed_data['alpha.txt'])
+        target_file = ftpserver.GetFTPUrl('alpha.txt')
         CopyAndCheckFiles(source_file, target_file)
 
         # Upload file form local to FTP, testing override
         source_file = embed_data['files/source/alpha.txt']
-        target_file = ftpserver.GetFTPUrl(embed_data['alpha.txt'])
+        target_file = ftpserver.GetFTPUrl('alpha.txt')
         with pytest.raises(FileAlreadyExistsError):
             CopyAndCheckFiles(source_file, target_file, override=False,)
 
         # Download file to local
-        source_file = ftpserver.GetFTPUrl(embed_data['alpha.txt'])
+        source_file = ftpserver.GetFTPUrl('alpha.txt')
         target_file = embed_data['alpha_copied_from_ftp.txt']
         CopyAndCheckFiles(source_file, target_file)
 
         with pytest.raises(NotImplementedProtocol):
-            CopyFile(ftpserver.GetFTPUrl(embed_data['alpha.txt']), 'ERROR://target')
+            CopyFile(ftpserver.GetFTPUrl('alpha.txt'), 'ERROR://target')
 
 
     def testFTPCreateFile(self, monkeypatch, embed_data, ftpserver):
-        target_file = ftpserver.GetFTPUrl(embed_data['ftp.txt'])
+        target_file = ftpserver.GetFTPUrl('ftp.txt')
         contents = 'This is a new file.'
         CreateFile(
             target_file,
@@ -1020,27 +1020,27 @@ class Test:
 
 
     def testFTPIsFile(self, embed_data, ftpserver):
-        assert IsFile(ftpserver.GetFTPUrl(embed_data['file.txt']))
-        assert IsFile(ftpserver.GetFTPUrl(embed_data['files/source/alpha.txt']))
-        assert not IsFile(ftpserver.GetFTPUrl(embed_data['doesnt_exist']))
-        assert not IsFile(ftpserver.GetFTPUrl(embed_data['doesnt_exist/doesnt_exist']))
-        assert not IsFile(ftpserver.GetFTPUrl(embed_data['files/doesnt_exist']))
+        assert IsFile(ftpserver.GetFTPUrl('file.txt'))
+        assert IsFile(ftpserver.GetFTPUrl('files/source/alpha.txt'))
+        assert not IsFile(ftpserver.GetFTPUrl('doesnt_exist'))
+        assert not IsFile(ftpserver.GetFTPUrl('doesnt_exist/doesnt_exist'))
+        assert not IsFile(ftpserver.GetFTPUrl('files/doesnt_exist'))
 
 
     def testFTPListFiles(self, monkeypatch, embed_data, ftpserver):
         # List FTP files
-        assert ListFiles(ftpserver.GetFTPUrl(embed_data['files/source'])) == [
+        assert ListFiles(ftpserver.GetFTPUrl('files/source')) == [
             'alpha.txt',
             'bravo.txt',
             'subfolder',
         ]
 
         # Try listing a directory that does not exist
-        assert ListFiles(ftpserver.GetFTPUrl(embed_data['/files/non-existent'])) is None
+        assert ListFiles(ftpserver.GetFTPUrl('/files/non-existent')) is None
 
 
     def testFTPMakeDirs(self, monkeypatch, embed_data, ftpserver):
-        CreateDirectory(ftpserver.GetFTPUrl(embed_data['/ftp_dir1']))
+        CreateDirectory(ftpserver.GetFTPUrl('/ftp_dir1'))
         assert os.path.isdir(embed_data['ftp_dir1'])
 
 
@@ -1111,11 +1111,11 @@ class Test:
             CheckIsFile(embed_data.GetDataDirectory())  # Not a file
 
         # assert not raises Exception
-        CheckIsFile(ftpserver.GetFTPUrl(embed_data['file.txt']))
+        CheckIsFile(ftpserver.GetFTPUrl('file.txt'))
         with pytest.raises(FileNotFoundError):
-            CheckIsFile(ftpserver.GetFTPUrl(embed_data['MISSING_FILE']))
+            CheckIsFile(ftpserver.GetFTPUrl('MISSING_FILE'))
         with pytest.raises(FileNotFoundError):
-            CheckIsFile(ftpserver.GetFTPUrl(embed_data['.']))  # Not a file
+            CheckIsFile(ftpserver.GetFTPUrl('.'))  # Not a file
 
 
     @pytest.mark.skipif(not sys.platform.startswith('win'), reason="drives are only valid in windows filesystems")
@@ -1325,7 +1325,7 @@ def ftpserver(monkeypatch, embed_data, request):
 
     # We serve the current directory using the same instance of the ftpserver for all tests.
     # All URLs must be prefixed by the data-directory in order to properly access the test data.
-    r_ftpserver.Serve('.')
+    r_ftpserver.Serve(embed_data.GetDataDirectory())
     request.addfinalizer(r_ftpserver.StopServing)
     return r_ftpserver
 

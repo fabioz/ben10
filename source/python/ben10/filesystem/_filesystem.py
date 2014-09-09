@@ -373,8 +373,6 @@ def _CopyFileLocal(source_filename, target_filename, copy_symlink=True):
         If False, the file being linked will be copied instead.
     '''
     import shutil
-    from ben10.foundation.reraise import Reraise
-
     try:
         # >>> Create the target_filename directory if necessary
         dir_name = os.path.dirname(target_filename)
@@ -402,6 +400,7 @@ def _CopyFileLocal(source_filename, target_filename, copy_symlink=True):
             shutil.copyfile(source_filename, target_filename)
             shutil.copymode(source_filename, target_filename)
     except Exception, e:
+        from ben10.foundation.reraise import Reraise
         Reraise(e, 'While executiong _filesystem._CopyFileLocal(%s, %s)' % (source_filename, target_filename))
 
 
