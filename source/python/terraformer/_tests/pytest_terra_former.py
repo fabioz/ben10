@@ -5,6 +5,7 @@ from terraformer import ImportBlock, TerraFormer
 import pytest
 
 
+
 def testAstVisitor():
     from terraformer._astvisitor import ASTVisitor
 

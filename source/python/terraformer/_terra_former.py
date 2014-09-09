@@ -55,6 +55,10 @@ class TerraFormer(object):
         Parse the string and return its AST representation. May raise
         a ParseError exception.
         """
+        # Prioritary import.
+        from terraforming import _lib2to3
+
+        # Other imports
         from ben10.foundation.reraise import Reraise
         from lib2to3 import pygram, pytree
         from lib2to3.pgen2 import driver
