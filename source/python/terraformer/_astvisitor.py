@@ -1,3 +1,4 @@
+from lib2to3.pygram import python_symbols, python_grammar
 
 
 class ASTError(Exception):
@@ -145,7 +146,6 @@ class ASTVisitor(object):
         """Register method to handle given pattern.
         """
         from lib2to3.patcomp import compile_pattern
-
         self.patterns.append((method, compile_pattern(pattern)))
 
     def visit(self, tree):
@@ -155,13 +155,19 @@ class ASTVisitor(object):
         return result
 
     def visit_start(self, tree):
-        pass
+        ''
 
     def visit_end(self, tree):
-        pass
+        ''
 
     def visit_leaf(self, leaf):
-        pass
+        ''
+
+    def visit_name(self, name):
+        ''
+
+    def visit_import(self, names, import_from, body):
+        ''
 
     def visit_node(self, node):
         for method, pattern in self.patterns:
@@ -178,9 +184,6 @@ class ASTVisitor(object):
 
     def visit_function(self, name, args, body):
         self._visit(body.children)
-
-    def visit_import(self, names, import_from, body):
-        ''
 
     def _visit(self, tree):
         """Main entry point of the ASTVisitor class.

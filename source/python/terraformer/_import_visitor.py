@@ -1,3 +1,5 @@
+from lib2to3.pygram import python_symbols
+from compiler.symbols import FunctionScope, ClassScope, ModuleScope
 from ._astvisitor import ASTVisitor
 
 
@@ -9,10 +11,13 @@ class ImportVisitor(ASTVisitor):
 
     def __init__(self):
         ASTVisitor.__init__(self)
-        self.symbols = set()
-        self.import_blocks = []
-        self._first_leaf = None
+        self._module = None
         self._current_import_block = None
+        self.scopes = []
+        self._scope_stack = []
+        self._klass_stack = []
+        self.import_blocks = []
+        self.symbols = set()
 
 
     def visit_start(self, tree):
@@ -31,24 +36,31 @@ class ImportVisitor(ASTVisitor):
         lineno = self._GetImportBlockLineNumber(first_leaf)
 
         # Create import-block zero, a place-holder for import-symbols additions.
-        self._current_import_block = ImportBlock(
-            code_position,
-            [],
-            0,
-            lineno,
-            0,
-            []
-        )
+        self._current_import_block = ImportBlock(code_position, [], 0, lineno, 0, [])
         self.import_blocks.append(self._current_import_block)
+
+        # Module scope.
+        scope = ModuleScope()
+        self._module = self.scopes.append(scope)
+        self._scope_stack.append(scope)
 
 
     def visit_leaf(self, leaf):
+
         if self._current_import_block:
             # Append 'intermediate' tokens to the import-block or reset it.
             if leaf.value in (u'\n', u'\r\n'):
                 self._current_import_block._code_replace.append(leaf)
             else:
                 self._current_import_block = None
+
+        # from lib2to3.pgen2 import token
+        # from lib2to3.pygram import python_symbols
+        # if leaf.type in (token.NAME,):
+        #     if leaf.parent.type in (python_symbols.power,):
+        #         self.names.setdefault(unicode(leaf.parent), []).append(leaf.parent)
+        #     elif leaf.parent.type in (python_symbols.expr_stmt,):
+        #         self.names.setdefault(leaf.value, []).append(leaf)
 
 
     def visit_import(self, names, import_from, body):
@@ -104,6 +116,45 @@ class ImportVisitor(ASTVisitor):
             self._current_import_block = self._CreateNewImportBlock(body, symbols, prefix, indent)
 
         self.symbols.update(set(symbols))
+
+
+    def visit_class(self, name, bases, body):
+        parent = self._scope_stack and self._scope_stack[-1]
+        # parent.add_def(node.name)
+        # for n in node.bases:
+        #     self.visit(n, parent)
+        scope = ClassScope(name, self._module)
+        if parent.nested or isinstance(parent, FunctionScope):
+            scope.nested = 1
+        # if node.doc is not None:
+        #     scope.add_def('__doc__')
+        # scope.add_def('__module__')
+        self.scopes.append(scope)
+        self._klass_stack.append(scope)
+        self._scope_stack.append(scope)
+        self._visit(body.children)
+        self._scope_stack.pop()
+        self._klass_stack.pop()
+        #self.handle_free_vars(scope, parent)
+
+
+    def visit_function(self, name, args, body):
+        parent = self._scope_stack and self._scope_stack[-1]
+        klass_name = self._klass_stack and self._klass_stack[-1].name
+        # if node.decorators:
+        #     self.visit(node.decorators, parent)
+        parent.add_def(name)
+        # for n in node.defaults:
+        #     self.visit(n, parent)
+        scope = FunctionScope(name, self._module, klass_name)
+        if parent.nested or isinstance(parent, FunctionScope):
+            scope.nested = 1
+        self.scopes.append(scope)
+        # self._do_args(scope, node.argnames)
+        self._scope_stack.append(scope)
+        self._visit(body.children)
+        self._scope_stack.pop()
+        # self.handle_free_vars(scope, parent)
 
 
     def _GetImportBlockLineNumber(self, node):

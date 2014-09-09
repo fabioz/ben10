@@ -575,3 +575,13 @@ import alpha
 if True:
     import bravo
 import charlie
+===
+from coilib50 import multithreading
+---
+import multithreading
+===
+from alpha import *
+from alpha import Alpha
+---
+from alpha import Alpha
+from alpha import *

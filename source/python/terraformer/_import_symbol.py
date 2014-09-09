@@ -86,6 +86,7 @@ class ImportSymbol(object):
         :return str:
         '''
         if self.kind == self.KIND_IMPORT_FROM:
+            assert '.' in self.symbol, "ERROR: Import-symbol 'from' has no dot in it: \"%s\"" % self.symbol
             return self.symbol.rsplit('.', 1)[1]
         else:
             return self.symbol

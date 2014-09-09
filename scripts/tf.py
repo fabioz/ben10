@@ -91,28 +91,6 @@ def AddImportSymbol(console_, source, import_symbol, single_job=False):
     _Map(console_, partial_add_import_symbol, filenames, sorted, single_job)
 
 
-def _GetFilenames(paths, extensions):
-    '''
-    Lists filenames matching the given paths and extensions.
-
-    :param paths:
-        List of paths or filenames to match.
-    :param extensions:
-        List of extensions to match. Ex.: .py, .cpp.
-    :return list:
-        Returns a list of matching paths.
-    '''
-    result = []
-    for i_path in paths:
-        if IsDir(i_path):
-            extensions = ['*%s' % i for i in extensions]
-            result += FindFiles(i_path, extensions)
-        else:
-            result += [i_path]
-    result = map(StandardizePath, result)
-    return result
-
-
 @app
 def FixCommit(console_, source, single_job=False):
     '''
@@ -141,6 +119,84 @@ def FixCommit(console_, source, single_job=False):
     filenames = GetFilenames(source)
     partial_fix_format = partial(_FixFormat, refactor={})
     _Map(console_, partial_fix_format, filenames, sorted, single_job)
+
+
+@app
+def FixIsFrozen(console_, path):
+    from ben10.filesystem import FindFiles, GetFileContents, CreateFile, EOL_STYLE_UNIX
+
+    FIND_REPLACE = [
+        ('coilib50.IsFrozen', 'IsFrozen', 'from ben10.foundation.is_frozen import IsFrozen'),
+        ('coilib50.IsDevelopment', 'IsDevelopment', 'from ben10.foundation.is_frozen import IsDevelopment'),
+        ('coilib50.SetIsFrozen', 'SetIsFrozen', 'from ben10.foundation.is_frozen import SetIsFrozen'),
+        ('coilib50.SetIsDevelopment', 'SetIsDevelopment', 'from ben10.foundation.is_frozen import SetIsDevelopment'),
+    ]
+
+    for i_filename in FindFiles(path, ['*.py']):
+        contents = GetFileContents(i_filename)
+        imports = set()
+        for i_find, i_replace, i_import in FIND_REPLACE:
+            if i_find in contents:
+                contents = contents.replace(i_find, i_replace)
+                imports.add(i_import)
+
+        if imports:
+            console_.Item(i_filename)
+            lines = contents.split('\n')
+            index = None
+            top_doc = False
+            for i, i_line in enumerate(lines):
+                if i == 0:
+                    for i_top_doc in ("'''", '"""'):
+                        if i_top_doc in i_line:
+                            console_.Print('TOPDOC START: %d' % i, indent=1)
+                            top_doc = i_top_doc
+                            break
+                    continue
+                elif top_doc:
+                    if i_top_doc in i_line:
+                        console_.Print('TOPDOC END: %d' % i, indent=1)
+                        index = i + 1
+                        break
+                    continue
+
+                elif i_line.startswith('import ') or i_line.startswith('from '):
+                    index = i - 1
+                    break
+
+                elif i_line.strip() == '':
+                    continue
+
+                console_.Print('ELSE: %d: %s' % (i, i_line))
+                index = i
+                break
+
+            assert index is not None
+            lines = lines[0:index] + list(imports) + lines[index:]
+            contents = '\n'.join(lines)
+            CreateFile(i_filename, contents, eol_style=EOL_STYLE_UNIX)
+
+
+def _GetFilenames(paths, extensions):
+    '''
+    Lists filenames matching the given paths and extensions.
+
+    :param paths:
+        List of paths or filenames to match.
+    :param extensions:
+        List of extensions to match. Ex.: .py, .cpp.
+    :return list:
+        Returns a list of matching paths.
+    '''
+    result = []
+    for i_path in paths:
+        if IsDir(i_path):
+            extensions = ['*%s' % i for i in extensions]
+            result += FindFiles(i_path, extensions)
+        else:
+            result += [i_path]
+    result = map(StandardizePath, result)
+    return result
 
 
 def _FixFormat(filename, refactor):

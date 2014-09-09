@@ -33,6 +33,7 @@ class TerraFormer(object):
         self.filename = filename
         self.source = source
         self.symbols = set()
+        self.names = set()
         self.import_blocks = []
 
         self.code = self._Parse(self.source)

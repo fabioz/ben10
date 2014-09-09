@@ -237,11 +237,14 @@ class ImportBlock(object):
 
             new_symbol = refactor.get(import_symbol.symbol)
             if new_symbol is not None:
+                kind = import_symbol.kind
+                if '.' not in new_symbol:
+                    kind = ImportSymbol.KIND_IMPORT_NAME
                 return ImportSymbol(
                     new_symbol,
                     import_symbol.import_as,
                     comment=import_symbol.comment,
-                    kind=import_symbol.kind
+                    kind=kind
                 )
 
             new_prefix = refactor.get(import_symbol.GetPackageName())
@@ -275,13 +278,13 @@ class ImportBlock(object):
             from lib2to3.fixer_util import Name, Newline
             from lib2to3.pytree import Node
 
-            if i_symbol.import_as is not None:
+            if symbol.import_as is not None:
                 node = Node(
                     pygram.python_symbols.import_as_name,
                     [
-                        Name(i_symbol.GetToken(), prefix=' '),
+                        Name(symbol.GetToken(), prefix=' '),
                         Name('as', prefix=' '),
-                        Name(i_symbol.import_as, prefix=' ')
+                        Name(symbol.import_as, prefix=' ')
                     ]
                 )
             else:
@@ -469,6 +472,7 @@ class ImportBlock(object):
                     (
                         GetSortIndex(symbol),
                         symbol.GetPackageName(),
+                        symbol.symbol.endswith('*'),
                         symbol.comment
                     ),
                     []
@@ -482,7 +486,7 @@ class ImportBlock(object):
                 )
 
         # Generates "from X import Y" statements
-        for (_sort_index, i_prefix, i_comment), i_symbols in sorted(import_from.iteritems()):
+        for (_sort_index, i_prefix, i_is_asterisk, i_comment), i_symbols in sorted(import_from.iteritems()):
             result.append(GenerateImportFromNode(i_prefix, sorted(i_symbols), indent, i_comment))
 
         # Generates "import X" statements

@@ -32,6 +32,7 @@ def testAstVisitor():
         def visit_import(self, names, import_from, body):
             self.log.append('visit_import: %s' % ','.join(map(str, names)))
 
+
     code = TerraFormer._Parse(Dedent(
         '''
         from alpha import Alpha
@@ -334,6 +335,7 @@ def testReorganizeImports(embed_data, line_tester):
             refactor={
                 'coilib50.basic.implements': 'etk11.foundation.interface',
                 'coilib50.basic.inter': 'etk11.foundation.interface',
+                'coilib50.multithreading': 'multithreading',
                 'before_refactor_alpha.Alpha': 'after_refactor.Alpha',
                 'before_refactor_bravo.Bravo': 'after_refactor.Bravo',
             }
@@ -459,3 +461,45 @@ def testLineTester(line_tester):
     with pytest.raises(Exception) as excinfo:
         line_tester.TestLines('===\nalpha\n\n\n---\n(alpha)\n()\n()', RaiseException)
     assert "While processing lines::" in str(excinfo.value)
+
+
+def testSymbolVisitor():
+
+    source_code = Dedent(
+        '''
+        from alpha import Alpha
+
+        class Zulu(Alpha):
+
+            def __init__(self, name):
+                self._name = name
+                alpha = bravo
+                coilib50.Charlie()
+                f = coilib50.Delta(echo, foxtrot)
+        '''
+    )
+
+    from terraformer._import_visitor import ImportVisitor
+    code = TerraFormer._Parse(source_code)
+    visitor = ImportVisitor()
+    visitor.visit(code)
+
+    for i in visitor.scopes:
+        print '+', i
+        for j in i.uses:
+            print '  +', j
+
+    from compiler.symbols import SymbolVisitor
+    from compiler.transformer import parse
+    from compiler.visitor import walk
+
+    code = parse(source_code)
+    symbol_visitor = SymbolVisitor()
+    walk(code, symbol_visitor)
+
+    for i in symbol_visitor.scopes.itervalues():
+        print '-', i
+        for j in i.uses:
+            print '  -', j
+
+    #assert False
