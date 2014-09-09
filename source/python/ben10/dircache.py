@@ -1,7 +1,7 @@
 from archivist import Archivist
 from ben10.filesystem import (CopyFile, CreateDirectory, CreateLink, CreateTemporaryDirectory,
     DeleteDirectory, DeleteFile, DeleteLink, Exists, FileAlreadyExistsError, FileNotFoundError,
-    IsLink, StandardizePath)
+    IsDir, IsLink, StandardizePath)
 import os
 
 
@@ -189,8 +189,14 @@ class DirCache(object):
         The remote and cache content are not touched.
         '''
         if Exists(self.local_dir):
-            assert IsLink(self.local_dir), "%s: The local directory is expected to be a link." % self.local_dir
-            DeleteLink(self.local_dir)
+            # Delete must be in this order (first links, then dirs) because links also count as
+            # directories.
+            if IsLink(self.local_dir):
+                DeleteLink(self.local_dir)
+            elif IsDir(self.local_dir):
+                DeleteDirectory(self.local_dir)
+            else:
+                raise RuntimeError("%s: The local directory is expected to be a link or dir." % self.local_dir)
 
 
     def CreateRemote(self):

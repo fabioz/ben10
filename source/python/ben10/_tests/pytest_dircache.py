@@ -1,6 +1,6 @@
 from ben10.dircache import DirCache
 from ben10.filesystem import (CreateDirectory, CreateFile, DeleteFile, FileAlreadyExistsError,
-    IsDir, IsFile, IsLink, ReadLink)
+    IsDir, IsFile, IsLink)
 import os
 import pytest
 
