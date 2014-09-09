@@ -8,7 +8,8 @@ Patches and fixes for lib2to3
 import lib2to3.pgen2.pgen
 
 # This is the same as Grammar.txt, reproduced here to avoid dependency to external file.
-GRAMMAR = '''
+GRAMMAR = {}
+GRAMMAR['Grammar.txt'] = '''
 # Grammar for 2to3. This grammar supports Python 2.x and 3.x.
 
 # Note:  Changing the grammar specified in this file will most likely
@@ -34,9 +35,9 @@ GRAMMAR = '''
 #diagram:rules
 
 # Start symbols for the grammar:
-#    file_input is a module or sequence of commands read from an input file;
-#    single_input is a single interactive statement;
-#    eval_input is the input for the eval() and input() functions.
+#	file_input is a module or sequence of commands read from an input file;
+#	single_input is a single interactive statement;
+#	eval_input is the input for the eval() and input() functions.
 # NB: compound_stmt in single_input is followed by extra NEWLINE!
 file_input: (NEWLINE | stmt)* ENDMARKER
 single_input: NEWLINE | simple_stmt | compound_stmt NEWLINE
@@ -67,7 +68,7 @@ small_stmt: (expr_stmt | print_stmt  | del_stmt | pass_stmt | flow_stmt |
 expr_stmt: testlist_star_expr (augassign (yield_expr|testlist) |
                      ('=' (yield_expr|testlist_star_expr))*)
 testlist_star_expr: (test|star_expr) (',' (test|star_expr))* [',']
-augassign: ('+=' | '-=' | '*=' | '/=' | '%=' | '&=' | '|=' | '^=' |
+augassign: ('+=' | '-=' | '*=' | '@=' | '/=' | '%=' | '&=' | '|=' | '^=' |
             '<<=' | '>>=' | '**=' | '//=')
 # For normal assignments, additional restrictions enforced by the interpreter
 print_stmt: 'print' ( [ test (',' test)* [','] ] |
@@ -99,9 +100,9 @@ while_stmt: 'while' test ':' suite ['else' ':' suite]
 for_stmt: 'for' exprlist 'in' testlist ':' suite ['else' ':' suite]
 try_stmt: ('try' ':' suite
            ((except_clause ':' suite)+
-        ['else' ':' suite]
-        ['finally' ':' suite] |
-       'finally' ':' suite))
+	    ['else' ':' suite]
+	    ['finally' ':' suite] |
+	   'finally' ':' suite))
 with_stmt: 'with' with_item (',' with_item)*  ':' suite
 with_item: test ['as' expr]
 with_var: 'as' expr
@@ -130,7 +131,7 @@ xor_expr: and_expr ('^' and_expr)*
 and_expr: shift_expr ('&' shift_expr)*
 shift_expr: arith_expr (('<<'|'>>') arith_expr)*
 arith_expr: term (('+'|'-') term)*
-term: factor (('*'|'/'|'%'|'//') factor)*
+term: factor (('*'|'@'|'/'|'%'|'//') factor)*
 factor: ('+'|'-'|'~') factor | power
 power: atom trailer* ['**' factor]
 atom: ('(' [yield_expr|testlist_gexp] ')' |
@@ -166,12 +167,47 @@ testlist1: test (',' test)*
 # not used in grammar, but may appear in "node" passed from Parser to Compiler
 encoding_decl: NAME
 
-yield_expr: 'yield' [testlist]
+yield_expr: 'yield' [yield_arg]
+yield_arg: 'from' test | testlist
+'''
+GRAMMAR['PatternGrammar.txt'] = '''
+# Copyright 2006 Google, Inc. All Rights Reserved.
+# Licensed to PSF under a Contributor Agreement.
+
+# A grammar to describe tree matching patterns.
+# Not shown here:
+# - 'TOKEN' stands for any token (leaf node)
+# - 'any' stands for any node (leaf or interior)
+# With 'any' we can still specify the sub-structure.
+
+# The start symbol is 'Matcher'.
+
+Matcher: Alternatives ENDMARKER
+
+Alternatives: Alternative ('|' Alternative)*
+
+Alternative: (Unit | NegatedUnit)+
+
+Unit: [NAME '='] ( STRING [Repeater]
+                 | NAME [Details] [Repeater]
+                 | '(' Alternatives ')' [Repeater]
+                 | '[' Alternatives ']'
+		 )
+
+NegatedUnit: 'not' (STRING | NAME [Details] | '(' Alternatives ')')
+
+Repeater: '*' | '+' | '{' NUMBER [',' NUMBER] '}'
+
+Details: '<' Alternatives '>'
 '''
 
 def generate_grammar(filename="Grammar.txt"):
     from StringIO import StringIO
-    p = lib2to3.pgen2.pgen.ParserGenerator(filename, stream=StringIO(GRAMMAR))
+    import os
+    p = lib2to3.pgen2.pgen.ParserGenerator(
+        filename,
+        stream=StringIO(GRAMMAR[os.path.basename(filename)])
+    )
     return p.make_grammar()
 lib2to3.pgen2.pgen.generate_grammar = generate_grammar
 
