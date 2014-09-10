@@ -1,5 +1,5 @@
-from ben10.filesystem import (CheckIsFile, CreateDirectory, CreateFile, DeleteFile, EOL_STYLE_NONE,
-    ExtendedPathMask, FileAlreadyExistsError, FindFiles)
+from ben10.filesystem import (CheckIsFile, DeleteFile, ExtendedPathMask, FileAlreadyExistsError,
+    FindFiles)
 import os
 import warnings
 
@@ -107,50 +107,6 @@ class Archivist(object):
     #===============================================================================================
     # Extraction
     #===============================================================================================
-    def ExtractZip(self, zip_filename, target_folder):
-        '''
-        Extracts a zip filename into the target folder
-
-        :param str zip_filename:
-            Path to the archive filename
-
-        :param str target_folder:
-            Folder into which contents will be extracted
-        '''
-        self.__ExtractArchive(zip_filename, target_folder)
-
-
-    def ExtractTar(self, tar_filename, target_folder, mode='r'):
-        '''
-        Extracts a zip filename into the target folder
-
-        :param str tar_filename:
-            Path to the archive filename
-
-        :param str target_folder:
-            Folder into which contents will be extracted
-
-        :param str mode:
-        '''
-        import tarfile
-        oss = tarfile.open(tar_filename, mode)
-        oss.extractall(target_folder)
-        oss.close()
-
-
-    def ExtractRar(self, rar_filename, target_folder):
-        '''
-        Extracts a rar filename into the target folder
-
-        :param str rar_filename:
-            Path to the archive filename
-
-        :param str target_folder:
-            Folder into which contents will be extracted
-        '''
-        self.__ExtractArchive(rar_filename, target_folder)
-
-
     def ExtractArchive(self, filename, target_dir):
         '''
         Extracts an filename into a directory
@@ -185,6 +141,56 @@ class Archivist(object):
                 return
 
         raise RuntimeError('Unknown filename format: %s' % filename)
+
+
+    def ExtractZip(self, zip_filename, target_folder):
+        '''
+        Extracts a zip filename into the target folder
+
+        :param str zip_filename:
+            Path to the archive filename
+
+        :param str target_folder:
+            Folder into which contents will be extracted
+        '''
+        import zipfile
+        zip_file = zipfile.ZipFile(zip_filename)
+        zip_file.extractall(target_folder)
+        zip_file.close()
+
+
+    def ExtractTar(self, tar_filename, target_folder, mode='r'):
+        '''
+        Extracts a zip filename into the target folder
+
+        :param str tar_filename:
+            Path to the archive filename
+
+        :param str target_folder:
+            Folder into which contents will be extracted
+
+        :param str mode:
+        '''
+        import tarfile
+        oss = tarfile.open(tar_filename, mode)
+        oss.extractall(target_folder)
+        oss.close()
+
+
+    def ExtractRar(self, rar_filename, target_folder):
+        '''
+        Extracts a rar filename into the target folder
+
+        :param str rar_filename:
+            Path to the archive filename
+
+        :param str target_folder:
+            Folder into which contents will be extracted
+        '''
+        from ._rarfile import Rarfile
+        rar_file = Rarfile().CreateRarFile(rar_filename)
+        rar_file.extractall(target_folder)
+        rar_file.close()
 
 
 
@@ -223,43 +229,3 @@ class Archivist(object):
                     result.append((archive_filename, i_filename))
 
         return result
-
-
-    def __ExtractArchive(self, archive_filename, target_dir):
-        '''
-        Generic implementation of Extract Archive. Handles .rar and .zip files.
-
-        :param str archive_filename:
-            The name of the archive.
-
-        :param str target_dir:
-            The target directory to extract the archive contents.
-        '''
-        # Get archive wrapper
-        from _archive_wrapper import CreateArchiveWrapper
-        archive = CreateArchiveWrapper(archive_filename)
-
-
-        # Create directories needed for target
-        target_dir = os.path.normpath(target_dir)
-        if not target_dir.endswith(':'):
-            CreateDirectory(target_dir)
-
-
-        # Create archive structure
-        for sub_dir in archive.ListDirs():
-            curdir = os.path.join(target_dir, sub_dir)
-            CreateDirectory(curdir)
-
-
-        # Extract archive
-        for i_name in archive.ListFilenames():
-            target_filename = os.path.normpath(os.path.join(target_dir, i_name))
-            if os.path.isdir(target_filename):
-                continue
-
-            CreateFile(
-                target_filename,
-                archive.ReadFile(i_name),
-                eol_style=EOL_STYLE_NONE,
-            )

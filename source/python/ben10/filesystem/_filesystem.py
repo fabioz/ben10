@@ -1216,7 +1216,7 @@ class CreateTemporaryDirectory(object):
 
     def __exit__(self, *args):
         if self.dirname is not None:
-            DeleteDirectory(self.dirname, skip_on_error=False)
+            DeleteDirectory(self.dirname, skip_on_error=True)
 
 
 

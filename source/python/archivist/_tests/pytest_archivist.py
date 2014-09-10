@@ -38,6 +38,7 @@ class Test(object):
     def testExceptions(self, embed_data):
         from archivist import Archivist
         from ben10.filesystem import CreateDirectory, CreateFile
+        from zipfile import BadZipfile
         import os
         import pytest
 
@@ -46,7 +47,7 @@ class Test(object):
 
         archive = Archivist()
 
-        with pytest.raises(NotImplementedError):
+        with pytest.raises(BadZipfile):
             archive.ExtractZip(embed_data['alpha.INVALID'], embed_data.GetDataDirectory())
 
         with pytest.raises(RuntimeError):
