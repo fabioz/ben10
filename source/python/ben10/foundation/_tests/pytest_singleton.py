@@ -1,3 +1,4 @@
+import mock
 from ben10.foundation.callback import After
 from ben10.foundation.decorators import Override
 from ben10.foundation.singleton import (PushPopSingletonError, Singleton, SingletonAlreadySetError,
@@ -129,3 +130,21 @@ class Test:
         self._called = False
         MySingleton.GetSingleton()
         assert not self._called
+
+
+    def testGetSingletonThreadSafe(self):
+        from threading import Thread, Event
+
+        class MySingleton(Singleton):
+            pass
+
+        thrlist = [Thread(target=MySingleton.GetSingleton) for i in range(3)]
+        with mock.patch.object(MySingleton, "CreateDefaultSingleton") as create_singleton_mock:
+            event = Event()
+            create_singleton_mock.side_effect = lambda: event.wait(1)
+            for thread in thrlist:
+                thread.start()
+            event.set()
+            for thread in thrlist:
+                thread.join()
+            assert create_singleton_mock.call_count == 1
