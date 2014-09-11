@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 from _callback import ErrorNotHandledInCallback, FunctionNotRegisteredError, HandleErrorOnCallback
 from _callback_wrapper import _CallbackWrapper
 from _callbacks import Callbacks

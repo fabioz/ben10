@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 from ben10.dircache import DirCache
 from ben10.filesystem import CreateDirectory, CreateFile, DeleteFile, IsDir, IsFile, IsLink
 from ben10.filesystem._filesystem import GetFileContents

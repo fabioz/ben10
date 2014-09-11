@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 '''
 This module contains a selection of file related functions that can be used anywhere.
 
@@ -84,7 +85,7 @@ def Cwd(directory):
 
         # working on some directory again
 
-    :param str directory:
+    :param unicode directory:
         Target directory to enter
     '''
     old_directory = os.getcwd()
@@ -109,10 +110,10 @@ def NormalizePath(path):
     Ex. The SOURCES_DIR set by subversion must end with a slash because of the way it is used
     in the Visual Studio projects.
 
-    :param str path:
+    :param unicode path:
         The path to normalize.
 
-    :rtype: str
+    :rtype: unicode
     :returns:
         Normalized path
     '''
@@ -134,10 +135,10 @@ def CanonicalPath(path):
         CanonicalPath(path1) == CanonicalPath(path2) if and only if they represent the same file on
         the host OS. Takes account of case, slashes and relative paths.
 
-    :param str path:
+    :param unicode path:
         The original path.
 
-    :rtype: str
+    :rtype: unicode
     :returns:
         The unique path.
     '''
@@ -199,10 +200,10 @@ def CreateMD5(source_filename, target_filename=None):
     '''
     Creates a md5 file from a source file (contents are the md5 hash of source file)
 
-    :param str source_filename:
+    :param unicode source_filename:
         Path to source file
 
-    :type target_filename: str or None
+    :type target_filename: unicode or None
     :param target_filename:
         Name of the target file with the md5 contents
 
@@ -309,11 +310,11 @@ def CopyFile(source_filename, target_filename, override=True, md5_check=False, c
 
 def _DoCopyFile(source_filename, target_filename, copy_symlink=True):
     '''
-    :param str source_filename:
+    :param unicode source_filename:
         The source filename.
         Schemas: local, ftp, http
 
-    :param str target_filename:
+    :param unicode target_filename:
         Target filename.
         Schemas: local, ftp
 
@@ -362,10 +363,10 @@ def _CopyFileLocal(source_filename, target_filename, copy_symlink=True):
     '''
     Copy a file locally to a directory.
 
-    :param str source_filename:
+    :param unicode source_filename:
         The filename to copy from.
 
-    :param str target_filename:
+    :param unicode target_filename:
         The filename to copy to.
 
     :param bool copy_symlink:
@@ -413,7 +414,7 @@ def CopyFiles(source_dir, target_dir, create_target_dir=False, md5_check=False):
     '''
     Copy files from the given source to the target.
 
-    :param str source_dir:
+    :param unicode source_dir:
         A filename, URL or a file mask.
         Ex.
             x:\coilib50
@@ -422,7 +423,7 @@ def CopyFiles(source_dir, target_dir, create_target_dir=False, md5_check=False):
             ftp://server/directory/file
 
 
-    :param str target_dir:
+    :param unicode target_dir:
         A directory or an URL
         Ex.
             d:\Temp
@@ -490,57 +491,6 @@ def CopyFilesX(file_mapping):
     '''
     Copies files into directories, according to a file mapping
 
-    :param list(tuple(str,str)) file_mapping:
-        A list of mappings between the directory in the target and the source.
-        For syntax, @see: ExtendedPathMask
-
-    :rtype: list(tuple(str,str))
-    :returns:
-        List of files copied. (source_filename, target_filename)
-
-    .. seealso:: FTP LIMITATIONS at this module's doc for performance issues information
-    '''
-    # List files that match the mapping
-    files = []
-    for i_target_path, i_source_path_mask in file_mapping:
-        tree_recurse, flat_recurse, dirname, in_filters, out_filters = ExtendedPathMask.Split(i_source_path_mask)
-
-        _AssertIsLocal(dirname)
-
-        filenames = FindFiles(dirname, in_filters, out_filters, tree_recurse)
-        for i_source_filename in filenames:
-            if os.path.isdir(i_source_filename):
-                continue  # Do not copy dirs
-
-            i_target_filename = i_source_filename[len(dirname) + 1:]
-            if flat_recurse:
-                i_target_filename = os.path.basename(i_target_filename)
-            i_target_filename = os.path.join(i_target_path, i_target_filename)
-
-            files.append((
-                StandardizePath(i_source_filename),
-                StandardizePath(i_target_filename)
-            ))
-
-    # Copy files
-    for i_source_filename, i_target_filename in files:
-        # Create target dir if necessary
-        target_dir = os.path.dirname(i_target_filename)
-        CreateDirectory(target_dir)
-
-        CopyFile(i_source_filename, i_target_filename)
-
-    return files
-
-
-
-#===================================================================================================
-# CopyFilesX
-#===================================================================================================
-def CopyFilesX(file_mapping):
-    '''
-    Copies files into directories, according to a file mapping
-
     :param list(tuple(unicode,unicode)) file_mapping:
         A list of mappings between the directory in the target and the source.
         For syntax, @see: ExtendedPathMask
@@ -590,7 +540,7 @@ def CopyFilesX(file_mapping):
 #===================================================================================================
 def IsFile(path):
     '''
-    :param str path:
+    :param unicode path:
         Path to a file (local or ftp)
 
     :raises NotImplementedProtocol:
@@ -668,7 +618,7 @@ def GetDriveType(path):
 #===================================================================================================
 def IsDir(directory):
     '''
-    :param str directory:
+    :param unicode directory:
         A path
 
     :rtype: bool
@@ -722,10 +672,10 @@ def CopyDirectory(source_dir, target_dir, override=False):
     '''
     Recursively copy a directory tree.
 
-    :param str source_dir:
+    :param unicode source_dir:
         Where files will come from
 
-    :param str target_dir:
+    :param unicode target_dir:
         Where files will go to
 
     :param bool override:
@@ -754,7 +704,7 @@ def DeleteFile(target_filename):
 
     .. note:: If file doesn't exist this method has no effect.
 
-    :param str target_filename:
+    :param unicode target_filename:
         A local filename
 
     :raises NotImplementedForRemotePathError:
@@ -781,21 +731,26 @@ def DeleteFile(target_filename):
 #===================================================================================================
 # AppendToFile
 #===================================================================================================
-def AppendToFile(filename, contents, eol_style=EOL_STYLE_NATIVE, encoding=None):
+def AppendToFile(filename, contents, eol_style=EOL_STYLE_NATIVE, encoding=None, binary=False):
     '''
     Appends content to a local file.
 
-    :param str filename:
+    :param unicode filename:
 
-    :param str contents:
+    :param unicode contents:
 
     :type eol_style: EOL_STYLE_XXX constant
     :param eol_style:
         Replaces the EOL by the appropriate EOL depending on the eol_style value.
         Considers that all content is using only "\n" as EOL.
 
-    :param str encoding:
+    :param unicode encoding:
         Target file's content encoding.
+        Defaults to sys.getdefaultencoding()
+
+    :param bool binary:
+        If True, content is appended in binary mode. In this case, `contents` must be `bytes` and not
+        `unicode`
 
     :raises NotImplementedForRemotePathError:
         If trying to modify a non-local path
@@ -806,15 +761,15 @@ def AppendToFile(filename, contents, eol_style=EOL_STYLE_NATIVE, encoding=None):
     '''
     _AssertIsLocal(filename)
 
-    # Unicode
-    unicode_contents = isinstance(contents, unicode)
-    use_encoding = encoding is not None
-    if unicode_contents ^ use_encoding:  # XOR
-        raise ValueError('Either use unicode contents with an encoding, or string contents without encoding.')
+    assert isinstance(contents, unicode) ^ binary, 'Must always receive unicode contents, unless binary=True'
 
-    if unicode_contents:
-        contents = contents.encode(encoding)
-    contents = _HandleContentsEol(contents, eol_style)
+    if not binary:
+        # Replaces eol on each line by the given eol_style.
+        contents = _HandleContentsEol(contents, eol_style)
+
+        # Handle encoding here, and always write in binary mode. We can't use io.open because it
+        # tries to do its own line ending handling.
+        contents = contents.encode(encoding or sys.getdefaultencoding())
 
     oss = open(filename, 'ab')
     try:
@@ -831,9 +786,9 @@ def MoveFile(source_filename, target_filename):
     '''
     Moves a file.
 
-    :param str source_filename:
+    :param unicode source_filename:
 
-    :param str target_filename:
+    :param unicode target_filename:
 
     :raises NotImplementedForRemotePathError:
         If trying to operate with non-local files.
@@ -853,9 +808,9 @@ def MoveDirectory(source_dir, target_dir):
     '''
     Moves a directory.
 
-    :param str source_dir:
+    :param unicode source_dir:
 
-    :param str target_dir:
+    :param unicode target_dir:
 
     :raises NotImplementedError:
         If trying to move anything other than:
@@ -899,12 +854,12 @@ def GetFileContents(filename, binary=False, encoding=None, newline=None):
     '''
     Reads a file and returns its contents. Works for both local and remote files.
 
-    :param str filename:
+    :param unicode filename:
 
     :param bool binary:
         If True returns the file as is, ignore any EOL conversion.
 
-    :param str encoding:
+    :param unicode encoding:
         File's encoding. If not None, contents obtained from file will be decoded using this
         `encoding`.
 
@@ -918,16 +873,11 @@ def GetFileContents(filename, binary=False, encoding=None, newline=None):
 
     .. seealso:: FTP LIMITATIONS at this module's doc for performance issues information
     '''
-    source_file = OpenFile(filename, encoding=encoding, binary=binary, newline=newline)
+    source_file = OpenFile(filename, binary=binary, encoding=encoding, newline=newline)
     try:
         contents = source_file.read()
     finally:
         source_file.close()
-
-    if not binary and encoding is None:
-        # When binary, read() call above returns bytes already.
-        # When encoding is undefined (None) we must convert to bytes using encode.
-        contents = contents.encode('ascii')
 
     return contents
 
@@ -939,17 +889,17 @@ def GetFileLines(filename, newline=None, encoding=None):
     '''
     Reads a file and returns its contents as a list of lines. Works for both local and remote files.
 
-    :param str filename:
+    :param unicode filename:
 
     :param None|''|'\n'|'\r'|'\r\n' newline:
         Controls universal newlines.
         See 'io.open' newline parameter documentation for more details.
 
-    :param str encoding:
+    :param unicode encoding:
         File's encoding. If not None, contents obtained from file will be decoded using this
         `encoding`.
 
-    :returns list(str):
+    :returns list(unicode):
         The file's lines
 
     .. seealso:: FTP LIMITATIONS at this module's doc for performance issues information
@@ -967,7 +917,7 @@ def OpenFile(filename, binary=False, newline=None, encoding=None):
     Open a file and returns it.
     Consider the possibility of a remote file (HTTP, HTTPS, FTP)
 
-    :param str filename:
+    :param unicode filename:
         Local or remote filename.
 
     :param bool binary:
@@ -978,7 +928,7 @@ def OpenFile(filename, binary=False, newline=None, encoding=None):
         Controls universal newlines.
         See 'io.open' newline parameter documentation for more details.
 
-    :param str encoding:
+    :param unicode encoding:
         File's encoding. If not None, contents obtained from file will be decoded using this
         `encoding`.
 
@@ -1017,11 +967,11 @@ def ListFiles(directory):
     '''
     Lists the files in the given directory
 
-    :type directory: str | unicode
+    :type directory: unicode | unicode
     :param directory:
         A directory or URL
 
-    :rtype: list(str) | list(unicode)
+    :rtype: list(unicode) | list(unicode)
     :returns:
         List of filenames/directories found in the given directory.
         Returns None if the given directory does not exists.
@@ -1060,7 +1010,7 @@ def CheckIsFile(filename):
     '''
     Check if the given file exists.
 
-    @filename: str
+    @filename: unicode
         The filename to check for existence.
 
     @raise: FileNotFoundError
@@ -1079,7 +1029,7 @@ def CheckIsDir(directory):
     '''
     Check if the given directory exists.
 
-    @filename: str
+    @filename: unicode
         Path to a directory being checked for existence.
 
     @raise: DirectoryNotFoundError
@@ -1094,14 +1044,14 @@ def CheckIsDir(directory):
 #===================================================================================================
 # CreateFile
 #===================================================================================================
-def CreateFile(filename, contents, eol_style=EOL_STYLE_NATIVE, create_dir=True, encoding=None):
+def CreateFile(filename, contents, eol_style=EOL_STYLE_NATIVE, create_dir=True, encoding=None, binary=False):
     '''
     Create a file with the given contents.
 
-    :param str filename:
+    :param unicode filename:
         Filename and path to be created.
 
-    :param str contents:
+    :param unicode contents:
         The file contents as a string.
 
     :type eol_style: EOL_STYLE_XXX constant
@@ -1112,10 +1062,15 @@ def CreateFile(filename, contents, eol_style=EOL_STYLE_NATIVE, create_dir=True, 
     :param bool create_dir:
         If True, also creates directories needed in filename's path
 
-    :param str encoding:
+    :param unicode encoding:
         Target file's content encoding.
+        Defaults to sys.getdefaultencoding()
 
-    :return str:
+    :param bool binary:
+        If True, file is created in binary mode. In this case, `contents` must be `bytes` and not
+        `unicode`
+
+    :return unicode:
         Returns the name of the file created.
 
     :raises NotImplementedProtocol:
@@ -1127,17 +1082,15 @@ def CreateFile(filename, contents, eol_style=EOL_STYLE_NATIVE, create_dir=True, 
 
     .. seealso:: FTP LIMITATIONS at this module's doc for performance issues information
     '''
-    # Unicode
-    unicode_contents = isinstance(contents, unicode)
-    use_encoding = encoding is not None
-    if unicode_contents ^ use_encoding:  # XOR
-        raise ValueError('Either use unicode contents with an encoding, or string contents without encoding.')
+    assert isinstance(contents, unicode) ^ binary, 'Must always receive unicode contents, unless binary=True'
 
-    if unicode_contents:
-        contents = contents.encode(encoding)
+    if not binary:
+        # Replaces eol on each line by the given eol_style.
+        contents = _HandleContentsEol(contents, eol_style)
 
-    # Replaces eol on each line by the given eol_style.
-    contents = _HandleContentsEol(contents, eol_style)
+        # Handle encoding here, and always write in binary mode. We can't use io.open because it
+        # tries to do its own line ending handling.
+        contents = contents.encode(encoding or sys.getdefaultencoding())
 
     # If asked, creates directory containing file
     if create_dir:
@@ -1173,17 +1126,13 @@ def ReplaceInFile(filename, old, new, encoding=None):
     :param unicode filename:
         The name of the file.
 
-    :param str  old:
+    :param unicode old:
         The string to search for.
 
-    :param str new:
+    :param unicode new:
         Replacement string.
 
-    :param str encoding:
-        Target file's content encoding.
-        Defaults to sys.getdefaultencoding()
-
-    :return str:
+    :return unicode:
         The new contents of the file.
     '''
     contents = GetFileContents(filename, encoding=encoding)
@@ -1200,9 +1149,9 @@ def CreateDirectory(directory):
     '''
     Create directory including any missing intermediate directory.
 
-    :param str directory:
+    :param unicode directory:
 
-    :return str|urlparse.ParseResult:
+    :return unicode|urlparse.ParseResult:
         Returns the created directory or url (see urlparse).
 
     :raises NotImplementedProtocol:
@@ -1239,18 +1188,18 @@ class CreateTemporaryDirectory(object):
     '''
     Context manager to create a temporary file and remove if at the context end.
 
-    :ivar str dirname:
+    :ivar unicode dirname:
         Name of the created directory
     '''
     def __init__(self, suffix='', prefix='tmp', base_dir=None, maximum_attempts=100):
         '''
-        :param str suffix:
+        :param unicode suffix:
             A suffix to add in the name of the created directory
 
-        :param str prefix:
+        :param unicode prefix:
             A prefix to add in the name of the created directory
 
-        :param str base_dir:
+        :param unicode base_dir:
             A path to use as base in the created directory (if any). The temp directory will be a
             child of the given base dir
 
@@ -1268,7 +1217,7 @@ class CreateTemporaryDirectory(object):
 
     def __enter__(self):
         '''
-        :return str:
+        :return unicode:
             The path to the created temp file.
         '''
         if self.base_dir is None:
@@ -1308,7 +1257,7 @@ class CreateTemporaryFile(object):
     '''
     Context manager to create a temporary file and remove if at the context end.
 
-    :ivar str filename:
+    :ivar unicode filename:
         Name of the created file
     '''
     def __init__(
@@ -1325,13 +1274,13 @@ class CreateTemporaryFile(object):
         :param eol_style: .. seealso:: CreateFile
         :param encoding: .. seealso:: CreateFile
 
-        :param str suffix:
+        :param unicode suffix:
             A suffix to add in the name of the created file
 
-        :param str prefix:
+        :param unicode prefix:
             A prefix to add in the name of the created file
 
-        :param str base_dir:
+        :param unicode base_dir:
             A path to use as base in the created file. Uses temp dir if not given.
 
         :param int maximum_attemps:
@@ -1353,7 +1302,7 @@ class CreateTemporaryFile(object):
 
     def __enter__(self):
         '''
-        :return str:
+        :return unicode:
             The path to the created temp file.
         '''
         from ._filesystem_exceptions import FileAlreadyExistsError
@@ -1391,7 +1340,7 @@ def DeleteDirectory(directory, skip_on_error=False):
     '''
     Deletes a directory.
 
-    :param str directory:
+    :param unicode directory:
 
     :param bool skip_on_error:
         If True, ignore any errors when trying to delete directory (for example, directory not
@@ -1434,7 +1383,7 @@ def DeleteDirectory(directory, skip_on_error=False):
 #===================================================================================================
 def GetMTime(path):
     '''
-    :param str path:
+    :param unicode path:
         Path to file or directory
 
     :rtype: float
@@ -1508,10 +1457,10 @@ def CreateLink(target_path, link_path, override=True):
     '''
     Create a symbolic link at `link_path` pointing to `target_path`.
 
-    :param str target_path:
+    :param unicode target_path:
         Link target
 
-    :param str link_path:
+    :param unicode link_path:
         Fullpath to link name
 
     :param bool override:
@@ -1545,7 +1494,7 @@ def CreateLink(target_path, link_path, override=True):
 #===================================================================================================
 def IsLink(path):
     '''
-    :param str path:
+    :param unicode path:
         Path being tested
 
     :returns bool:
@@ -1573,10 +1522,10 @@ def ReadLink(path):
     '''
     Read the target of the symbolic link at `path`.
 
-    :param str path:
+    :param unicode path:
         Path to a symbolic link
 
-    :returns str:
+    :returns unicode:
         Target of a symbolic link
     '''
     _AssertIsLocal(path)
@@ -1637,7 +1586,7 @@ def _AssertIsLocal(path):
 
     This is used in filesystem functions that do not support remote operations yet.
 
-    :param str path:
+    :param unicode path:
 
     :raises NotImplementedForRemotePathError:
         If the given path is not local
@@ -1652,7 +1601,7 @@ def _HandleContentsEol(contents, eol_style):
     '''
     Replaces eol on each line by the given eol_style.
 
-    :param str contents:
+    :param unicode contents:
     :type eol_style: EOL_STYLE_XXX constant
     :param eol_style:
     '''
@@ -1773,21 +1722,22 @@ def CheckForUpdate(source, target):
 #===================================================================================================
 # MatchMasks
 #===================================================================================================
-def MatchMasks(filename, filters):
+def MatchMasks(filename, masks):
     '''
     Verifies if a filename match with given patterns.
 
     :param str filename: The filename to match.
-    :param list(str) filters: The patterns to search in the filename.
+    :param list(str) masks: The patterns to search in the filename.
     :return bool:
         True if the filename has matched with one pattern, False otherwise.
     '''
     import fnmatch
-    if not isinstance(filters, (list, tuple)):
-        filters = [filters]
 
-    for i_filter in filters:
-        if fnmatch.fnmatch(filename, i_filter):
+    if not isinstance(masks, (list, tuple)):
+        masks = [masks]
+
+    for i_mask in masks:
+        if fnmatch.fnmatch(filename, i_mask):
             return True
     return False
 

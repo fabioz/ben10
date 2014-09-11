@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 from ben10.foundation.platform_ import Platform
 from ben10.foundation.url import HideURLPassword, IsUrlEqual
 

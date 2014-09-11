@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 '''
 frozen
 Setup the sys.frozen attribute when the application is not in release mode.

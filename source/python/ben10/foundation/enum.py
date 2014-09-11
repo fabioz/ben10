@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 '''
     An enumeration is a set of symbolic names bound to unique, constant integer values. Within an
     enumeration, the values can be compared by identity, and the enumeration itself can be iterated
@@ -10,7 +11,7 @@
     Other examples include error status values and states within a defined process.
 
     It is possible to simply define a sequence of values of some other basic type, such as int or
-    str, to represent discrete arbitrary values. However, an enumeration ensures that such values
+    unicode, to represent discrete arbitrary values. However, an enumeration ensures that such values
     are distinct from any others, and that operations without meaning ("Wednesday times two") are
     not defined for these values.
 
@@ -51,7 +52,7 @@ class EnumValue(tuple):
         #
         # self[0] is the Enum class
         # self[1] is the integer value (int)
-        # self[2] is the name of this enumerate value (str)
+        # self[2] is the name of this enumerate value (unicode)
 
         return tuple.__new__(cls, (Enumcls, value, name))
 
@@ -122,6 +123,12 @@ class EnumValue(tuple):
 #===================================================================================================
 class EnumMetaclass(type):
 
+    def __new__(self, *args, **kwargs):
+        # Convert first arg to bytes, since type does not accept unicode for class names.
+        args = (bytes(args[0]),) + args[1:]
+        return type.__new__(self, *args, **kwargs)
+
+
     def __init__(cls, name, bases, attributes):
         '''
         Creates an Enum class.
@@ -129,13 +136,13 @@ class EnumMetaclass(type):
         :param type cls:
             The class being defined.
 
-        :param str name:
+        :param unicode name:
             The name of the class.
 
         :param list(type) bases:
             The class's base classes.
 
-        :type attributes: dict(str -> object)
+        :type attributes: dict(unicode -> object)
         :param attributes:
             The class attributes.
         '''
@@ -152,7 +159,7 @@ class EnumMetaclass(type):
                 enums.update(basecls._enums)
 
         # Creates a class for the enumerate values
-        Enumvalue_class = type(name + 'Value', (EnumValue,), {})
+        Enumvalue_class = type(bytes(name + 'Value'), (EnumValue,), {})
         cls._value_type = Enumvalue_class
 
         # For each class attribute, create an EnumValue and store that back on
@@ -212,7 +219,7 @@ class EnumMetaclass(type):
 
 
 Enum = EnumMetaclass(
-    str('Enum'),  # name
+    'Enum',  # name
     (),  # bases
     {  # attributes
         '__doc__': 'The public API Enum class.',
@@ -272,10 +279,10 @@ def MakeEnum(name, enum_list):
     automatically assigned starting from 0. When 2-tuples are used, the first item of the tuple is
     a string and the second item is the integer value.
 
-    :param str name:
+    :param unicode name:
         The enum class name.
 
-    :type enum_list: list((str, int) | (str))
+    :type enum_list: list((unicode, int) | (unicode))
     :param enum_list:
         A list with the names of the enumerate values, or tuples with the name and the integer
         value.
@@ -291,7 +298,7 @@ def MakeEnum(name, enum_list):
                 item, index = item
             except ValueError:
                 raise EnumException, "tuple doesn't have 2 items: %r" % item
-        if type(item) is not str:
+        if type(item) is not unicode:
             raise EnumException, "enum name is not a string: %r" % item
         if type(index) is not int:
             raise EnumException, "enum value is not an integer: %r" % index
@@ -303,7 +310,7 @@ def MakeEnum(name, enum_list):
         reverse_lookup[index] = item
         index += 1
 
-    return EnumMetaclass(str(name), (Enum,), lookup)
+    return EnumMetaclass(unicode(name), (Enum,), lookup)
 
 
 

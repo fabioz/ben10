@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 from ben10.foundation.is_frozen import IsFrozen
 from ben10.foundation.platform_ import Platform
 import os
@@ -17,7 +18,7 @@ def IsRunningOn64BitMachine():
         Returns true if the current machine is a 64 bit machine (regardless of the way this
         executable was compiled).
     '''
-    platform_short_name = str(Platform.GetCurrentPlatform())
+    platform_short_name = unicode(Platform.GetCurrentPlatform())
 
     # If python is compiled on 64 bits and running, this is a 64 bit machine.
     if platform_short_name == 'win64':
@@ -51,6 +52,8 @@ def GetApplicationDir():
 
     Expects that the application executable is installed in a sub directory of the application
     directory.
+
+    :return unicode:
     '''
     if IsFrozen():
         result = os.path.dirname(sys.executable)
@@ -58,7 +61,7 @@ def GetApplicationDir():
     else:
         result = sys.path[0]
 
-    return result
+    return result.decode('ascii')
 
 
 #===================================================================================================
@@ -66,10 +69,11 @@ def GetApplicationDir():
 #===================================================================================================
 def GetExecutableDir():
     '''
-    :return str:
+    :return unicode:
         Directory containing sys.executable
     '''
-    return os.path.dirname(sys.executable)
+    result = os.path.dirname(sys.executable)
+    return result.decode('ascii')
 
 
 #===================================================================================================
@@ -77,11 +81,14 @@ def GetExecutableDir():
 #===================================================================================================
 def GetUserHomeDir():
     '''
-        :rtype: the user directory to be used (platform-dependent).
-        In windows that means something as:
-            C:\Documents and Settings\user_name
-        In linux it's something as:
-            /usr/home/user_name
+    Obtain the user home directory.
+
+    On windows that means something as:
+        C:\Documents and Settings\<USER_NAME>
+    On linux it's something as:
+        /usr/home/user_name
+
+    :return unicode:
     '''
     # where to save
     if sys.platform == 'win32':
@@ -89,4 +96,4 @@ def GetUserHomeDir():
     else:
         path = os.environ['HOME']
 
-    return path
+    return path.decode('ascii')

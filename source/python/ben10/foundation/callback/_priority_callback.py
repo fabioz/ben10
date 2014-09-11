@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 from _fast_callback import Callback
 from ben10.foundation.decorators import Override
 from ben10.foundation.odict import odict

@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 '''
 IMPORTANT:
     Avoid importing lib2to3 on module level becase this makes multi-processing test execution fail.

@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 from ben10.foundation import is_frozen
 from ben10.foundation.platform_ import Platform
 from ben10.foundation.pushpop import PushPop
@@ -35,22 +36,32 @@ class Test():
     def testGetUserHomeDir(self):
         with PushPop(os, 'environ', dict(HOMEDRIVE='C:/',HOMEPATH='Users/ama',HOME='/home/users/ama')):
             with PushPop(sys, 'platform', 'win32'):
-                assert GetUserHomeDir() == '%(HOMEDRIVE)s%(HOMEPATH)s' % os.environ
+                home_dir = GetUserHomeDir()
+                assert isinstance(home_dir, unicode)
+                assert home_dir == '%(HOMEDRIVE)s%(HOMEPATH)s' % os.environ
             with PushPop(sys, 'platform', 'linux2'):
-                assert GetUserHomeDir() == '%(HOME)s' % os.environ
+                home_dir = GetUserHomeDir()
+                assert isinstance(home_dir, unicode)
+                assert home_dir == '%(HOME)s' % os.environ
 
 
     def testGetApplicationDir(self):
         was_frozen = is_frozen.SetIsFrozen(False)
         try:
-            assert GetApplicationDir() == sys.path[0]
+            application_dir = GetApplicationDir()
+            assert isinstance(application_dir, unicode)
+            assert application_dir == sys.path[0]
 
             # When in a executable...
             is_frozen.SetIsFrozen(True)
-            assert GetApplicationDir() == os.path.dirname(os.path.dirname(sys.executable))
+            application_dir = GetApplicationDir()
+            assert isinstance(application_dir, unicode)
+            assert application_dir == os.path.dirname(os.path.dirname(sys.executable))
         finally:
             is_frozen.SetIsFrozen(was_frozen)
 
 
     def testGetExecutableDir(self):
-        assert GetExecutableDir() == os.path.dirname(sys.executable)
+        executable_dir = GetExecutableDir()
+        assert isinstance(executable_dir, unicode)
+        assert executable_dir == os.path.dirname(sys.executable)

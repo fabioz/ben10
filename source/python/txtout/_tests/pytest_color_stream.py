@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 from txtout.color_stream import ColorStream, UnixConsole
 import cStringIO
 

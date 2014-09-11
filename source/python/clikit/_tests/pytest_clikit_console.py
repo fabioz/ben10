@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 from StringIO import StringIO
 from clikit.console import BufferedConsole, Console
 import mock

@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 '''
 This module contains an open function that should be used with care.
 
@@ -46,7 +47,7 @@ def OpenReadOnlyFile(filename, binary=False, sequential=False):
     Windows files can be configured with a attribute for reading sequentially that have a good
     impact in reading files, specially if reading network files.
 
-    :param str filename:
+    :param unicode filename:
         File name to be opened
 
     :param bool binary:

@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 from ben10.filesystem import (CheckIsFile, DeleteFile, ExtendedPathMask, FileAlreadyExistsError,
     FindFiles)
 import os
@@ -20,10 +21,10 @@ class Archivist(object):
         '''
         Creates a compressed archive (zip, rar, etc).
 
-        :param str archive:
+        :param unicode archive:
             The name of the target archive
 
-        :param list(tuple(str,str)) archive_mapping:
+        :param list(tuple(unicode,unicode)) archive_mapping:
             A list of mappings between the directory in the target and the source "extended path
             mask" description.
 
@@ -60,14 +61,14 @@ class Archivist(object):
         '''
         Create a zip filename using the given archive_mapping
 
-        :param str archive:
+        :param unicode archive:
             The name of the target archive
 
-        :param list(tuple(str,str)) archive_mapping:
+        :param list(tuple(unicode,unicode)) archive_mapping:
             A list of mappings between the directory in the target and the source "extended path
             mask" description.
 
-        :param str mode:
+        :param unicode mode:
             The file mode for the archive. Needed to maintain the interface.
             CreateZip only accepts "w".
         '''
@@ -84,14 +85,14 @@ class Archivist(object):
         '''
         Create a tar filename using the given archive_mapping
 
-        :param str archive:
+        :param unicode archive:
             The name of the target archive
 
-        :param list(tuple(str,str)) archive_mapping:
+        :param list(tuple(unicode,unicode)) archive_mapping:
             A list of mappings between the directory in the target and the source "extended path
             mask" description.
 
-        :param str mode:
+        :param unicode mode:
             The file mode for the archive.
             See options on tarfile.open documentation.
             http://docs.python.org/2/library/tarfile.html
@@ -147,10 +148,10 @@ class Archivist(object):
         '''
         Extracts a zip filename into the target folder
 
-        :param str zip_filename:
+        :param unicode zip_filename:
             Path to the archive filename
 
-        :param str target_folder:
+        :param unicode target_folder:
             Folder into which contents will be extracted
         '''
         import zipfile
@@ -163,13 +164,13 @@ class Archivist(object):
         '''
         Extracts a zip filename into the target folder
 
-        :param str tar_filename:
+        :param unicode tar_filename:
             Path to the archive filename
 
-        :param str target_folder:
+        :param unicode target_folder:
             Folder into which contents will be extracted
 
-        :param str mode:
+        :param unicode mode:
         '''
         import tarfile
         oss = tarfile.open(tar_filename, mode)
@@ -181,10 +182,10 @@ class Archivist(object):
         '''
         Extracts a rar filename into the target folder
 
-        :param str rar_filename:
+        :param unicode rar_filename:
             Path to the archive filename
 
-        :param str target_folder:
+        :param unicode target_folder:
             Folder into which contents will be extracted
         '''
         from ._rarfile import Rarfile
@@ -196,14 +197,13 @@ class Archivist(object):
         rar_file.close()
 
 
-
     # Internal functions ---------------------------------------------------------------------------
     def _ZipFileListing(self, archive_mapping, out_filters=()):
         '''
         Returns a list of tuples, mapping each filename found in the given archive mapping.
         Each tuple contains the zip_filename and original filename.
 
-        :param list(tuple(str,str)) archive_mapping:
+        :param list(tuple(unicode,unicode)) archive_mapping:
             A list of mappings between the directory in the target and the source "extended path
             mask" description.
         '''
@@ -220,7 +220,7 @@ class Archivist(object):
             )
             if len(filenames) == 0:
                 warnings.warn(
-                    'NO FILES LISTED in "extended path mask": %r' % (i_path,),
+                    'NO FILES LISTED in "extended path mask": \'%s\'' % (i_path,),
                     stacklevel=2,
                 )
             for i_filename in filenames:

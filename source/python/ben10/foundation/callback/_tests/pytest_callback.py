@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 from ben10.foundation.callback import (After, Before, Callback, Callbacks,
     FunctionNotRegisteredError, Remove, _CallbackWrapper)
 from ben10.foundation.string import Dedent
@@ -677,7 +678,7 @@ class Test(object):
                 assert self.called == 4
             assert mocked.call_count == 2
             mocked.assert_called_with(
-                '''Error while trying to call \n  File "%s", line 661, in After2 (Called from Callback)\nArgs: (1,)\nKwargs: {\'a\': 2}\n''' % __file__
+                '''Error while trying to call \n  File "%s", line 662, in After2 (Called from Callback)\nArgs: (1,)\nKwargs: {\'a\': 2}\n''' % __file__
             )
 
             # test the default behaviour: errors are not handled and stop execution as usual

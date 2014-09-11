@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 import contextlib
 
 
@@ -11,7 +12,7 @@ def PushPopAttr(obj, name, value):
     A context manager to replace and restore a variable/attribute.
 
     :param object obj: The object to replace/restore.
-    :param str name: The variable/attribute to replace/restore.
+    :param unicode name: The variable/attribute to replace/restore.
     :param object value: The value to replace.
 
     Example::

@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 from ben10.foundation.reraise import Reraise, ReraiseKeyError
 import pytest
 
@@ -29,7 +30,7 @@ class Test(object):
             except Exception, exception:
                 Reraise(exception, "While doing y:")
         except Exception, exception:
-            obtained = str(exception)
+            obtained = unicode(exception)
             assert type(exception) == AttributeError
 
         assert obtained == expected
@@ -57,7 +58,7 @@ class Test(object):
             except Exception, exception:
                 Reraise(exception, "While doing x:")
         except Exception, exception:
-            obtained = str(exception)
+            obtained = unicode(exception)
             assert type(exception) == RuntimeError
 
         assert obtained == expected
@@ -84,7 +85,7 @@ class Test(object):
             except Exception, exception:
                 Reraise(exception, "While doing x:")
         except Exception, exception:
-            obtained = str(exception)
+            obtained = unicode(exception)
 
         assert 'SecondaryError' in obtained, 'Expected "SecondaryError" to be in: ' + obtained
 
@@ -96,4 +97,4 @@ class Test(object):
             except KeyError as exception:
                 Reraise(exception, "Reraising")
 
-        assert str(key_error) == '%s:95: ReraiseKeyError:' % __file__
+        assert unicode(key_error) == '%s:96: ReraiseKeyError:' % __file__

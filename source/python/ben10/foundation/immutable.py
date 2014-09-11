@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 '''
     Defines types and functions to generate immutable structures.
 
@@ -5,7 +6,7 @@
 '''
 from types import NoneType
 
-_IMMUTABLE_TYPES = set((int, long, float, str, bool, NoneType))
+_IMMUTABLE_TYPES = set((int, long, float, unicode, bool, NoneType))
 
 #===================================================================================================
 # RegisterAsImmutable
@@ -33,8 +34,8 @@ def AsImmutable(value, return_str_if_not_expected=True):
     Returns the given instance as a immutable object:
         - Converts lists to tuples
         - Converts dicts to ImmutableDicts
-        - Converts other objects to str
-        - Does not convert basic types (int/float/str/bool)
+        - Converts other objects to unicode
+        - Does not convert basic types (int/float/unicode/bool)
 
     :param object value:
         The value to be returned as an immutable value
@@ -68,7 +69,7 @@ def AsImmutable(value, return_str_if_not_expected=True):
 
 
     #Now, on to the isinstance series...
-    if isinstance(value, (int, long, float, str, bool)):
+    if isinstance(value, (int, long, float, unicode, bool)):
         return value
 
     if isinstance(value, dict):
@@ -81,7 +82,7 @@ def AsImmutable(value, return_str_if_not_expected=True):
         return frozenset(value)
 
     if return_str_if_not_expected:
-        return str(value)
+        return unicode(value)
 
     else:
         raise RuntimeError('Cannot make %s immutable (not supported).' % value)

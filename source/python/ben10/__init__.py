@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 #===================================================================================================
 # Placeholder for the "tr" function
 # The "tr" function is implemented by xgui20.translate

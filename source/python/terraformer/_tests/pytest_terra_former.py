@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 from ben10.foundation.pushpop import PushPop
 from ben10.foundation.string import Dedent
 from terraformer import TerraFormer
@@ -357,7 +358,7 @@ def testLocalImports(monkeypatch, embed_data):
     monkeypatch.setattr(ImportBlock, 'PYTHON_EXT', '.py_')
 
     def TestIt(filename):
-        full_filename=embed_data['testLocalImports/alpha/%s.py_' % filename]
+        full_filename = embed_data['testLocalImports/alpha/%s.py_' % filename]
         terra = TerraFormer(filename=full_filename)
         terra.Save()
         embed_data.AssertEqualFiles(
@@ -386,9 +387,9 @@ def testSymbolVisitor():
     def PrintScopes(scopes):
         result = []
         for i in sorted(scopes, key=lambda x:x.name):
-            result.append( '- %s' % i)
+            result.append('- %s' % i)
             for j in sorted(i.uses):
-                result.append( '  - %s' % j)
+                result.append('  - %s' % j)
         return '\n'.join(result)
 
     source_code = Dedent(

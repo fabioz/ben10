@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 '''
 This module provides a basic interface concept.
 
@@ -321,7 +322,7 @@ def _CheckIfClassImplements(class_, interface):
 
     :type interface: Interface
 
-    :rtype: (bool, str) or (bool, None)
+    :rtype: (bool, unicode) or (bool, None)
     :returns:
         (is_implementation, reason)
         If the class doesn't implement the given interface, will return False, and a message stating
@@ -419,7 +420,7 @@ class Attribute(object):
         :param object attribute:
             Object that will be compared to see if it matches the expected interface.
 
-        :rtype: (bool, str)
+        :rtype: (bool, unicode)
         :returns:
             If the given object implements or inherits from the interface expected by this
             attribute, will return (True, None), otherwise will return (False, message), where

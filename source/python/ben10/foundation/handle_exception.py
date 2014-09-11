@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 '''
 This module contains utility functions for dealing with exceptions that should be handled in the
 application.

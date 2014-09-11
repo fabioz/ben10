@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 from archivist import Archivist
 from ben10.filesystem import (CopyFile, CreateDirectory, CreateFile, CreateLink,
     CreateTemporaryDirectory, DeleteDirectory, DeleteFile, DeleteLink, Exists, IsDir, IsLink,
@@ -30,11 +31,11 @@ class DirCacheLocal(object):
         with local_dir='workspace_2/alpha_artifacts' and they both will point to the same directory
         inside the cache.
 
-    :ivar str local_dir:
+    :ivar unicode local_dir:
         The local directory to place a link with this name pointing to the
         real contents available on `cache_dir`.
 
-    :ivar str cache_base_dir:
+    :ivar unicode cache_base_dir:
         A base directory to store the actual remote content.
 
     :ivar str cache_dirname:
@@ -354,10 +355,10 @@ class DirCache(DirCacheLocal):
         '''
         Internal method that actually downloads the remote resource.
 
-        :param str extract_dir:
+        :param unicode extract_dir:
             A temporary directory where to extract archive remote resources.
 
-        :param str target_dir:
+        :param unicode target_dir:
             The final destination of the remote resource.
         '''
         with CreateTemporaryDirectory() as tmp_dir:

@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 from ben10.filesystem import CreateFile, StandardizePath
 from ben10.fixtures import MultipleFilesNotFound, _EmbedDataFixture
 from ben10.foundation.is_frozen import IsFrozen, SetIsFrozen
@@ -5,6 +6,7 @@ from ben10.foundation.string import Dedent
 import faulthandler
 import os
 import pytest
+
 
 
 def testEmbedData(embed_data):
@@ -54,7 +56,7 @@ def testEmbedDataAssertEqualFiles(embed_data):
             'alpha.txt',
             'different.txt'
         )
-    assert str(e.value) == Dedent(
+    assert unicode(e.value) == Dedent(
         '''
         *** FILENAME: data_fixtures__testEmbedDataAssertEqualFiles/alpha.txt
         ***\w
@@ -80,7 +82,7 @@ def testEmbedDataAssertEqualFiles(embed_data):
         )
 
     assert (
-        str(e.value)
+        unicode(e.value)
         == 'Files not found: '
         'missing.txt,data_fixtures__testEmbedDataAssertEqualFiles/missing.txt'
     )
@@ -99,7 +101,7 @@ def testNotOnFrozen(monkeypatch, embed_data):
 
         assert \
             '_EmbedDataFixture is not ready for execution inside an executable.' \
-            in str(exception)
+            in unicode(exception)
     finally:
         SetIsFrozen(was_frozen)
 

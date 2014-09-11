@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 from ben10.foundation.is_frozen import IsFrozen
 import os
 import sys
@@ -105,25 +106,25 @@ class ModuleFinder(object):
 
         Directory will be scanned recursively
 
-        :param str directory:
+        :param unicode directory:
             Path to a directory
 
-        :param list(str) out_filters:
+        :param list(unicode) out_filters:
             List of filename filters
             .. see:: FindFiles
 
-        :rtype: list(str)
+        :rtype: list(unicode)
         :returns:
             List of module imported by python
         '''
         from ben10.filesystem import FindFiles
         from modulefinder import ModuleFinder as Finder
 
-        finder = Finder(directory)
+        finder = Finder(bytes(directory))
         for py_filename in FindFiles(directory, in_filters='*.py', out_filters=out_filters):
             finder.run_script(py_filename)
 
-        return sorted(finder.modules.keys() + finder.badmodules.keys())
+        return map(unicode, sorted(finder.modules.keys() + finder.badmodules.keys()))
 
 
     @classmethod
@@ -131,10 +132,10 @@ class ModuleFinder(object):
         '''
         List projects in the given path matching the given regex..
 
-        :param str path:
+        :param unicode path:
             A path to be searched recursively for imports
 
-        :param str regex:
+        :param unicode regex:
             A python regular expression to match each found import.
             Modules are recognized as ESSS projects if they match the regular expression
 
@@ -142,7 +143,7 @@ class ModuleFinder(object):
 
                 Which means a sequence of letters followed by two numbers.
 
-        :rtype: set(str)
+        :rtype: set(unicode)
         :returns:
             A set containing project names for all ESSS imports found in the given path
 
@@ -161,12 +162,12 @@ class ModuleFinder(object):
 
                 Which means a sequence of letters followed by two numbers.
 
-            :param str module_path:
+            :param unicode module_path:
                 A module path in import format.
                 Ex.:
                   coilib50.basic
 
-            :rtype: str | None
+            :rtype: unicode | None
             :returns:
                 Returns the first part of the module if it is a esss module and None otherwise.
             '''
@@ -197,7 +198,7 @@ class ModuleFinder(object):
         Actually, returns the values found self.python_path, that may, or may not be $PYTHONPATH
         depending on how this class was constructed.
 
-        :param list(str) directories:
+        :param list(unicode) directories:
             Included in the result IF self.extend_sys_path option is set (which is not the
             default).
         '''

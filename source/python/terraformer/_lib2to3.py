@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 '''
 Patches and fixes for lib2to3
 '''

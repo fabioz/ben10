@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 from _callback_wrapper import _CallbackWrapper
 from ben10.foundation.odict import odict
 from ben10.foundation.reraise import Reraise

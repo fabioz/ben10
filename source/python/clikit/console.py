@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 '''
 The Console is a class that makes it easier to generate colored output.
 '''
@@ -192,7 +193,7 @@ class Console(object):
         '''
         Prints a message to the output.
 
-        :param str|list(str) message: the message to print.
+        :param unicode|list(unicode) message: the message to print.
         :param int verbosity:
             The miminum verbosity value for this message to appear. See verbosity property.
         :param int newlines:
@@ -212,9 +213,9 @@ class Console(object):
             stream = self.__stdout
 
         if isinstance(message, (list, tuple)):
-            message = '\n'.join(map(str, message))
+            message = '\n'.join(map(unicode, message))
         else:
-            message = str(message)
+            message = unicode(message)
         if self.color:
             # `out` holds the stream of text we'll eventually output
             # `stack` is the currently applied color codes
@@ -269,7 +270,7 @@ class Console(object):
         '''
         Shortcut to Print using stderr.
         '''
-        message = str(message)
+        message = unicode(message)
         return self.Print(message, verbosity=0, newlines=newlines, indent=indent, stderr=True)
 
 
@@ -291,9 +292,9 @@ class Console(object):
         '''
         Ask the users for a value.
 
-        :param str message: Message to print before asking for the value
+        :param unicode message: Message to print before asking for the value
         :param bool hidden_input: If True, user input will not be shown in command line (useful for passwords)
-        :return str: A value entered by the user.
+        :return unicode: A value entered by the user.
         '''
         self.PrintQuiet(message + ' ', newlines=0)
 
@@ -308,7 +309,7 @@ class Console(object):
         '''
         Ask the users for a password. User input will not be shown in command line.
 
-        :return str: A value entered by the user.
+        :return unicode: A value entered by the user.
         '''
         return self.Ask('Password:', hidden_input=True)
 
@@ -327,7 +328,7 @@ class Console(object):
         '''
         Ends a progress "successfully" with a message
 
-        :param str message: Message to finish the progress. Default to "OK"
+        :param unicode message: Message to finish the progress. Default to "OK"
         '''
         self.Print(format_ % message, verbosity=verbosity)
 
@@ -336,7 +337,7 @@ class Console(object):
         '''
         Ends a progress "with failure" message
 
-        :param str message: (Error) message to finish the progress.
+        :param unicode message: (Error) message to finish the progress.
         '''
         self.Print(format_ % message, verbosity=verbosity)
 
@@ -345,7 +346,7 @@ class Console(object):
         '''
         Ends a progress "with a warning" message
 
-        :param str message: (Warning) message to finish the progress.
+        :param unicode message: (Warning) message to finish the progress.
         '''
         self.Print(format_ % message, verbosity=verbosity)
 
@@ -354,7 +355,7 @@ class Console(object):
         '''
         Prints an item.
 
-        :param str message:
+        :param unicode message:
         :param int verbosity:
         :param int newlines:
         :param int indent:

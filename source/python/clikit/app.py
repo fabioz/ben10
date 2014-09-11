@@ -1,5 +1,6 @@
-from .command import Command
+from __future__ import unicode_literals
 from ben10.foundation.string import Dedent
+from .command import Command
 import ConfigParser
 import argparse
 import os
@@ -102,13 +103,13 @@ class ConfPlugin():
 
     def __init__(self, name, conf_defaults=None, conf_filename=None):
         '''
-        :param str name:
+        :param unicode name:
             The application name, used to deduce the configuration filename.
         :param dict conf_defaults:
             Default values for configuration.
             This is a dictionary of dictionaries. The outer dictionary has the configuration groups
             as keys. The inner dictionary maps names to values inside a group.
-        :param str conf_filename:
+        :param unicode conf_filename:
             The configuration filename. If None generates a default name.
         '''
         self.__name = name
@@ -185,7 +186,7 @@ class ConfPlugin():
                     conf.add_section(section)
                 for name, value in options.iteritems():
                     if not conf.has_option(section, name):
-                        conf.set(section, name, str(value))
+                        conf.set(section, name, unicode(value))
 
             return conf
 
@@ -302,8 +303,8 @@ class App(object):
         Adds a function as a subcommand to the application.
 
         :param <funcion> func: The function to add.
-        :param str name: The name of the command. If not given (None) uses the function name.
-        :param list(str) alias: A list of valid aliases for the same command.
+        :param unicode name: The name of the command. If not given (None) uses the function name.
+        :param list(unicode) alias: A list of valid aliases for the same command.
         :return Command:
             Command instance for the given function.
         '''
@@ -312,7 +313,7 @@ class App(object):
             Returns a list of names considering the function and all aliases.
 
             :param funcion func:
-            :param list(str) alias:
+            :param list(unicode) alias:
             '''
             result = [self.ConvertToCommandName(name or func.__name__)]
             if alias is None:
@@ -378,10 +379,10 @@ class App(object):
         Ex.
             CreateDb -> create-db
 
-        :param str func_name:
+        :param unicode func_name:
             The function name, using camel cases standard.
 
-        :return str:
+        :return unicode:
         '''
         import re
         s1 = re.sub('(.)([A-Z][a-z]+)', r'\1-\2', func_name)
@@ -401,10 +402,10 @@ class App(object):
         Ex.
             MyDb -> my_db_
 
-        :param str func_name:
+        :param unicode func_name:
             The function name, using camel cases standard.
 
-        :return str:
+        :return unicode:
         '''
         import re
         s1 = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', func_name)
@@ -418,7 +419,7 @@ class App(object):
         '''
         Returns a command instance from the given __name.
 
-        :param str __name:
+        :param unicode __name:
         :return self._Command:
         '''
         for j_command in self.__commands:
@@ -431,7 +432,7 @@ class App(object):
         '''
         Lists all commands names, including all aliases.
 
-        :return list(str):
+        :return list(unicode):
         '''
         result = []
         for j_command in self.__commands:
@@ -510,7 +511,7 @@ class App(object):
                 return self.RETCODE_ERROR
 
         except InvalidCommand as exception:
-            self.console.PrintError('<red>ERROR: Unknown command %s</>' % str(exception))
+            self.console.PrintError('<red>ERROR: Unknown command %s</>' % unicode(exception))
             self.PrintHelp()
             return self.RETCODE_ERROR
 
@@ -567,7 +568,7 @@ class App(object):
         '''
         Executes a command using normal parameters.
 
-        :param str cmd:
+        :param unicode cmd:
             The name of a previously registered command to execute.
 
         :param *args:
@@ -603,7 +604,7 @@ class App(object):
                 """
             )
 
-        :param str string:
+        :param unicode string:
             A multi-line string with command calls and expected results.
             Consider the following syntax rules:
                 - Lines starting with '>' are command execution (command);
@@ -634,7 +635,7 @@ class App(object):
                 >>>DoSomethingThatFails [retcode=1]
                 >>>DoSomethingOk [retcode=0]
 
-            :param str input_line:
+            :param unicode input_line:
             '''
             import re
             pattern = '\[retcode=(\d+)\]'
@@ -673,16 +674,16 @@ class App(object):
             app = App('ii')
             retcode, output = app.TestCall('ii list')
 
-        :param str cmd_line:
+        :param unicode cmd_line:
             A command line to execute.
             The first parameter must be the app name as declared in this App instance constructor.
 
-        :param dict(str : App):
+        :param dict(unicode : App):
             A list of extra-apps available for execution.
             By default only this App instance is available for executing in the command line. With
             this parameter one can add others utilitarian apps for testing.
 
-        :return tuple(int, str):
+        :return tuple(int, unicode):
             Returns the command return code and output.
         '''
         from .console import BufferedConsole

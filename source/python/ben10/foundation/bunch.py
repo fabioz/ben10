@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 '''Bunch utility class.
 
 Implemented by Alex Martelli (http://mail.python.org/pipermail/python-list/2002-July/112007.html), but
@@ -121,7 +122,7 @@ class MetaBunch(type):
                 copy_op = copy.deepcopy
 
                 if value.__class__ in (
-                    bool, int, float, long, str, NoneType
+                    bool, int, float, long, unicode, NoneType
                     ):
                     copy_op = None
                 else:
@@ -237,7 +238,7 @@ class MetaHashableBunch(MetaBunch):
     @classmethod
     def _MakeGetter(cls, name):
         '''
-        :param str name:
+        :param unicode name:
             The name of the property to create the get method for.
 
         :rtype: function
@@ -286,7 +287,7 @@ def ConvertToDict(bunch):
     :param Bunch bunch:
         A bunch.
 
-    :rtype: dict(str -> object)
+    :rtype: dict(unicode -> object)
     :returns:
         The bunch mapped as a dict.
     '''

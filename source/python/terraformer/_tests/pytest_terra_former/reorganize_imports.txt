@@ -515,7 +515,7 @@ if e.errno == errno.ENOENT:  # File does not exist
     from _filesystem_exceptions import FileNotFoundError  # @Reimport
     raise FileNotFoundError(filename)
 
-if 'proxy' in str(e.strerror):
+if 'proxy' in unicode(e.strerror):
     from _filesystem_exceptions import CantOpenFileThroughProxyError
     raise CantOpenFileThroughProxyError(filename)
 ---
@@ -523,7 +523,7 @@ if e.errno == errno.ENOENT:  # File does not exist
     from _filesystem_exceptions import FileNotFoundError  # @Reimport
     raise FileNotFoundError(filename)
 
-if 'proxy' in str(e.strerror):
+if 'proxy' in unicode(e.strerror):
     from _filesystem_exceptions import CantOpenFileThroughProxyError
     raise CantOpenFileThroughProxyError(filename)
 ===

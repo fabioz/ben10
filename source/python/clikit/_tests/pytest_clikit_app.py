@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 from ben10.foundation.string import Dedent
 from clikit.app import App, UnknownApp
 from clikit.console import BufferedConsole, Console
@@ -187,7 +188,7 @@ class Test:
         # Tests output when an invalid command is requested
         self._TestMain(app, 'INVALID', Dedent(
             '''
-            ERROR: Unknown command 'INVALID'
+            ERROR: Unknown command u'INVALID'
 
             Usage:
                 test <subcommand> [options]
@@ -217,7 +218,7 @@ class Test:
                     'value' : 'ALPHA',
                 }
             },
-            conf_filename=str(conf_filename),
+            conf_filename=unicode(conf_filename),
             buffered_console=True
         )
 
@@ -253,7 +254,7 @@ class Test:
                     'value' : 'ALPHA',
                 }
             },
-            conf_filename=str(conf_filename),
+            conf_filename=unicode(conf_filename),
             buffered_console=True
         )
 
@@ -427,7 +428,7 @@ class Test:
         with pytest.raises(RuntimeError) as e:
             app.Add(Command)
 
-        assert str(e.value) == \
+        assert unicode(e.value) == \
             'Clikit commands are not allowed to have boolean parameters that default to True.'
 
 

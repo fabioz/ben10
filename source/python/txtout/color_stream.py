@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 import sys
 
 
@@ -280,10 +281,10 @@ class ColorStream(object):
     @classmethod
     def ClearAnsiColorEscapeSequences(cls, text):
         '''
-        :param str text:
+        :param unicode text:
             A text with zero or more ansi color scape sequences.
 
-        :rtype: str
+        :rtype: unicode
         :returns:
             Returns the given text with all ansi color scape sequences removed.
         '''

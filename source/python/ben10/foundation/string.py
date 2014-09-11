@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 '''
 Module for string manipulation functions
 '''
@@ -29,7 +30,7 @@ def Dedent(text, ignore_first_linebreak=True, ignore_last_linebreak=True):
             """
         )
 
-    :param str text:
+    :param unicode text:
         Text to be dedented (see examples above)
 
     :param bool ignore_first_linebreak:
@@ -96,22 +97,22 @@ def Indent(text, indent=1, indentation='    '):
     '''
     Indents multiple lines of text.
 
-    :param list(str)|str text:
+    :param list(unicode)|unicode text:
         The text to apply the indentation.
 
     :param int indent:
         Number of indentations to add. Defaults to 1.
 
-    :param str indentation:
+    :param unicode indentation:
         The text used as indentation. Defaults to 4 spaces.
 
-    :return str:
+    :return unicode:
         Returns the text with applied indentation.
     '''
     indentation = indent * indentation
 
     lines = text
-    if isinstance(lines, str):
+    if isinstance(lines, unicode):
         append_eol = lines.endswith('\n')
         lines = lines.splitlines()
     else:
@@ -140,12 +141,12 @@ def SafeSplit(s, sep, maxsplit=None, default=''):
     '''
     Perform a string split granting the size of the resulting list.
 
-    :param str s: The input string.
-    :param str sep: The separator.
+    :param unicode s: The input string.
+    :param unicode sep: The separator.
     :param int maxsplit: The max number of splits. The len of the resulting len is granted to be maxsplit + 1
     :param default: The default value for filled values in the result.
 
-    :return list(str):
+    :return list(unicode):
         Returns a list with fixed size of maxsplit + 1.
     '''
     if maxsplit is None:
@@ -157,3 +158,20 @@ def SafeSplit(s, sep, maxsplit=None, default=''):
         if diff_len > 0:
             result += [default] * diff_len
     return result
+
+
+
+#===================================================================================================
+# ToByteString
+#===================================================================================================
+def ToByteString(arg):
+    '''
+    Converts basestrings to byte string.
+
+    Does nothing if parameter is not a basestring.
+
+    :param object arg:
+    '''
+    if isinstance(arg, basestring):
+        return str(arg)
+    return arg

@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 from ben10.foundation.platform_ import Platform, UnknownPlatform
 import os
 import platform
@@ -16,7 +17,7 @@ class Test(object):
         assert p.name == 'win'
         assert p.bits == '32'
         assert p.debug == False
-        assert str(p) == 'win32'
+        assert unicode(p) == 'win32'
         assert p.AsString(False) == 'win32'
         assert p.AsString(True) == 'win32'
         assert p.GetSimplePlatform() == 'i686.win32'
@@ -29,7 +30,7 @@ class Test(object):
         assert p.name == 'win'
         assert p.bits == '64'
         assert p.debug == True
-        assert str(p) == 'win64d'
+        assert unicode(p) == 'win64d'
         assert p.AsString(False) == 'win64d'
         assert p.AsString(True) == 'win64'
         assert p.GetSimplePlatform() == 'amd64.win32'
@@ -84,18 +85,18 @@ class Test(object):
 
 
     def testCreate(self):
-        assert str(Platform.Create('win32')) == 'win32'
-        assert str(Platform.Create('i686.win32')) == 'win32'
-        assert str(Platform.Create(None)) == str(Platform.GetCurrentPlatform())
+        assert unicode(Platform.Create('win32')) == 'win32'
+        assert unicode(Platform.Create('i686.win32')) == 'win32'
+        assert unicode(Platform.Create(None)) == unicode(Platform.GetCurrentPlatform())
 
         plat = Platform.GetCurrentPlatform()
         assert Platform.Create(plat) is plat
 
         p = Platform.CreateFromString('win32')
-        assert str(p) == 'win32'
+        assert unicode(p) == 'win32'
 
         p = Platform.CreateFromSimplePlatform('i686.win32')
-        assert str(p) == 'win32'
+        assert unicode(p) == 'win32'
 
         with pytest.raises(UnknownPlatform):
             Platform.Create(123)
@@ -110,22 +111,22 @@ class Test(object):
         '''
         monkeypatch.setattr(sys, 'platform', 'win32')
         monkeypatch.setattr(platform, 'python_compiler', lambda:'WINDOWS')
-        assert str(Platform.GetCurrentPlatform()) == 'win32'
-        assert str(Platform.GetDefaultPlatform()) == 'win32'
+        assert unicode(Platform.GetCurrentPlatform()) == 'win32'
+        assert unicode(Platform.GetDefaultPlatform()) == 'win32'
 
         monkeypatch.setattr(platform, 'python_compiler', lambda:'AMD64')
-        assert str(Platform.GetCurrentPlatform()) == 'win64'
-        assert str(Platform.GetDefaultPlatform()) == 'win32'
+        assert unicode(Platform.GetCurrentPlatform()) == 'win64'
+        assert unicode(Platform.GetDefaultPlatform()) == 'win32'
 
         monkeypatch.setattr(sys, 'platform', 'darwin')
-        assert str(Platform.GetCurrentPlatform()) == 'darwin64'
-        assert str(Platform.GetDefaultPlatform()) == 'darwin64'
+        assert unicode(Platform.GetCurrentPlatform()) == 'darwin64'
+        assert unicode(Platform.GetDefaultPlatform()) == 'darwin64'
 
         monkeypatch.setattr(sys, 'platform', 'linux2')
         monkeypatch.setattr(platform, 'dist', lambda:['fedora'])
         monkeypatch.setattr(platform, 'machine', lambda:'x86_64')
-        assert str(Platform.GetCurrentPlatform()) == 'redhat64'
-        assert str(Platform.GetDefaultPlatform()) == 'redhat64'
+        assert unicode(Platform.GetCurrentPlatform()) == 'redhat64'
+        assert unicode(Platform.GetDefaultPlatform()) == 'redhat64'
 
 
     def testGetOSPlatform(self, monkeypatch):
@@ -133,15 +134,15 @@ class Test(object):
         monkeypatch.setattr(platform, 'python_compiler', lambda:'WINDOWS')
 
         monkeypatch.setattr(os, 'environ', {})
-        assert str(Platform.GetOSPlatform()) == 'win32'
+        assert unicode(Platform.GetOSPlatform()) == 'win32'
 
         monkeypatch.setattr(os, 'environ', {'PROGRAMFILES(X86)':''})
-        assert str(Platform.GetOSPlatform()) == 'win64'
+        assert unicode(Platform.GetOSPlatform()) == 'win64'
 
         monkeypatch.setattr(sys, 'platform', 'linux2')
         monkeypatch.setattr(platform, 'dist', lambda:['fedora'])
         monkeypatch.setattr(platform, 'machine', lambda:'x86_64')
-        assert str(Platform.GetOSPlatform()) == 'redhat64'
+        assert unicode(Platform.GetOSPlatform()) == 'redhat64'
 
 
     def testFlags(self, monkeypatch):

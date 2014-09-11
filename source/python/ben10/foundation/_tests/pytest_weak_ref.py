@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 from ben10.foundation.weak_ref import (GetRealObj, GetWeakProxy, GetWeakRef, IsSame, IsWeakProxy,
     IsWeakRef, WeakList, WeakMethodProxy, WeakMethodRef, WeakSet)
 import pytest
@@ -255,7 +256,7 @@ class Test():
     def testCustomAssertEqual(self):
         with pytest.raises(AssertionError) as excinfo:
             self.CustomAssertEqual(1, 2)
-        assert str(excinfo.value) == '1 != 2'
+        assert unicode(excinfo.value) == '1 != 2'
 
 
     def testRefcount(self):
@@ -366,13 +367,13 @@ class Test():
         self.SetupTestAttributes()
 
         r = WeakMethodRef(self.c.f)
-        assert str(r)[:33] == '<WeakMethodRef to C.f for object '
+        assert unicode(r)[:33] == '<WeakMethodRef to C.f for object '
 
         def Foo():
             'Never called'
 
         r = WeakMethodRef(Foo)
-        assert str(r) == '<WeakMethodRef to Foo>'
+        assert unicode(r) == '<WeakMethodRef to Foo>'
 
 
     def testWeakList(self):

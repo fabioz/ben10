@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 from StringIO import StringIO
 import logging
 import sys
@@ -110,7 +111,7 @@ def PrintDetailedTraceback(exc_info=None, stream=None, max_levels=None, max_line
                 print >> stream, ss + val_repr
 
     #
-    # Replaced "exception" by "exception.message" because "str(exception)" generate an
+    # Replaced "exception" by "exception.message" because "unicode(exception)" generate an
     # UnicodeEncodeError when the exception is encoding using unicode (utf-8).
     # That problem occurred with Apache + Django translation.
     #
@@ -118,6 +119,6 @@ def PrintDetailedTraceback(exc_info=None, stream=None, max_levels=None, max_line
         message = exception.message
 
     else:
-        message = str(exception)  # Default behavior
+        message = unicode(exception)  # Default behavior
 
     print >> stream, '%s: %s' % (exc_type.__name__, message)

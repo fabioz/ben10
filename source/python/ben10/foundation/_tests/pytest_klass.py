@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 from ben10.foundation.klass import (AllBasesNames, CheckOverridden, GetClassHierarchy, IsInstance,
     IsSubclass)
 import pytest
@@ -111,17 +112,17 @@ class Test:
 #     def profileIsInstance(self):
 #         '''
 #             Results obtained (after optimizing):
-#                 Unnamed Timer: IsInstance str 0.131 secs
+#                 Unnamed Timer: IsInstance unicode 0.131 secs
 #                 Unnamed Timer: IsInstance tuple 0.244 secs
 #                 Unnamed Timer: isinstance 0.041 secs
 #
 #                 With timeit implementation
-#                 IsInstance str 1.28110317487
+#                 IsInstance unicode 1.28110317487
 #                 IsInstance tuple 2.4118422541
 #                 isinstance 0.376544210033
 #
 #                 Changes: using IsSubclass
-#                 IsInstance str 1.52469482232
+#                 IsInstance unicode 1.52469482232
 #                 IsInstance tuple 2.62789000656
 #                 IsInstance classs 2.18690264229
 #                 isinstance 0.402243563057
@@ -131,7 +132,7 @@ class Test:
 #         setup = 'from __main__ import A, B, C, D, E;from coilib50.basic.klass import IsInstance'
 #
 #         timer = timeit.Timer(stmt='IsInstance(C(), "B")', setup=setup)
-#         print 'IsInstance str', timer.timeit()
+#         print 'IsInstance unicode', timer.timeit()
 #
 #         timer = timeit.Timer(stmt='IsInstance(C(), ("B", ))', setup=setup)
 #         print 'IsInstance tuple', timer.timeit()

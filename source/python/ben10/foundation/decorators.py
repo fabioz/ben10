@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 '''
 Collection of decorator with ONLY standard library dependencies.
 '''
@@ -105,7 +106,7 @@ def Deprecated(name=None):
     '''
     Decorator that marks a method as deprecated.
 
-    :param str name:
+    :param unicode name:
         The name of the method that substitutes this one, if any.
     '''
     if not IsDevelopment():
@@ -126,9 +127,9 @@ def Deprecated(name=None):
                 implementation.
                 '''
                 if name is not None:
-                    msg = 'DEPRECATED: %r is deprecated, use %r instead' % (func.__name__, name)
+                    msg = 'DEPRECATED: \'%s\' is deprecated, use \'%s\' instead' % (func.__name__, name)
                 else:
-                    msg = 'DEPRECATED: %r is deprecated' % func.__name__
+                    msg = 'DEPRECATED: \'%s\' is deprecated' % func.__name__
                 warnings.warn(msg, stacklevel=2)
                 return func(*args, **kwargs)
 
@@ -203,11 +204,11 @@ def Comparable(cls):
         value.__name__ = name
         setattr(cls, name, value)
 
-    setter(cls, '__lt__', lambda s, o: _compare(s, o, lambda s,o: s < o))
-    setter(cls, '__le__', lambda s, o: _compare(s, o, lambda s,o: s <= o))
-    setter(cls, '__eq__', lambda s, o: _compare(s, o, lambda s,o: s == o))
-    setter(cls, '__ge__', lambda s, o: _compare(s, o, lambda s,o: s >= o))
-    setter(cls, '__gt__', lambda s, o: _compare(s, o, lambda s,o: s > o))
-    setter(cls, '__ne__', lambda s, o: _compare(s, o, lambda s,o: s != o))
-    setter(cls, '__hash__', lambda s: hash(s._cmpkey()))
+    setter(cls, b'__lt__', lambda s, o: _compare(s, o, lambda s,o: s < o))
+    setter(cls, b'__le__', lambda s, o: _compare(s, o, lambda s,o: s <= o))
+    setter(cls, b'__eq__', lambda s, o: _compare(s, o, lambda s,o: s == o))
+    setter(cls, b'__ge__', lambda s, o: _compare(s, o, lambda s,o: s >= o))
+    setter(cls, b'__gt__', lambda s, o: _compare(s, o, lambda s,o: s > o))
+    setter(cls, b'__ne__', lambda s, o: _compare(s, o, lambda s,o: s != o))
+    setter(cls, b'__hash__', lambda s: hash(s._cmpkey()))
     return cls

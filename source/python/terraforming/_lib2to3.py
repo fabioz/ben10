@@ -1,3 +1,5 @@
+from __future__ import unicode_literals
+
 # Priority Import: changes lib2to3
 from terraformer import _lib2to3
 

@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 from ben10.foundation.string import Dedent, Indent, SafeSplit
 
 

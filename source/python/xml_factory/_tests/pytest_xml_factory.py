@@ -1,12 +1,9 @@
+from __future__ import unicode_literals
 from StringIO import StringIO
 from ben10.foundation.string import Dedent
 from xml.etree import ElementTree
 from xml_factory import WritePrettyXML, WritePrettyXMLElement, XmlFactory
 import pytest
-
-
-
-pytest_plugins = ["ben10.fixtures"]
 
 
 

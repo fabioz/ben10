@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 '''
 Examples of using logging:
 
@@ -88,7 +89,7 @@ def AddDebugStreamHandler(logger=''):
     '''
     Helper to add a default stream handler (that'll log to stderr) into a given logger.
 
-    :param str logger:
+    :param unicode logger:
         The logger to which the handler should be added.
     '''
     result = GetLogger(logger)
@@ -106,7 +107,7 @@ class _LogHandle(object):
 
     def __init__(self, logger, stream_handler, string_io):
         '''
-        :param str logger:
+        :param unicode logger:
             The logger context.
 
         :param StreamHandler stream_handler:
@@ -143,7 +144,7 @@ class _LogHandle(object):
 
     def GetRecordedLog(self):
         '''
-        :rtype: str
+        :rtype: unicode
         :returns:
             Returns the contents logged so far.
         '''
@@ -161,7 +162,7 @@ def StartLogging(logger=''):
             log = logger.GetRecordedLog()
             ... check the log.
 
-    :param str logger:
+    :param unicode logger:
         The logger context to be logged.
     '''
     string_io = StringIO.StringIO()
@@ -185,7 +186,7 @@ def _ExceptionWithDetailedTraceback(logger, msg):
 
     It is similar to exception, but using coilib's detailed traceback.
 
-    :param str msg:
+    :param unicode msg:
         Message to display before traceback.
     '''
     from .print_detailed_traceback import PrintDetailedTraceback

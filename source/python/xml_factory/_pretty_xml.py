@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 from xml.etree import ElementTree
 
 
@@ -9,15 +10,15 @@ def WritePrettyXML(input, output):
     '''
     Writes the input file in pretty xml.
 
-    :type input: str or file
+    :type input: unicode or file
     :param input:
         The input filename or file object.
 
-    :type output: str or file
+    :type output: unicode or file
     :param output:
         The output filename or file opened for writing.
     '''
-    if isinstance(output, str):
+    if isinstance(output, unicode):
         out_stream = file(output, 'w')
         close_output = True
     else:

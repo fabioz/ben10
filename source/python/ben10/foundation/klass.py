@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 '''
     @author
         ama@esss.com.br
@@ -34,7 +35,7 @@ def IsInstance(p_object, p_class_name):
     :param object p_object:
         The object we would like to test for.
 
-    :param str p_class_name:
+    :param unicode p_class_name:
         Name or class to test if the object is an instance of.
 
     Like the built-in isinstance, but also accepts a class name as parameter.
@@ -60,7 +61,7 @@ def IsSubclass(p_class, p_class_name):
     '''
     isins = isinstance  # put it in locals
 
-    if isins(p_class_name, str):
+    if isins(p_class_name, unicode):
         if p_class_name == p_class.__name__:
             return True
 
@@ -72,7 +73,7 @@ def IsSubclass(p_class, p_class_name):
             return p_class_name in names
 
 
-    elif isins(p_class_name, tuple) and len(p_class_name) > 0 and isins(p_class_name[0], str) :
+    elif isins(p_class_name, tuple) and len(p_class_name) > 0 and isins(p_class_name[0], unicode) :
 
         names = None
 
@@ -138,7 +139,7 @@ def CheckOverridden(instance, current_method_class, method_name):
     :param type current_method_class:
         The class we're checking for the override.
 
-    :param str method_name:
+    :param unicode method_name:
         The name of the method to be overridden.
 
     :raises AssertionError:

@@ -1,4 +1,6 @@
+from __future__ import unicode_literals
 # -*- coding: UTF-8 -*-
+from __future__ import unicode_literals
 from ben10.filesystem import (AppendToFile, CanonicalPath, CheckIsDir, CheckIsFile, CopyDirectory,
     CopyFile, CopyFiles, CopyFilesX, CreateDirectory, CreateFile, CreateLink, CreateMD5,
     CreateTemporaryDirectory, Cwd, DRIVE_FIXED, DRIVE_NO_ROOT_DIR, DRIVE_REMOTE, DeleteDirectory,
@@ -13,6 +15,7 @@ from mock import patch
 import errno
 import logging
 import os
+import pyftpdlib
 import pytest
 import subprocess
 import sys
@@ -125,7 +128,7 @@ class Test:
 
         # Testing with unicode
         # Create non-ascii files in runtime, to make sure git won't complain
-        filename = embed_data['files/source/áéíõu.txt'].decode('latin1')
+        filename = embed_data['files/source/ação.txt']
         CreateFile(filename, contents='test')
         CreateMD5(filename)
         assert GetFileContents(filename + '.md5') == '098f6bcd4621d373cade4e832627b4f6'
@@ -377,15 +380,15 @@ class Test:
         # Use OpenFile to obtain the file contents, with binary=False and binary=True
         iss = OpenFile(test_filename)
         obtained = iss.read()
-        assert obtained == u'Alpha\nBravo\nCharlie\nDelta'
+        assert obtained == 'Alpha\nBravo\nCharlie\nDelta'
 
         iss = OpenFile(test_filename, binary=True)
         obtained = iss.read()
-        assert obtained == u'Alpha\nBravo\r\nCharlie\rDelta'
+        assert obtained == 'Alpha\nBravo\r\nCharlie\rDelta'
 
         iss = OpenFile(test_filename, newline='')
         obtained = iss.read()
-        assert obtained == u'Alpha\nBravo\r\nCharlie\rDelta'
+        assert obtained == 'Alpha\nBravo\r\nCharlie\rDelta'
 
         # Emulating many urllib errors and their "nicer" versions provided by filesystem.
         class Raise():
@@ -453,6 +456,7 @@ class Test:
             FileError('alpha.txt')
 
 
+    @pytest.mark.skipif(True, reason='TODO: Upgrade pyftpdlib to version 1.4 (support unicode)')
     @pytest.mark.serial
     def todo_testFTPFileContents(self, monkeypatch, embed_data, ftpserver):
         '''
@@ -494,7 +498,7 @@ class Test:
         '''
         Creates a dummy file with a non-ascii filename and checks its existance.
         '''
-        target_file = embed_data['éáóãçí.txt'].decode('latin1')
+        target_file = embed_data['ação.txt']
         CreateFile(target_file, 'contents')
         assert os.path.isfile(target_file.encode(sys.getfilesystemencoding()))
         assert os.path.isfile(target_file)
@@ -508,34 +512,33 @@ class Test:
         assert GetFileContents(filename) == "alpha bravo charlie delta echo"
 
 
+    @pytest.mark.skipif(True, reason='TODO: Upgrade pyftpdlib to version 1.4 (support unicode)')
     @pytest.mark.serial
-    def todo_testUnicodeFTP(self, embed_data, ftpserver):
+    def testUnicodeFTP(self, embed_data, ftpserver):
         '''
-        TODO: ETK-644: unicode.
-
         No FTP function supports non-ascii filenames / paths
         '''
-        filename1 = 'a\xe7\xe3o.txt'
+        filename1 = 'ação.txt'
         CreateFile(embed_data[filename1], 'action in portuguese')
-        unicode_filename1 = ftpserver.GetFTPUrl(filename1).decode('latin1')
+        unicode_filename1 = ftpserver.GetFTPUrl(filename1)
 
-        dirname1 = 'a\xe7\xe3o_dir'
+        dirname1 = 'ação_dir'
         CreateDirectory(embed_data[dirname1])
-        unicode_dirname1 = ftpserver.GetFTPUrl(dirname1).decode('latin1')
+        unicode_dirname1 = ftpserver.GetFTPUrl(dirname1)
 
         dirname2 = 'target_directory'
         CreateDirectory(embed_data[dirname2])
-        unicode_dirname2 = ftpserver.GetFTPUrl(dirname2).decode('latin1')
+        unicode_dirname2 = ftpserver.GetFTPUrl(dirname2)
 
         dirname3 = 'moved_directory'
-        unicode_dirname3 = ftpserver.GetFTPUrl(dirname3).decode('latin1')
+        unicode_dirname3 = ftpserver.GetFTPUrl(dirname3)
 
         def _TestUnicode(exception, func, *args, **kwargs):
             if exception:
                 with pytest.raises(exception) as e:
                     func(*args, **kwargs)
                 if exception == UnicodeEncodeError:
-                    assert "No support for non-ascii filenames in FTP" in str(e.value)
+                    assert "No support for non-ascii filenames in FTP" in unicode(e.value)
             else:
                 func(*args, **kwargs)
 
@@ -563,49 +566,7 @@ class Test:
         # _TestUnicode(MoveFile, unicode_filename2, unicode_filename)
 
 
-    def todo__testUnicodeFileContents(self, embed_data):
-        '''
-        TODO: ETK-644: unicode.
-        '''
-        target_file = embed_data['file.txt']
-        unicode_contents = 'unicode ãéí'.decode('latin1')
-
-        # If given unicode contents, must also receive an encoding
-        with pytest.raises(ValueError):
-            CreateFile(target_file, contents=unicode_contents)
-        # If given encoding, must receive unicode contents
-        with pytest.raises(ValueError):
-            CreateFile(target_file, contents='string', encoding='utf8')
-
-        CreateFile(target_file, unicode_contents, encoding='utf8')
-        assert IsFile(target_file)
-
-        # GetFileContents will usually return a byte array
-        byte_array = GetFileContents(target_file)
-        assert byte_array == 'unicode \xc3\xa3\xc3\xa9\xc3\xad'
-
-        # When receiving an encoding, it will return a unicode string
-        obtained_contents = GetFileContents(target_file, encoding='utf8')
-        assert isinstance(obtained_contents, unicode)
-        assert obtained_contents == unicode_contents
-
-        # AppendToFile has a similar behavior
-        with pytest.raises(ValueError):
-            AppendToFile(target_file, contents=unicode_contents)
-        # If given encoding, must receive unicode contents
-        with pytest.raises(ValueError):
-            AppendToFile(target_file, contents='string', encoding='utf8')
-
-        AppendToFile(target_file, contents=unicode_contents, encoding='utf8')
-        obtained_contents = GetFileContents(target_file, encoding='utf8')
-        assert obtained_contents == unicode_contents + unicode_contents
-
-
-    @pytest.mark.serial
-    def todo_testCreateFileInMissingDirectory(self, monkeypatch, embed_data, ftpserver):
-        '''
-        TODO: BEN-44 Fix pyftpdlib related tests in ben10.filesystem (linux)
-        '''
+    def testCreateFileInMissingDirectory(self, embed_data):
         # Trying to create a file in a directory that does not exist should raise an error
         target_file = embed_data['missing_dir/sub_dir/file.txt']
 
@@ -624,11 +585,9 @@ class Test:
             DeleteFile(single_file)
 
 
+    @pytest.mark.skipif(True, reason='TODO: Upgrade pyftpdlib to version 1.4 (support unicode)')
     @pytest.mark.serial
-    def todo_testFTPCreateFileInMissingDirectory(self, ftpserver):
-        '''
-        TODO: BEN-44 Fix pyftpdlib related tests in ben10.filesystem (linux)
-        '''
+    def testFTPCreateFileInMissingDirectory(self, ftpserver):
         from ftputil.error import FTPIOError
 
         target_ftp_file = ftpserver.GetFTPUrl('missing_ftp_dir/sub_dir/file.txt')
@@ -699,7 +658,7 @@ class Test:
         assert IsFile(embed_data['files/doesnt_exist']) == False
 
         # Create non-ascii files in runtime, to make sure git won't complain
-        filename = embed_data['files/source/áéíõu.txt'].decode('latin1')
+        filename = embed_data['files/source/ação.txt']
         CreateFile(filename, contents='test')
         assert IsFile(filename) == True
 
@@ -810,7 +769,7 @@ class Test:
         import random
 
         with CreateTemporaryDirectory(prefix='my_prefix', suffix='my_suffix') as first_temp_dir:
-            assert isinstance(first_temp_dir, str)
+            assert isinstance(first_temp_dir, unicode)
             assert os.path.isdir(first_temp_dir) == True
 
             dir_name = os.path.split(first_temp_dir)[-1]
@@ -865,10 +824,12 @@ class Test:
         '''
         Creates a directory with a non-ascii name checks its existance.
         '''
-        # Creating dir with slightly more complex name
-        assert os.path.isdir(embed_data['póço'].decode('latin1').encode(sys.getfilesystemencoding())) == False
-        CreateDirectory(embed_data['póço'].decode('latin1'))
-        assert os.path.isdir(embed_data['póço'].decode('latin1').encode(sys.getfilesystemencoding())) == True
+        dirname = embed_data['ação.txt']
+
+        assert os.path.isdir(dirname.encode(sys.getfilesystemencoding())) == False
+
+        CreateDirectory(dirname)
+        assert os.path.isdir(dirname.encode(sys.getfilesystemencoding())) == True
 
 
     def testListFiles(self, embed_data):
@@ -878,10 +839,6 @@ class Test:
             'bravo.txt',
             'subfolder',
         ])
-
-        # When listing with unicode, unicode strings are returned
-        for filename in ListFiles(embed_data['files/source'].decode('latin1')):
-            assert type(filename) == unicode
 
         # Try listing a dir that does not exist
         assert ListFiles(embed_data['files/non-existent']) is None
@@ -918,11 +875,11 @@ class Test:
         '''
             Creates files with non-ascii filenames and copies them.
         '''
-        source_file = embed_data['álça.txt']
-        target_file = embed_data['álça_copy.txt']
+        source_file = embed_data['ação.txt']
+        target_file = embed_data['ação_copy.txt']
 
         # Sanity check
-        assert not os.path.isfile(target_file.decode('latin1').encode(sys.getfilesystemencoding()))
+        assert not os.path.isfile(target_file.encode(sys.getfilesystemencoding()))
 
         # Copy and check file
         CreateFile(source_file, 'fake_content_1')
@@ -930,7 +887,7 @@ class Test:
         embed_data.AssertEqualFiles(source_file, target_file)
 
         # Copy again... overrides with no error.
-        source_file = embed_data['brãvó.txt']
+        source_file = embed_data['bração.txt']
         CreateFile(source_file, 'fake_content_2')
         CopyFile(source_file, target_file)
         embed_data.AssertEqualFiles(source_file, target_file)
@@ -951,21 +908,17 @@ class Test:
         assert not IsDir(embed_data['missing_dir'])
 
 
+    @pytest.mark.skipif(True, reason='TODO: Upgrade pyftpdlib to version 1.4 (support unicode)')
     @pytest.mark.serial
-    def todo_testFTPIsDir(self, monkeypatch, embed_data, ftpserver):
-        '''
-        TODO: BEN-44 Fix pyftpdlib related tests in ben10.filesystem (linux)
-        '''
+    def testFTPIsDir(self, monkeypatch, embed_data, ftpserver):
         assert IsDir(ftpserver.GetFTPUrl('.'))
         assert not IsDir(ftpserver.GetFTPUrl('missing_dir'))
         assert not IsDir(ftpserver.GetFTPUrl('missing_dir/missing_sub_dir'))
 
 
+    @pytest.mark.skipif(True, reason='TODO: Upgrade pyftpdlib to version 1.4 (support unicode)')
     @pytest.mark.serial
-    def todo_testFTPCopyFiles(self, monkeypatch, embed_data, ftpserver):
-        '''
-        TODO: BEN-44 Fix pyftpdlib related tests in ben10.filesystem (linux)
-        '''
+    def testFTPCopyFiles(self, monkeypatch, embed_data, ftpserver):
         source_dir = embed_data['files/source']
         target_dir = ftpserver.GetFTPUrl('ftp_target_dir')
 
@@ -982,11 +935,9 @@ class Test:
         assert set(ListFiles(source_dir)) == set(ListFiles(target_dir))
 
 
+    @pytest.mark.skipif(True, reason='TODO: Upgrade pyftpdlib to version 1.4 (support unicode)')
     @pytest.mark.serial
-    def todo_testMoveDirectoryFTP(self, monkeypatch, embed_data, ftpserver):
-        '''
-        TODO: BEN-44 Fix pyftpdlib related tests in ben10.filesystem (linux)
-        '''
+    def testFTPMoveDirectory(self, monkeypatch, embed_data, ftpserver):
         source_dir = ftpserver.GetFTPUrl('files/source')
         target_dir = ftpserver.GetFTPUrl('ftp_target_dir')
 
@@ -1014,11 +965,9 @@ class Test:
             MoveDirectory(source_dir, target_dir)
 
 
+    @pytest.mark.skipif(True, reason='TODO: Upgrade pyftpdlib to version 1.4 (support unicode)')
     @pytest.mark.serial
-    def todo_testFTPCopyFile(self, monkeypatch, embed_data, ftpserver):
-        '''
-        TODO: BEN-44 Fix pyftpdlib related tests in ben10.filesystem (linux)
-        '''
+    def testFTPCopyFile(self, monkeypatch, embed_data, ftpserver):
         def CopyAndCheckFiles(source_file, target_file, override=True):
             CopyFile(
                 source_file,
@@ -1047,11 +996,9 @@ class Test:
             CopyFile(ftpserver.GetFTPUrl('alpha.txt'), 'ERROR://target')
 
 
+    @pytest.mark.skipif(True, reason='TODO: Upgrade pyftpdlib to version 1.4 (support unicode)')
     @pytest.mark.serial
-    def todo_testFTPCreateFile(self, monkeypatch, embed_data, ftpserver):
-        '''
-        TODO: BEN-44 Fix pyftpdlib related tests in ben10.filesystem (linux)
-        '''
+    def testFTPCreateFile(self, monkeypatch, embed_data, ftpserver):
         target_file = ftpserver.GetFTPUrl('ftp.txt')
         contents = 'This is a new file.'
         CreateFile(
@@ -1061,11 +1008,9 @@ class Test:
         assert GetFileContents(target_file) == contents
 
 
+    @pytest.mark.skipif(True, reason='TODO: Upgrade pyftpdlib to version 1.4 (support unicode)')
     @pytest.mark.serial
-    def todo_testFTPIsFile(self, embed_data, ftpserver):
-        '''
-        TODO: BEN-44 Fix pyftpdlib related tests in ben10.filesystem (linux)
-        '''
+    def testFTPIsFile(self, embed_data, ftpserver):
         assert IsFile(ftpserver.GetFTPUrl('file.txt'))
         assert IsFile(ftpserver.GetFTPUrl('files/source/alpha.txt'))
         assert not IsFile(ftpserver.GetFTPUrl('doesnt_exist'))
@@ -1073,11 +1018,9 @@ class Test:
         assert not IsFile(ftpserver.GetFTPUrl('files/doesnt_exist'))
 
 
+    @pytest.mark.skipif(True, reason='TODO: Upgrade pyftpdlib to version 1.4 (support unicode)')
     @pytest.mark.serial
-    def todo_testFTPListFiles(self, monkeypatch, embed_data, ftpserver):
-        '''
-        TODO: BEN-44 Fix pyftpdlib related tests in ben10.filesystem (linux)
-        '''
+    def testFTPListFiles(self, monkeypatch, embed_data, ftpserver):
         # List FTP files
         assert ListFiles(ftpserver.GetFTPUrl('files/source')) == [
             'alpha.txt',
@@ -1093,11 +1036,9 @@ class Test:
             ListFiles(ftpserver.GetFTPUrl('//files/non-existent'))
 
 
+    @pytest.mark.skipif(True, reason='TODO: Upgrade pyftpdlib to version 1.4 (support unicode)')
     @pytest.mark.serial
-    def todo_testFTPMakeDirs(self, monkeypatch, embed_data, ftpserver):
-        '''
-        TODO: BEN-44 Fix pyftpdlib related tests in ben10.filesystem (linux)
-        '''
+    def testFTPMakeDirs(self, monkeypatch, embed_data, ftpserver):
         CreateDirectory(ftpserver.GetFTPUrl('/ftp_dir1'))
         assert os.path.isdir(embed_data['ftp_dir1'])
 
@@ -1169,11 +1110,9 @@ class Test:
             CheckIsFile(embed_data.GetDataDirectory())  # Not a file
 
 
+    @pytest.mark.skipif(True, reason='TODO: Upgrade pyftpdlib to version 1.4 (support unicode)')
     @pytest.mark.serial
-    def todo_testFTPCheckIsFile(self, ftpserver):
-        '''
-        TODO: BEN-44 Fix pyftpdlib related tests in ben10.filesystem (linux)
-        '''
+    def testFTPCheckIsFile(self, ftpserver):
         # assert not raises Exception
         CheckIsFile(ftpserver.GetFTPUrl('file.txt'))
         with pytest.raises(FileNotFoundError):
@@ -1183,10 +1122,7 @@ class Test:
 
 
     @pytest.mark.skipif(not sys.platform.startswith('win'), reason="drives are only valid in windows filesystems")
-    def todo_testCheckDriveType(self, monkeypatch, embed_data, ftpserver):
-        '''
-        TODO: BEN-44 Fix pyftpdlib related tests in ben10.filesystem (linux)
-        '''
+    def testCheckDriveType(self, monkeypatch, embed_data, ftpserver):
         assert GetDriveType('') == DRIVE_FIXED
         assert GetDriveType(embed_data['file.txt']) == DRIVE_FIXED
         assert GetDriveType(os.path.abspath(embed_data['file.txt'])) == DRIVE_FIXED
@@ -1210,11 +1146,9 @@ class Test:
             CheckIsDir(embed_data['file.txt'])  # Not a directory
 
 
+    @pytest.mark.skipif(True, reason='TODO: Upgrade pyftpdlib to version 1.4 (support unicode)')
     @pytest.mark.serial
-    def todo_testFTPCheckIsDir(self, ftpserver):
-        '''
-        TODO: BEN-44 Fix pyftpdlib related tests in ben10.filesystem (linux)
-        '''
+    def testFTPCheckIsDir(self, ftpserver):
         # assert not raises Exception
         CheckIsDir(ftpserver.GetFTPUrl('.'))
 
@@ -1502,7 +1436,7 @@ def ftpserver(monkeypatch, embed_data, request):
             '''
             Starts a phony ftp-server for testing purpose.
 
-            :param str directory:
+            :param unicode directory:
                 The directory to serve in the ftp-server.
             '''
             assert self._ftpd is None
@@ -1514,10 +1448,10 @@ def ftpserver(monkeypatch, embed_data, request):
             '''
             Returns the url to access the given filename using this ftp-server.
 
-            :param str filename:
+            :param unicode filename:
                 The non-absolute filename to access.
 
-            :return str:
+            :return unicode:
                 The full url for the given filename.
             '''
             assert self._ftpd is not None, "FTPServer not serving, call ftpserver.Serve method."

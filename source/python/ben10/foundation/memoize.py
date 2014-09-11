@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 
 
 
@@ -73,12 +74,12 @@ class Memoize(object):
         :param int maxsize:
             The maximum size of the internal cache (default is 50).
 
-        :param str prune_method:
+        :param unicode prune_method:
             This is according to the way used to prune entries. Right now only
             pruning the oldest entry is supported (FIFO), but different ways could be
             available (e.g.: pruning LRU seems a natural addition)
 
-        :param str memo_target:
+        :param unicode memo_target:
             One of the constants MEMO_INSTANCE_METHOD or MEMO_FUNCTION or MEMO_FROM_ARGSPEC.
             When from argspec it'll try to see if the 1st parameter is 'self' and if it is,
             it'll fall to using the MEMO_INSTANCE_METHOD (otherwise the MEMO_FUNCTION is used)
@@ -135,12 +136,12 @@ class Memoize(object):
         Create the argspec object that helps when creating the cache key. Subclasses may want to customize the argspec
         object to help offer customized cache key generation algorithm.
 
-        :param list(str) args:
+        :param list(unicode) args:
             The names of the explicit arguments.
-        :param str trail:
+        :param unicode trail:
             The variable name used to store varargs.
             `None` if no varargs are accepted.
-        :param str kwargs:
+        :param unicode kwargs:
             The variable name used to store non-explict keyword arguments.
              `None` if no non-explicit keyword arguments are accepted.
         :param tuple(object) defaults:

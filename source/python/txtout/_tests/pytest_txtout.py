@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 from ben10.foundation.string import Dedent
 from cStringIO import StringIO
 from txtout.txtout import TextOutput
@@ -63,7 +64,8 @@ Now using with!
             ********************************************************************************
 
             '''
-        ) % '\n'.join(textwrap.wrap(__file__ + ':52:', 80))
+        # Hard-coded 53 points to the "raise RuntimeError('This is an exception')" line in this file
+        ) % '\n'.join(textwrap.wrap(__file__ + ':53:', 80))
 
         stream = StringIO()
         oss.SetOutputStream(stream)

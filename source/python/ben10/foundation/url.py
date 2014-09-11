@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 from ben10.foundation.platform_ import Platform
 
 
@@ -7,9 +8,9 @@ from ben10.foundation.platform_ import Platform
 #===================================================================================================
 def IsUrlEqual(url_or_path_1, url_or_path_2):
     '''
-    :param str url_or_path_1:
+    :param unicode url_or_path_1:
 
-    :param str url_or_path_2:
+    :param unicode url_or_path_2:
 
     :rtype: bool
     :returns:
@@ -42,10 +43,10 @@ def HideURLPassword(url):
     Hides username and password in a URL, useful when you want to print an URL without showing
     protected information.
 
-    :param str url:
+    :param unicode url:
         A URL
 
-    :rtype: str
+    :rtype: unicode
     :returns:
         The given FTP URL with hidden username and password
     '''

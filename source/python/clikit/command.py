@@ -1,17 +1,7 @@
+from __future__ import unicode_literals
 from .console import BufferedConsole
 from collections import OrderedDict
 import re
-
-
-
-#===================================================================================================
-# IsString
-#===================================================================================================
-def IsString(variable):
-    '''
-    PLACEHOLD to check if this given variable is a string in a PYTHON 3 safe way.
-    '''
-    return isinstance(variable, str)
 
 
 
@@ -72,7 +62,7 @@ class Command:
             '''
             Creates Arg instance for our positional with default argument.
 
-            :param str name:
+            :param unicode name:
                 The name of the argument.
             '''
             return Command.Arg(name, Command.Arg.ARG_TYPE_POSITIONAL, self.default)
@@ -91,7 +81,7 @@ class Command:
 
         def __init__(self, name, arg_type, default=NO_DEFAULT):
             '''
-            :param str name:
+            :param unicode name:
                 The argument name.
 
             :param ARG_TYPE_XXX arg_type:
@@ -176,7 +166,7 @@ class Command:
         :param <function> func:
             A function to wrap as a command.
 
-        :param None|str|list(str) names:
+        :param None|unicode|list(unicode) names:
             A list of names for the command.
             By default uses the function name converted to "command style".
             If not None, uses only the names from this argument, ignoring the function name.
@@ -184,7 +174,7 @@ class Command:
         self.func = func
         if names is None:
             self.names = [func.__name__]  # default to function name
-        elif IsString(names):
+        elif isinstance(names, unicode):
             self.names = [names]  # a single name
         else:
             self.names = names  # already a list
@@ -230,7 +220,7 @@ class Command:
             try:
                 self.args[i_arg].description = i_description
             except KeyError, e:
-                raise RuntimeError('%s: argument not found for documentation entry.' % str(e))
+                raise RuntimeError('%s: argument not found for documentation entry.' % unicode(e))
 
 
     def _ParseFunctionArguments(self, func):
@@ -256,7 +246,7 @@ class Command:
         Parses the (function) docstring for the genral and arguments descriptions.
 
         :param docstring: A well formed docstring of a function.
-        :rtype: tuple(str, list(str))
+        :rtype: tuple(unicode, list(unicode))
         :returns:
             Returns the function description (doc's first line) and the description of each
             argument (sphinx doc style).
@@ -284,7 +274,7 @@ class Command:
         '''
         Format help for this command.
 
-        :return str:
+        :return unicode:
         '''
         console = BufferedConsole()
         console.Print('Usage:')
@@ -337,7 +327,7 @@ class Command:
                 try:
                     arg = fixtures[i_arg.name]
                 except KeyError as exception:
-                    raise InvalidFixture(str(exception))
+                    raise InvalidFixture(unicode(exception))
                 args.append(arg)
                 continue
 

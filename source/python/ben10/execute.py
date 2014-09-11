@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 from ben10.filesystem import CanonicalPath, Cwd, StandardizePath
 from ben10.foundation.reraise import Reraise
 from ben10.foundation.string import SafeSplit
@@ -28,7 +29,7 @@ def PrintEnvironment(environment, oss, sort_lists=True):
     '''
     Prints an environment dict into a given stream.
 
-    :param dict(str->str) environment:
+    :param dict(unicode->unicode) environment:
         Dictionary containing the environment
         variable_name - > value
 
@@ -71,7 +72,7 @@ class EnvironmentContextManager(object):
 
     def __init__(self, environ, update=False, change_sys_path=False):
         '''
-        :param dict(str:str) environ:
+        :param dict(unicode:unicode) environ:
             A dictionary of environment variables names and values
 
         :param bool update:
@@ -93,7 +94,7 @@ class EnvironmentContextManager(object):
         '''
         Copies the current environment and sets the given environment
 
-        :param dict(str:str) environ:
+        :param dict(unicode:unicode) environ:
             A dictionary of environment variables names and values
         '''
         self._old_environ = os.environ.copy()
@@ -182,15 +183,15 @@ def Execute(
     '''
     Executes a shell command
 
-    :type command_line: list(str) or str
+    :type command_line: list(unicode) or unicode
     :param command_line:
         List of command - line to execute, including the executable as the first element in the
         list.
 
-    :param str cwd:
+    :param unicode cwd:
         The current working directory for the execution.
 
-    :type environ: dict(str, str)
+    :type environ: dict(unicode, unicode)
     :param environ:
         The environment variables available for the subprocess. This will replace the current
         environment.
@@ -199,14 +200,14 @@ def Execute(
         This dictionary will be modified by the Execute, so make sure that this is a copy of
         your actual data, not the original.
 
-    :param dict(str:str) extra_environ:
+    :param dict(unicode:unicode) extra_environ:
         Environment variables (name, value) to add to the execution environment.
 
-    :type input: str | None
+    :type input: unicode | None
     :param input:
         Text to send as input to the process.
 
-    :param callback(str) output_callback:
+    :param callback(unicode) output_callback:
         A optional callback called with the process output as it is generated.
 
     :param callback(int) return_code_callback:
@@ -246,7 +247,7 @@ def Execute(
         callback. If False, stdout will be dumped directly to the console (preserving color),
         and the callback will not be called.
 
-    :rtype: list(str)
+    :rtype: list(unicode)
     :returns:
         Returns the process execution output as a list of strings.
     '''
@@ -262,7 +263,7 @@ def Execute(
         return result
 
     # We accept strings as the command_line.
-    is_string_command_line = isinstance(command_line, str)
+    is_string_command_line = isinstance(command_line, unicode)
 
     # Handle string/list command_list
     if ignore_auto_quote and not is_string_command_line:
@@ -298,6 +299,9 @@ def Execute(
         if i_value is COPY_FROM_ENVIRONMENT and i_name in os.environ:
             replace_environ[i_name] = os.environ[i_name]
     environ.update(replace_environ)
+
+    # subprocess does not accept unicode strings
+    environ = {bytes(key) : bytes(value) for key, value in environ.iteritems()}
 
     try:
         popen = subprocess.Popen(
@@ -399,7 +403,7 @@ def Execute2(
     Use the same parameters as Execute, except callback_return_code, which is overridden in
     order to return the value.
 
-    :rtype: tuple(list(str), int)
+    :rtype: tuple(list(unicode), int)
     :returns:
         Returns a 2 - tuple with the following values
             [0]: List of string printed by the process

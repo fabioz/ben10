@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 from ben10.foundation.bunch import Bunch, ConvertToDict, HashableBunch
 import math
 import pytest
@@ -155,7 +156,7 @@ class Test:
 
         bunch_1 = DummyBunch1()
 
-        assert repr(bunch_1) == "DummyBunch1(dict_of_lists={'foo': [], 'bar': []}, foo='bar')"
+        assert repr(bunch_1) == "DummyBunch1(dict_of_lists={u'foo': [], u'bar': []}, foo=u'bar')"
 
         obtained_dict_1 = ConvertToDict(bunch_1)
         expected_dict_1 = {
@@ -170,7 +171,7 @@ class Test:
         # initialized with types, not objects ------------------------------------------------------
         class DummyBunch2(Bunch):
             a = bool
-            b = str
+            b = unicode
             c = int
 
         bunch_2 = DummyBunch2()
@@ -178,7 +179,7 @@ class Test:
         obtained_dict_2 = ConvertToDict(bunch_2)
         expected_dict_2 = {
             'a' : bool,
-            'b' : str,
+            'b' : unicode,
             'c' : int,
         }
         assert obtained_dict_2 == expected_dict_2

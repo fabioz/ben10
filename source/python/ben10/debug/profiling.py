@@ -1,3 +1,12 @@
+from __future__ import unicode_literals
+import os
+import pstats
+import subprocess
+import sys
+try:
+    import cProfile as profile
+except ImportError:
+    import profile
 '''
 Basic use for the profile structure:
 
@@ -33,15 +42,6 @@ MyFunc()
 
 '''
 
-import os
-import pstats
-import subprocess
-import sys
-try:
-    import cProfile as profile
-except ImportError:
-    import profile
-
 
 #===================================================================================================
 # ObtainStats
@@ -74,7 +74,7 @@ def ProfileMethod(filename, rows=50, sort=(('cumul',), ('time',)), show_graph=Fa
     '''
     Decorator to profile the decorated function or method.
 
-    :param str filename:
+    :param unicode filename:
         Where to save the profiling information. If None, profile information will be printed to the
         output.
 
@@ -119,7 +119,7 @@ def ProfileMethod(filename, rows=50, sort=(('cumul',), ('time',)), show_graph=Fa
             # Show text output regardless of showing graph.
             tup_sort = sort
             s = tup_sort[0]
-            if isinstance(s, str):
+            if isinstance(s, unicode):
                 tup_sort = [tup_sort]
 
             stats = pstats.Stats(prof)
@@ -141,7 +141,7 @@ def ShowGraph(filename):
     Creates an .svg from the profile generated file and opens it (a proper association to .svg
     files must be already defined in the machine).
 
-    :param str filename:
+    :param unicode filename:
         This is the file generated from ProfileMethod.
     '''
     import gprof2dot

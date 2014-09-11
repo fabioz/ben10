@@ -1,11 +1,8 @@
+from __future__ import unicode_literals
 from ben10.foundation.callback import Callback
 from ben10.module_finder import ImportToken, ModuleFinder
 import pytest
-import sys
 
-
-
-pytest_plugins = ["ben10.fixtures"]
 
 
 #===================================================================================================
@@ -55,15 +52,16 @@ class Test:
 
 
     def testGetImports(self, embed_data):
-        modules = ModuleFinder.GetImports(
-            embed_data.GetDataDirectory(),
-        )
+        modules = ModuleFinder.GetImports(embed_data.GetDataDirectory())
 
         # Main shows up if we execute this test as a python script
         if '__main__' in modules:
             modules.remove('__main__')
 
+        assert all(map(lambda x: isinstance(x, unicode), modules))
+
         assert modules == [
+            '__future__',
             'ben10._tests.pytest_module_finder.module2',
             'ben10._tests.pytest_module_finder.submodule.module3',
             'os',

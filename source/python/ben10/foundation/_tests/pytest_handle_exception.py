@@ -1,4 +1,6 @@
+from __future__ import unicode_literals
 from ben10.foundation import handle_exception
+from ben10.foundation.string import Dedent
 import pytest
 import sys
 
@@ -49,12 +51,16 @@ class Test(object):
 
         obtained = capfd.readouterr()
         assert tuple(obtained) == (
-            u'',
-            u'''Traceback (most recent call last):
-  File "%s", line 45, in testHandleException
-    raise RuntimeError()
-RuntimeError
-''' % __file__,
+            '',
+            Dedent(
+                '''
+                Traceback (most recent call last):
+                  File "%s", line 47, in testHandleException
+                    raise RuntimeError()
+                RuntimeError
+
+                ''' % __file__,
+            )
         )
 
 

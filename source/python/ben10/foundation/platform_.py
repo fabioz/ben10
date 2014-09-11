@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 
 
 
@@ -9,7 +10,7 @@ class UnknownPlatform(NotImplementedError):
     An unknown platform is found, either converting from platform naming conventions or obtaining
     the current platform.
 
-    :ivar str platform:
+    :ivar unicode platform:
         The unknown platform string.
     '''
     def __init__(self, platform):
@@ -74,10 +75,10 @@ class Platform(object):
 
     def __init__(self, name, bits, debug=False):
         '''
-        :param str name:
+        :param unicode name:
             Platform name. One of _VALID_NAMES
 
-        :param str bits:
+        :param unicode bits:
             Platform bits. One of _VALID_BITS
 
         :param bool debug:
@@ -104,12 +105,12 @@ class Platform(object):
         '''
         Returns a Platform instance from the given seed.
 
-        :param str|None|Platform seed:
-            If str, create a Platform based on the given string
+        :param unicode|None|Platform seed:
+            If unicode, create a Platform based on the given string
             If None, returns the current platform
             If Platform, returns the seed
         '''
-        if isinstance(seed, str):
+        if isinstance(seed, unicode):
             try:
                 return cls.CreateFromString(seed)
             except UnknownPlatform:
@@ -125,7 +126,7 @@ class Platform(object):
     @classmethod
     def GetValidPlatforms(cls):
         '''
-        :rtype: list(str)
+        :rtype: list(unicode)
         :returns:
             List of all valid platform names
         '''
@@ -141,7 +142,7 @@ class Platform(object):
     @classmethod
     def CreateFromString(cls, text):
         '''
-        :param str text:
+        :param unicode text:
             The platform name (Ex.: win32d, redhat64)
 
         :rtype: Platform
@@ -171,7 +172,7 @@ class Platform(object):
     @classmethod
     def CreateFromSimplePlatform(cls, simple_platform, debug=False):
         '''
-        :param str simple_platform:
+        :param unicode simple_platform:
 
         :param bool debug:
 
@@ -246,7 +247,7 @@ class Platform(object):
         current_platform = cls.GetCurrentPlatform()
 
         # We have to find out if we are running Python32 in a 64bit machine
-        if str(current_platform) == 'win32':
+        if unicode(current_platform) == 'win32':
             # In Windows, we can check environment variables to do this
             import os
             if 'PROGRAMFILES(X86)' in os.environ:
@@ -271,7 +272,7 @@ class Platform(object):
             'win64' : 'win32'
         }
         current = cls.GetCurrentPlatform()
-        result = RESULT.get(str(current))
+        result = RESULT.get(unicode(current))
         if result is None:
             return current
         return cls.CreateFromString(result)
@@ -282,7 +283,7 @@ class Platform(object):
         '''
         Shortcut to obtain platform flavour from current platform.
 
-        :rtype: str
+        :rtype: unicode
         :returns:
             @see: Platform.GetPlatformFlavour
         '''
@@ -294,7 +295,7 @@ class Platform(object):
         :param bool ignore_debug:
             If true, ignores the debug flag in the platform name.
 
-        :rtype: str
+        :rtype: unicode
         :returns:
             Returns the platform as a string.
         '''
@@ -314,7 +315,7 @@ class Platform(object):
         '''
         Returns the platform flavour associated with this platform.
 
-        :rtype: str
+        :rtype: unicode
         :returns:
             The platform flavour, which is a supper set of the platform name itself.
             The possible values are:
@@ -349,16 +350,16 @@ class Platform(object):
             True if this platform is DEBUG (ends with d)
                  e.g.: win32d, win64
         '''
-        return str(self).endswith('d')
+        return unicode(self).endswith('d')
 
 
     def GetBaseName(self):
         '''
-        :rtype: str
+        :rtype: unicode
         :returns:
             Returns the base platform name (ignores debug)
         '''
-        platform = str(self)
+        platform = unicode(self)
 
         if self.IsDebug():
             return platform[:-1]
@@ -367,7 +368,7 @@ class Platform(object):
 
     def GetSimplePlatform(self):
         '''
-        :rtype: str
+        :rtype: unicode
         :returns:
             Returns the platform in the old format (simple-platform)
 
@@ -388,7 +389,7 @@ class Platform(object):
             'darwin32' : 'i686.darwin',
         }
         try:
-            plat = str(self)
+            plat = unicode(self)
             return RESULT[plat]
         except KeyError:
             raise UnknownPlatform(plat)
@@ -396,7 +397,7 @@ class Platform(object):
 
     def GetMneumonic(self):
         '''
-        :rtype: str
+        :rtype: unicode
         :returns:
             Returns the mneumonic name (3 chars) for the platform.
         '''
@@ -405,7 +406,7 @@ class Platform(object):
 
     def GetLongName(self):
         '''
-        :rtype: str
+        :rtype: unicode
         :returns:
             Returns the long name for the platform.
 
@@ -423,7 +424,7 @@ class Platform(object):
             'darwin32' : 'Darwin 32-bit',
         }
         try:
-            plat = str(self)
+            plat = unicode(self)
             return RESULT[plat]
         except KeyError:
             raise UnknownPlatform(plat)
@@ -434,7 +435,7 @@ class Platform(object):
         '''
         Returns a set with all possible platform flags.
 
-        :return set(str):
+        :return set(unicode):
         '''
         result = {cls.FLAVOUR_WINDOWS, cls.FLAVOUR_LINUX, cls.FLAVOUR_DARWIN}
         for i_platform in cls.GetValidPlatforms():
@@ -447,10 +448,10 @@ class Platform(object):
         Returns the flags correspondent with the current platform.
         The resulting set is always a sub-set of GetAllFlags.
 
-        :return set(str):
+        :return set(unicode):
         '''
         result = {
-            str(self),  # Example: The exact name of the platform: win32, win32d, win64, win64d
+            unicode(self),  # Example: The exact name of the platform: win32, win32d, win64, win64d
             self.GetBaseName(),  # Example: "win32" (for both win32d and win32)
             self.GetPlatformFlavour(),  # Example: "windows" (for all windows variations)
         }

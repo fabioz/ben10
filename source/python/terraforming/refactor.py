@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 '''
 This module provides instruments to perform code refactoring.
 '''
@@ -44,7 +45,7 @@ class TerraForming(object):
         '''
         Converts the given filename to a py.test.
 
-        :param str filename:
+        :param unicode filename:
         '''
         try:
             input_ = GetFileContents(filename)
@@ -59,7 +60,7 @@ class TerraForming(object):
         Fix the width of all "division-lines" found.
         A division-line is a commented line containing only equal signs (=) or dashes (-)
 
-        :param str filename:
+        :param unicode filename:
         '''
         try:
             lines = GetFileLines(filename)
@@ -74,7 +75,7 @@ class TerraForming(object):
         '''
         Remove any spaces on the end of each line of the given file.
 
-        :param str filename:
+        :param unicode filename:
         '''
         try:
             lines = GetFileLines(filename)
@@ -92,7 +93,7 @@ class TerraForming(object):
 
         This is the main API for TerraForming.
 
-        :param str filename:
+        :param unicode filename:
             The file to perform the reorganization/refactoring. Note that the file is always
             rewritten by this algorithm, no backups. It's assumed that you're using a version
             control system.
@@ -149,7 +150,7 @@ class TerraForming(object):
             - TABs
             - EOLs
 
-        :param str filename:
+        :param unicode filename:
             The file to perform the reorganization/refactoring. Note that the file is always
             rewritten by this algorithm, no backups. It's assumed that you're using a version
             control system.
@@ -177,10 +178,10 @@ class TerraForming(object):
         '''
         Fix the width of the division lines in a python module.
 
-        :param list(str) lines:
+        :param list(unicode) lines:
             Lines of a python module to refactor.
 
-        :return list(str):
+        :return list(unicode):
             Refactored lines for the given python module (lines)
         '''
         r_lines = []
@@ -199,10 +200,10 @@ class TerraForming(object):
         '''
         Remove spaces from the right side of each line.
 
-        :param list(str) lines:
+        :param list(unicode) lines:
             Input lines.
 
-        :return list(str):
+        :return list(unicode):
             Modified lines.
         '''
         return [i.rstrip(' \t') for i in lines]
@@ -212,10 +213,10 @@ class TerraForming(object):
         '''
         Replaces TABS with SPACES.
 
-        :param list(str) lines:
+        :param list(unicode) lines:
             Input lines.
 
-        :return list(str):
+        :return list(unicode):
             Modified lines.
         '''
         return [i.replace('\t', ' ' * tab_width) for i in lines]
@@ -224,11 +225,11 @@ class TerraForming(object):
     @staticmethod
     def GetCodeTree(code):
         '''
-        Obtain the lib2to3 node from the given code (str).
+        Obtain the lib2to3 node from the given code (unicode).
 
         * Handles the necessary of EOL at the end of the code.
 
-        :param str code:
+        :param unicode code:
             Python code (multiline)
 
         :return:
@@ -279,7 +280,7 @@ class TerraForming(object):
         tree.prefix = first_line_prefix
 
         # Next lines
-        if next_lines_prefix and '\n' in str(tree):
+        if next_lines_prefix and '\n' in unicode(tree):
             prefix_next = ''
             skip = True
             for i_leaf in TerraFormer.WalkLeafs(tree.children[0]):
@@ -529,16 +530,16 @@ class TerraForming(object):
 
                 TerraForming.FixIndentation(new_node, node.prefix, next_lines_prefix=next_line_prefix)
 
-                if True:
+                if False:
                     print '=' * 80
-                    print str(node)
+                    print unicode(node)
                     print '-' * 80
                     print "1-PREFIX: '%s'" % node.prefix
                     print "N-PREFIX: '%s'" % next_line_prefix
                     print '-' * 80
-                    print str(new_code)
+                    print unicode(new_code)
                     print '-' * 80
-                    print str(new_node)
+                    print unicode(new_node)
 
                 node.replace(new_node)
 
@@ -552,4 +553,4 @@ class TerraForming(object):
         rt = MyRefactoringTool([ConvertPyTestFix], options=options)
         rt.refactor_tree(tree, 'ConvertPyTestFix')
 
-        return str(tree)
+        return unicode(tree)

@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 from ben10.foundation.types_ import Method, Null
 from ben10.interface import (AssertImplements, Attribute, BadImplementationError,
     DeclareClassImplements, GetImplementedInterfaces, IAdaptable, ImplementsInterface, Interface,
@@ -209,9 +210,8 @@ class Test:
             zoo = Attribute(int)
 
         class I(Interface):
-
             foo = Attribute(int)
-            bar = Attribute(str)
+            bar = Attribute(unicode)
             foobar = Attribute(int, None)
             a_zoo = Attribute(IZoo)
 

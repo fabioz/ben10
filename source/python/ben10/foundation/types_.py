@@ -1,9 +1,10 @@
-'''
-Extensions to python native types.
-'''
+from __future__ import unicode_literals
 from ben10.foundation.is_frozen import IsDevelopment
 from ben10.foundation.klass import IsInstance
 from ben10.foundation.weak_ref import WeakList
+'''
+Extensions to python native types.
+'''
 
 
 
@@ -36,7 +37,7 @@ def _GetKnownNumberTypes():
 #===================================================================================================
 def Boolean(text):
     '''
-    :param str text:
+    :param unicode text:
         A text semantically representing a boolean value.
 
     :rtype: bool
@@ -87,7 +88,7 @@ def CheckType(object_, type_, message=None):
         This can be a actual type or the name of the type.
         This can be one type or a list of types.
 
-    :param str message:
+    :param unicode message:
         The error message shown if the check does not pass.
         By default, generates the following message:
 
@@ -99,7 +100,7 @@ def CheckType(object_, type_, message=None):
     result = IsInstance(object_, type_)
     if not result:
         # 001) The list of the types names.
-        type_names = [x if isinstance(x, str) else x.__name__ for x in MakeTuple(type_)]
+        type_names = [x if isinstance(x, unicode) else x.__name__ for x in MakeTuple(type_)]
         type_names = '" or "'.join(type_names)
 
         # 002) Build the error message
@@ -248,7 +249,7 @@ def IsBasicType(value, accept_compound=False, additional=None):
     :returns:
         True if the passed value is from a basic python type
     '''
-    if isinstance(value, (int, str, long, float, bool, complex)) or \
+    if isinstance(value, (int, unicode, bytes, long, float, bool, complex)) or \
         value is None or (additional and isinstance(value, additional)):
         return True
 
@@ -665,7 +666,7 @@ class StringDictIO(object):
         '''
         Writes a dictionary into a file.
 
-        :param str filename:
+        :param unicode filename:
             Path and filename for target file.
 
         :param bool sort_items:
@@ -674,21 +675,6 @@ class StringDictIO(object):
         items = dictionary.items()
         if sort_items:
             items = sorted(items)
-
-        # Sanity check: make sure we have only strings, not Unicodes
-        for i_key, i_value in items:
-            if isinstance(i_key, unicode):
-                raise TypeError(
-                    'The key "%s" is UNICODE!' %
-                    i_key.encode('ascii', errors='replace')
-                )
-            if isinstance(i_value, unicode):
-                raise TypeError(
-                    'The value of key "%s", "%s" is UNICODE!' % (
-                        i_key,
-                        i_value.encode('ascii', errors='replace')
-                    )
-                )
 
         contents = '\n'.join(['%s = %s' % i for i in items]) + '\n'
 
@@ -701,7 +687,7 @@ class StringDictIO(object):
         '''
         Loads a dictionary from a file.
 
-        :param str filename:
+        :param unicode filename:
             Path and filename for source file.
 
         :param bool inverted:

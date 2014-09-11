@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 from ben10.foundation import is_frozen
 from ben10.foundation.decorators import Abstract, Comparable, Deprecated, Implements, Override
 import pytest

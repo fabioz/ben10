@@ -1,8 +1,10 @@
+from __future__ import unicode_literals
 from ben10.execute import EnvironmentContextManager, Execute, ExecuteNoWait, PrintEnvironment
-from ben10.filesystem import CreateFile
+from ben10.filesystem import CreateFile, OpenFile
 from ben10.foundation.string import Dedent
 from cStringIO import StringIO
 from txtout.txtout import TextOutput
+import io
 import os
 import pytest
 import time
@@ -163,15 +165,14 @@ class Test(object):
         }
 
         # Prepare a controled text output
-        stream = StringIO()
-        output = TextOutput(stream)
-
-        # Print environment
-        PrintEnvironment(environment, output)
-
-        # Save output to temp file
         obtained = embed_data.GetDataFilename('testPrintEnvironment.txt')
-        CreateFile(obtained, contents=stream.getvalue())
+
+        obtained_file = io.open(obtained, 'w')
+        try:
+            output = TextOutput(obtained_file)
+            PrintEnvironment(environment, output)
+        finally:
+            obtained_file.close()
 
         # Compare file contents
         embed_data.AssertEqualFiles(

@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 '''
 Perform maintenance operations on source code.
 '''

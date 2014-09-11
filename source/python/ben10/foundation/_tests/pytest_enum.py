@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 from ben10.foundation.enum import Enum, IterEnumValues, MakeEnum
 import pytest
 
@@ -80,8 +81,8 @@ class Test:
         assert Colors.green == Colors.green
         assert Colors.green != Colors.blue
 
-        assert str(Colors.red) == 'Colors.red'
-        assert str(Colors.blue) == 'Colors.blue'
+        assert unicode(Colors.red) == 'Colors.red'
+        assert unicode(Colors.blue) == 'Colors.blue'
 
         assert repr(Colors.red) == '<Colors.red [0]>'
         assert repr(Colors.green) == '<Colors.green [1]>'
@@ -217,7 +218,7 @@ class Test:
 
         with pytest.raises(TypeError) as e:
             CreateBadEnum()
-        assert str(e).endswith('Multiple enum values: 3')
+        assert unicode(e).endswith('Multiple enum values: 3')
 
         def CreateBadEnumExtension():
             class BadColors(Colors):
@@ -226,7 +227,7 @@ class Test:
 
         with pytest.raises(TypeError) as e:
             CreateBadEnumExtension()
-        assert str(e).endswith('Multiple enum values: 0')
+        assert unicode(e).endswith('Multiple enum values: 0')
 
         # Enumeration values are hashable, so they can be used in dictionaries and sets.
 
@@ -254,7 +255,8 @@ class Test:
 
         with pytest.raises(TypeError) as e:
             TryToCreateBadEnum()
-        assert str(e).endswith("Enum value is not an integer: Apple='APPLE'")
+
+        assert unicode(e).endswith("Enum value is not an integer: Apple=u'APPLE'")
 
 
     def testIterEnumValuesPython(self):
@@ -276,11 +278,3 @@ class Test:
             list(x.name for x in IterEnumValues(_TestEnum))
             == ['Espresso', 'Latte', 'Cappuccino', 'Irish', 'Turkish', 'Crema']
         )
-
-
-
-#===================================================================================================
-# Entry Point
-#===================================================================================================
-if __name__ == '__main__':
-    unittest.main()

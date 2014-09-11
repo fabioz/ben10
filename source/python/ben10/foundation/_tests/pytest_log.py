@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 from StringIO import StringIO
 from ben10.foundation import log
 from ben10.foundation.string import Dedent

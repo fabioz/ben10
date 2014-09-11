@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 from ben10.filesystem import CanonicalPath, CreateDirectory, CreateFile, DeleteFile, GetFileContents
 from gitit.git import (BranchAlreadyExistsError, DirtyRepositoryError, Git, GitExecuteError,
     GitRefDoesNotExistError, NotCurrentlyInAnyBranchError, RepositoryAccessError,
@@ -463,7 +464,7 @@ class Test(object):
         CreateDirectory(charlie_dir)
         assert git.GetWorkingDir(charlie_dir) == os.path.abspath(git.cloned_remote)
 
-        assert git.GetWorkingDir(str(tmpdir.mkdir('not_a_git_dir'))) is None
+        assert git.GetWorkingDir(unicode(tmpdir.mkdir('not_a_git_dir'))) is None
 
 
     def testListLocalBranches(self, git, embed_data):

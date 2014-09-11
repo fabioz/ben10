@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 from urllib2 import HTTPError, HTTPPasswordMgrWithDefaultRealm, ProxyBasicAuthHandler
 import urllib
 import urllib2
@@ -139,7 +140,13 @@ class EsssHttpProtocol(object):
             A file url. This method was intended for a text file, not binary files.
         '''
         url_file = self.URLOpen(url)
-        return url_file.read()
+
+        # Obtain encoding from headers (taken from http://stackoverflow.com/questions/1020892/urllib2-read-to-unicode)
+        import cgi
+        _, params = cgi.parse_header(url_file.headers.get('Content-Type', ''))
+        encoding = params.get('charset', 'utf-8')
+
+        return url_file.read().decode(encoding)
 
 
     def DownloadFile(self, url, target_filename, report_hook=None, block_size=None, additional_user_agent_params=[]):

@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 from ben10.foundation.lru import LRU, LRUWithRemovalMemo, _DictWithRemovalMemo, _Node
 import pytest
 

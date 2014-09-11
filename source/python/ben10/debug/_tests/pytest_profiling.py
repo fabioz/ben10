@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 from StringIO import StringIO
 from UserList import UserList
 from ben10.debug.profiling import ObtainStats, PrintProfile, PrintProfileMultiple, ProfileMethod
@@ -6,10 +7,6 @@ import pstats
 import pytest
 import re
 import sys
-
-
-
-pytest_plugins = ["ben10.fixtures"]
 
 
 
@@ -76,7 +73,7 @@ class Test:
             # Tests CheckOutput failing
             with pytest.raises(AssertionError) as exception:
                 CheckOutput("MISSING")
-            assert str(exception.value).startswith('>>MISSING<< not found in >>')
+            assert unicode(exception.value).startswith('>>MISSING<< not found in >>')
 
             CheckOutput("UserList.py:\d+\(append\)")
 

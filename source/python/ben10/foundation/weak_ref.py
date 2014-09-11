@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 from ben10.foundation.decorators import Implements
 from types import LambdaType
 import inspect
@@ -113,7 +114,7 @@ class WeakList(object):
         self.data[i] = GetWeakRef(item)
 
     def __str__(self):
-        return '\n'.join(str(x) for x in self)
+        return '\n'.join(unicode(x) for x in self)
 
 
 
@@ -210,7 +211,7 @@ class WeakMethodRef(object):
 
 
     def __repr__(self):
-        func_name = getattr(self._func, '__name__', str(self._func))
+        func_name = getattr(self._func, '__name__', unicode(self._func))
         if self._obj is not None:
             obj = self._obj()
             if obj is None:
@@ -310,7 +311,7 @@ class WeakSet(object):
 
 
     def __str__(self):
-        return '\n'.join(str(x) for x in self)
+        return '\n'.join(unicode(x) for x in self)
 
 
 

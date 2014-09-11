@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 '''
 Inspired in a code obtained from http://www.thescripts.com/forum/thread46361.html
 '''
@@ -49,10 +50,10 @@ def Reraise(exception, message, separator='\n'):
     :param Exception exception:
         Original exception being raised with additional messages
 
-    :param str message:
+    :param unicode message:
         Message to be added to the given exception
 
-    :param str separator:
+    :param unicode separator:
         String separating `message` from the `exception`'s original message.
 
     e.g.
@@ -76,7 +77,7 @@ def Reraise(exception, message, separator='\n'):
     import sys
 
     # Get the current message
-    current_message = str(exception)
+    current_message = unicode(exception)
 
     # Build the new message
     if not current_message.startswith(separator):
@@ -92,10 +93,10 @@ def Reraise(exception, message, separator='\n'):
     elif isinstance(exception, SyntaxError):
         exception = ReraiseSyntaxError(message)
     else:
-        # In Python 2.5 overriding the exception "__str__" has no effect in "str()". Instead, we
+        # In Python 2.5 overriding the exception "__str__" has no effect in "unicode()". Instead, we
         # must change the "args" attribute which is used to build the string representation.
         # Even though the documentation says "args" will be deprecated, it uses its first argument
-        # in str() implementation and not "message".
+        # in unicode() implementation and not "message".
         exception.message = message
         exception.args = (exception.message,)
 

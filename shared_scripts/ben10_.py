@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 from ben10.foundation.decorators import Override
 from sharedscripts10.namespace.namespace_types import LIST, PATHLIST
 from sharedscripts10.shared_scripts.esss import EsssProject

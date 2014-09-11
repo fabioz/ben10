@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 from ben10.foundation.types_ import CheckType
 import os
 import sys
@@ -426,7 +427,7 @@ class TextOutput(AbstractTextOutput):
         '''
         Prints a text (p_args) observing the page_width, indentations and color.
         '''
-        text = ' '.join(map(str, p_args))
+        text = ' '.join(map(unicode, p_args))
 
         for i_line in self._WrapLines(text, p_first_indent, p_next_indent, page_width=page_width):
             self.ColorWrite(color, '%s\n' % i_line)
@@ -781,7 +782,7 @@ class TextOutput(AbstractTextOutput):
             print '*' * 80
             print 'Major failure: Error while handling and exception'
             print '-' * 80
-            print str(e)
+            print unicode(e)
             print '*' * 80
             raise
 
@@ -799,12 +800,12 @@ class TextOutput(AbstractTextOutput):
             A list of labels, one for each column
             If None, does not print labels
         @type labels:
-            [str]
+            [unicode]
 
         :param  values:
             A list of values, each entry must have a value for each column.
         @type values:
-            [[str]]
+            [[unicode]]
         '''
 
         def Print(message, color=None):

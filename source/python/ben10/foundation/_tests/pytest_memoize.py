@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 from ben10.foundation.memoize import Memoize
 from ben10.foundation.weak_ref import GetWeakRef
 import pytest
@@ -124,14 +125,14 @@ class Test:
             number = 999
             Memoize(2)(number)
 
-        assert str(exception.value) == 'Expecting a function/method/classmethod for Memoize.'
+        assert unicode(exception.value) == 'Expecting a function/method/classmethod for Memoize.'
 
         with pytest.raises(AssertionError) as exception:
             @Memoize(2, 'INVALID')
             def MyFunction():
                 'Not called!'
 
-        assert str(exception.value) == 'Memoize prune method not supported: INVALID'
+        assert unicode(exception.value) == 'Memoize prune method not supported: INVALID'
 
 
     def testMemoizeLRU(self):
@@ -298,7 +299,7 @@ class Test:
         with pytest.raises(Exception) as exception_info:
             Memoize(Foo)
         message = 'Non-declared keyword arguments (`**kwargs`) not supported. Note that Memoize must be the first decorator (nearest to the function) used.'
-        assert message in str(exception_info.value)
+        assert message in unicode(exception_info.value)
 
         # Can't try to call with non-declared keyword arguments.
         @Memoize
@@ -309,7 +310,7 @@ class Test:
         with pytest.raises(Exception) as exception_info:
             Bar(s=2)
         message = 'Can\'t use non-declared keyword arguments.'
-        assert message in str(exception_info.value)
+        assert message in unicode(exception_info.value)
 
 
     def testPerformance__flaky(self):

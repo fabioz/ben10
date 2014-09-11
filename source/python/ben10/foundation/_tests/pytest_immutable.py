@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 from ben10.foundation.immutable import AsImmutable, ImmutableDict
 from copy import copy, deepcopy
 import pytest
@@ -39,12 +40,12 @@ class Test:
 
         # Dealing with derived values
         a = MyClass()
-        assert AsImmutable(a, return_str_if_not_expected=True) == str(a)
+        assert AsImmutable(a, return_str_if_not_expected=True) == unicode(a)
         with pytest.raises(RuntimeError):
             AsImmutable(a, return_str_if_not_expected=False)
 
         # Derived basics
-        class MyStr(str):
+        class MyStr(unicode):
             pass
         assert AsImmutable(MyStr('alpha')) == 'alpha'
 

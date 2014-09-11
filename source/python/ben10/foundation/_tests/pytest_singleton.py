@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 from ben10.foundation.callback import After
 from ben10.foundation.decorators import Override
 from ben10.foundation.singleton import (PushPopSingletonError, Singleton, SingletonAlreadySetError,

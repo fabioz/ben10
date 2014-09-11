@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 '''
 Collection of fixtures for pytests.
 
@@ -134,18 +135,18 @@ class _EmbedDataFixture(object):
 
     def __init__(self, request):
 
-        # @ivar _module_dir: str
+        # @ivar _module_dir: unicode
         # The module name.
         self._module_name = request.module.__name__.split('.')[-1]
         self._function_name = request.function.__name__
 
-        # @ivar _source_dir: str
+        # @ivar _source_dir: unicode
         # The source directory name.
         # The contents of this directories populates the data-directory
         # This name is create based on the module_name
         self._source_dir = request.fspath.dirname + '/' + self._module_name
 
-        # @ivar _data_dir: str
+        # @ivar _data_dir: unicode
         # The data directory name
         # This name is created based on the module_name
         # Adding the function name to enable parallel run of tests in the same module (pytest_xdist)
@@ -169,7 +170,7 @@ class _EmbedDataFixture(object):
         '''
         Creates the data-directory as a copy of the source directory.
 
-        :rtype: str
+        :rtype: unicode
         :returns:
             Path to created data dir
         '''
@@ -203,7 +204,7 @@ class _EmbedDataFixture(object):
         :param bool create_dir:
             If True (default) creates the data directory.
 
-        :rtype: str
+        :rtype: unicode
         :returns:
             Returns the data-directory name.
 
@@ -224,13 +225,13 @@ class _EmbedDataFixture(object):
         '''
         Returns a full filename in the data-directory.
 
-        @params parts: list(str)
+        @params parts: list(unicode)
             Path parts. Each part is joined to form a path.
 
         :keyword bool absolute:
             If True, returns the filename as an abspath
 
-        :rtype: str
+        :rtype: unicode
         :returns:
             The full path prefixed with the data-directory.
 
@@ -270,14 +271,14 @@ class _EmbedDataFixture(object):
 
         Searches for the filenames both inside and outside the data directory (in that order).
 
-        :param str filename1:
+        :param unicode filename1:
 
-        :param str filename2:
+        :param unicode filename2:
 
         :param bool binary:
             Thread both files as binary files.
 
-        :param str encoding:
+        :param unicode encoding:
             File's encoding. If not None, contents obtained from file will be decoded using this
             `encoding`.
 
@@ -286,6 +287,9 @@ class _EmbedDataFixture(object):
             This callback receives a list of strings (lines) and must also return a list of lines,
             changed as needed.
             The resulting lines will be used to compare with the contents of filename2.
+
+        :param bool binary:
+            .. seealso:: ben10.filesystem.GetFileContents
         '''
         from ben10.filesystem import GetFileContents, GetFileLines
 

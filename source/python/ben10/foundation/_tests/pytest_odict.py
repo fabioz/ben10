@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 from ben10.foundation.odict import _GetSymbol, _OrderedDict
 from ben10.foundation.pushpop import PushPopItem
 import pytest

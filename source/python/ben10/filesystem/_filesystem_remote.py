@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 from ftputil.error import FTPIOError, FTPOSError, PermanentError
 
 
@@ -111,7 +112,7 @@ def FTPUploadFileToUrl(source_filename, target_url):
     '''
     Uploads the given LOCAL file to the given ftp url.
 
-    :param str source_filename:
+    :param unicode source_filename:
         The local filename to copy from.
 
     :param ParseResult target_url:
@@ -134,7 +135,7 @@ def DownloadUrlToFile(source_url, target_filename):
     :param ParseResult source_url:
         A parsed url as returned by urlparse.urlparse
 
-    :param str target_filename:
+    :param unicode target_filename:
         A target filename
     '''
     try:
@@ -205,15 +206,15 @@ def OpenFile(filename_url):
             from _filesystem_exceptions import FileNotFoundError  # @Reimport
             raise FileNotFoundError(filename)
 
-        if 'proxy' in str(e.strerror):
+        if 'proxy' in unicode(e.strerror):
             from _filesystem_exceptions import CantOpenFileThroughProxyError
             raise CantOpenFileThroughProxyError(filename)
 
-        if '550' in str(e.strerror):
+        if '550' in unicode(e.strerror):
             from _filesystem_exceptions import DirectoryNotFoundError
             raise DirectoryNotFoundError(filename)
 
-        if '11001' in str(e.strerror):
+        if '11001' in unicode(e.strerror):
             from _filesystem_exceptions import ServerTimeoutError
             raise ServerTimeoutError(filename)
 
@@ -389,7 +390,7 @@ def FTPListFiles(url):
 
         A parsed url as returned by urlparse.urlparse
 
-    :rtype: list(str) or None
+    :rtype: list(unicode) or None
     :returns:
         List of files, or None if directory does not exist (error 550 CWD)
     '''

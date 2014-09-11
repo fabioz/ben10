@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 from ben10.esss_http_protocol import EsssHttpProtocol
 from ben10.filesystem import CreateFile
 from ben10.phony_http_server import PhonyHTTPServer, ProxyHandler

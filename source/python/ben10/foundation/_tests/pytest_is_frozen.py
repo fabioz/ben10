@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 from ben10.foundation.is_frozen import IsDevelopment, IsFrozen, SetIsDevelopment, SetIsFrozen
 
 

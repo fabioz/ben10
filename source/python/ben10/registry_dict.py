@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 '''
 Slightly magical Win32api Registry -> Dictionary-like-object wrapper
 '''
@@ -158,7 +159,7 @@ class RegistryDict(object):
         except:
             return  # Silently ignore bad keys
         itemtype = type(item)
-        if itemtype is str:
+        if itemtype is unicode:
             _winreg.DeleteValue(self.keyhandle, key)
         elif isinstance(item, RegistryDict):
             # Delete everything in the subkey, then the subkey itself
@@ -199,7 +200,7 @@ class RegistryDict(object):
             self.__setitem__(k, v)
 
     def __setitem__(self, item, value):
-        item = str(item)
+        item = unicode(item)
         pyvalue = type(value)
         if pyvalue is tuple and len(value) == 2:
             valuetype = value[1]
@@ -210,7 +211,7 @@ class RegistryDict(object):
                 d.clear()
                 d.update(value)
                 return
-            if pyvalue is str:
+            if pyvalue is unicode:
                 valuetype = _winreg.REG_SZ
             elif pyvalue is int:
                 valuetype = _winreg.REG_DWORD
@@ -220,7 +221,7 @@ class RegistryDict(object):
         _winreg.SetValueEx(self.keyhandle, item, 0, valuetype, value)
 
     def open(self, keyhandle, keypath, flags=None):
-        if type(keypath) is str:
+        if type(keypath) is unicode:
             keypath = keypath.split('\\')
         if flags is None:
             for subkey in keypath:

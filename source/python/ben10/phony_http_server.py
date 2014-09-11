@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 '''
 Implements a simple HTTP server used for tests related with the HTTP.
 

@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 from StringIO import StringIO
 from ben10.filesystem import CreateFile
 from ben10.foundation.print_detailed_traceback import PrintDetailedTraceback
@@ -17,7 +18,7 @@ def testPrintDetailedTraceback(embed_data):
                 raise TypeError("object of type 'int' has no len()")
         return result
 
-    data = map(str, xrange(100))
+    data = map(unicode, xrange(100))
     data[3] = 3
 
     stream = StringIO()

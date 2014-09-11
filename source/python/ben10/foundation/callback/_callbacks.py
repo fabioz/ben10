@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 from _shortcuts import After, Before, Remove
 
 

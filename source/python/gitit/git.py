@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 from ben10.foundation.memoize import Memoize
 from ben10.foundation.singleton import Singleton
 import os
@@ -49,10 +50,10 @@ class Git(Singleton):
         '''
         Executes a git command line in the given repository.
 
-        :param list(str)|str command_line:
+        :param list(unicode)|unicode command_line:
             List of commands to execute, not including 'git' as the first.
 
-        :param str|None repo_path:
+        :param unicode|None repo_path:
             Path to repository where the command will be executed (without .git)
 
             If None, runs command in current directory (useful for clone, for example)
@@ -66,14 +67,14 @@ class Git(Singleton):
         :param clean_eol:
             .. seealso:: System.Execute
 
-        :returns list(str)|str:
+        :returns list(unicode)|unicode:
             List of lines output from git command, or the complete output if parameter flat_output
             is True
 
         :raises GitExecuteError:
             If the git executable returns an error code
         '''
-        if isinstance(command_line, str):
+        if isinstance(command_line, unicode):
             import shlex
             command_line = shlex.split(command_line)
         command_line = ['git'] + list(command_line)
@@ -107,7 +108,7 @@ class Git(Singleton):
         '''
         Checks if a remote Git repository exists
 
-        :param str repository_url:
+        :param unicode repository_url:
 
         :rtype: bool
         :returns:
@@ -133,11 +134,11 @@ class Git(Singleton):
         '''
         Clone a repository_url
 
-        :param str repository_url:
+        :param unicode repository_url:
             The path to the repository_url.
             e.g. git@yoda:something.git, X:/.git_repos/something.git
 
-        :param str target_dir:
+        :param unicode target_dir:
             Target path to clone the repository_url into.
             e.g.: X:\something, $HOME/Projects/something
 
@@ -200,10 +201,10 @@ class Git(Singleton):
         '''
         Create a hook-file.
 
-        :param str repo_path:
+        :param unicode repo_path:
             Path to the repository (local)
 
-        :param str filename:
+        :param unicode filename:
             The hook filename.
             Just the base name.
             Ex.
@@ -211,10 +212,10 @@ class Git(Singleton):
                 post-commit
                 hook_lib.py
 
-        :param str content:
+        :param unicode content:
             The hook file content.
 
-        :return str:
+        :return unicode:
             Returns the hook *full* filename.
         '''
         from ben10.filesystem import CreateFile, EOL_STYLE_UNIX
@@ -228,13 +229,13 @@ class Git(Singleton):
         '''
         Sets a remote Url in a git repository
 
-        :param str repo_path:
+        :param unicode repo_path:
             Path to the repository (local)
 
-        :param str url:
+        :param unicode url:
             Target url
 
-        :param str remote_name:
+        :param unicode remote_name:
         '''
         return self.Execute(
             ['remote', 'set-url', remote_name, url],
@@ -244,20 +245,20 @@ class Git(Singleton):
 
     def Status(self, repo_path, flags=['--branch', '--short'], flat_output=True, source_dir='.'):
         '''
-        :param str repo_path:
+        :param unicode repo_path:
             Path to the repository (local)
 
-        :param list(str) flags:
+        :param list(unicode) flags:
             List of additional flags given to status.
             Defaults to --branch and --short
 
         :param bool flat_output:
             .. seealso:: self.Execute
 
-        :param str source_dir:
+        :param unicode source_dir:
             Directory (relative to repo_path) where status will be executed.
 
-        :returns str:
+        :returns unicode:
             Output from git status with the given flags
         '''
         return self.Execute(['status', source_dir] + flags, repo_path, flat_output=flat_output)
@@ -267,13 +268,13 @@ class Git(Singleton):
         '''
         Returns commit info from the given repository in a dictionary format
 
-        :param str repo_path:
+        :param unicode repo_path:
             Path to the repository (local)
 
-        :param str ref:
+        :param unicode ref:
             Git ref pointing to commit
 
-        :rtype: dict(str,str)
+        :rtype: dict(unicode,unicode)
         :returns:
             ['commit']
             ['short_commit']
@@ -295,10 +296,10 @@ class Git(Singleton):
 
     def GetCommitRepr(self, repo_path, ref='HEAD', commit_hash=True, short=False, date=False, summary=False):
         '''
-        :param str repo_path:
+        :param unicode repo_path:
             Path to the repository (local)
 
-        :param str ref:
+        :param unicode ref:
             Git ref pointing to commit
 
         :param bool commit_hash:
@@ -315,7 +316,7 @@ class Git(Singleton):
         :param bool summary:
             If True, includes the commit summary
 
-        :return str:
+        :return unicode:
             The current (HEAD) commit name (commit_hash string), plus flavors depending on parameters
         '''
         result_format = ''
@@ -340,10 +341,10 @@ class Git(Singleton):
 
     def GetCommitCount(self, repo_path, commit=None):
         '''
-        :param str repo_path:
+        :param unicode repo_path:
             Path to the repository (local)
 
-        :type commit: str | None
+        :type commit: unicode | None
         :param commit:
             Considers commits of the given commit. (Ex. HEAD)
             Defaults to None which means that we count all the commits in the repository.
@@ -360,16 +361,16 @@ class Git(Singleton):
 
     def Diff(self, repo_path, old_revision=None, new_revision=None):
         '''
-        :param str repo_path:
+        :param unicode repo_path:
             Path to the repository (local)
 
-        :param str old_revision:
+        :param unicode old_revision:
             The previous revision to be compared with
 
-        :param str new_revision:
+        :param unicode new_revision:
             The revision to be compared with
 
-        :return str:
+        :return unicode:
             The diff obtained, generated by git
         '''
         args = ['diff']
@@ -383,20 +384,20 @@ class Git(Singleton):
 
     def Show(self, repo_path, revision, diff_only=False, flags=[]):
         '''
-        :param str repo_path:
+        :param unicode repo_path:
             Path to the repository (local)
 
-        :param str revision:
+        :param unicode revision:
             The revision to be shown
 
         :param bool diff_only:
             If True, only shows diff for this commit. This is similar to git diffing to previous
             commit, but also works for commits without parents
 
-        :param list(str) flags:
+        :param list(unicode) flags:
             Additional flags and parameters passed to 'git show'
 
-        :return str:
+        :return unicode:
             result from 'git show'
         '''
         if diff_only:
@@ -413,13 +414,13 @@ class Git(Singleton):
 
     def GetAuthor(self, repo_path, revision):
         '''
-        :param str repo_path:
+        :param unicode repo_path:
             Path to the repository (local)
 
-        :param str revision:
+        :param unicode revision:
             The name of the revision from which the author's name will be extracted
 
-        :return str:
+        :return unicode:
             The author's name
         '''
         return self.Execute(
@@ -429,13 +430,13 @@ class Git(Singleton):
 
     def GetAuthorEmail(self, repo_path, revision):
         '''
-        :param str repo_path:
+        :param unicode repo_path:
             Path to the repository (local)
 
-        :param str revision:
+        :param unicode revision:
             The name of the revision from which the author's name will be extracted
 
-        :return str:
+        :return unicode:
             The author's email
         '''
         return self.Execute(
@@ -445,13 +446,13 @@ class Git(Singleton):
 
     def GetMessage(self, repo_path, revision):
         '''
-        :param str repo_path:
+        :param unicode repo_path:
             Path to the repository (local)
 
-        :param str revision:
+        :param unicode revision:
             The name of the revision from which the commit message will be extracted
 
-        :return str:
+        :return unicode:
             The commit message
         '''
         return self.Execute(
@@ -461,18 +462,18 @@ class Git(Singleton):
 
     def GetChangedPaths(self, repo_path, revision, previous_revision=None):
         '''
-        :param str repo_path:
+        :param unicode repo_path:
             Path to the repository (local)
 
-        :param str revision:
+        :param unicode revision:
             The name of the revision from which the changed paths be extracted
 
-        :param str|None previous_revision:
+        :param unicode|None previous_revision:
             Used to list changed paths in a range.
             Will list all changes between `previous_revision` and `revision` (not including changes
             in `previous_revision` itself)
 
-        :return list(str):
+        :return list(unicode):
             A list with the names of all changed paths
         '''
         revision_string = revision
@@ -491,10 +492,10 @@ class Git(Singleton):
 
     def GetCommitStats(self, repo_path, revision):
         '''
-        :param str repo_path:
+        :param unicode repo_path:
             Path to the repository (local)
 
-        :param str revision:
+        :param unicode revision:
             The name of the revision.
 
         :rtype: tuple(int,int,int)
@@ -526,13 +527,13 @@ class Git(Singleton):
 
     def Checkout(self, repo_path, ref):
         '''
-        :param str repo_path:
+        :param unicode repo_path:
             Path to the repository (local)
 
-        :param str ref:
+        :param unicode ref:
             An existing git ref (can be a branch, tag, or revision)
 
-        :rtype: list(str)
+        :rtype: list(unicode)
         :returns:
             Output from git log
         '''
@@ -546,7 +547,7 @@ class Git(Singleton):
 
     def IsDirty(self, repo_path):
         '''
-        :param str repo_path:
+        :param unicode repo_path:
             Path to the repository (local)
 
         :return bool:
@@ -560,16 +561,16 @@ class Git(Singleton):
 
     def GetRevisions(self, repo_path, r1, r2, ref=None, ignore_merges=False):
         '''
-        :param str repo_path:
+        :param unicode repo_path:
             Path to the repository (local)
 
-        :param str r1:
+        :param unicode r1:
             The first revision to consider
 
-        :param str r2:
+        :param unicode r2:
             The last revision to consider
 
-        :param str ref:
+        :param unicode ref:
             Ref containing r2.
 
             This is only needed when r1 is a non-revision (self.ZERO_REVISION), seen in a first commit
@@ -583,7 +584,7 @@ class Git(Singleton):
         :param bool ignore_merges:
             If True, will skip all merge commit revisions.
 
-        :rtype: list(str)
+        :rtype: list(unicode)
         :returns:
             A list of all revision hashes that are reachable by r2, but not by r1.
             Orders from earliest to latest.
@@ -627,9 +628,9 @@ class Git(Singleton):
         '''
         Adds a filename to a repository's staged changes.
 
-        :param str repo_path:
+        :param unicode repo_path:
 
-        :param str filename:
+        :param unicode filename:
         '''
         self.Execute(['add', filename], repo_path)
 
@@ -638,22 +639,22 @@ class Git(Singleton):
         '''
         Commits staged changes in a repository
 
-        :param str repo_path:
+        :param unicode repo_path:
 
-        :param str commit_message:
+        :param unicode commit_message:
         '''
         self.Execute(['commit', '-m', commit_message] + flags, repo_path)
 
 
     def Push(self, repo_path, remote_name=None, ref=None, tags=False):
         '''
-        :param str repo_path:
+        :param unicode repo_path:
             Path to the repository (local)
 
-        :param str remote_name:
+        :param unicode remote_name:
             The remote into which the push will be made.
 
-        :param str ref:
+        :param unicode ref:
             The name of the ref that will pushed into.
 
         :param bool tags:
@@ -677,22 +678,22 @@ class Git(Singleton):
         '''
         Fetches information from a remote
 
-        :param str repo_path:
+        :param unicode repo_path:
             Path to the repository (local)
 
-        :param str remote_name:
+        :param unicode remote_name:
             The remote from which the info will be fetched
 
-        :param str ref:
+        :param unicode ref:
             Target remote refspec.
 
         :param bool tags:
             If True, adds --tags option
 
-        :param list(str) flags:
+        :param list(unicode) flags:
             Additional flags passed to git fetch
 
-        :rtype: list(str)
+        :rtype: list(unicode)
         :returns:
             Output from git log
         '''
@@ -716,14 +717,14 @@ class Git(Singleton):
         '''
         Reset the current reference to the given one.
 
-        :param str repo_path:
+        :param unicode repo_path:
             Path to the repository (local)
 
-        :param str ref:
+        :param unicode ref:
             Reference to "reset" to.
             If None, resets the working dir to its original state.
 
-        :rtype: list(str)
+        :rtype: list(unicode)
         :returns:
             Output from git log
         '''
@@ -736,13 +737,13 @@ class Git(Singleton):
 
     def Pull(self, repo_path, remote_name=None, branch=None, rebase=None, commit=None, output_callback=None):
         '''
-        :param str repo_path:
+        :param unicode repo_path:
             Path to the repository (local)
 
-        :param str remote_name:
+        :param unicode remote_name:
             The remote from which the pull will be made.
 
-        :param str branch:
+        :param unicode branch:
             The name of the branch that will be pulled.
             If None, uses the current branch
 
@@ -759,7 +760,7 @@ class Git(Singleton):
         :param output_callback:
             .. seealso:: self.Execute
 
-        :return list(str):
+        :return list(unicode):
             Output from git pull
         '''
         command_line = ['pull']
@@ -792,16 +793,15 @@ class Git(Singleton):
     @Memoize(500)
     def Log(self, repo_path, flags=()):
         '''
-        :param str repo_path:
+        :param unicode repo_path:
             Path to the repository (local)
 
-        :param tuple(str) flags:
+        :param tuple(unicode) flags:
             Additional flags passed to git log
 
             e.g. ('--oneline',)
 
-        :rtype: list(str)
-        :returns:
+        :returns list(unicode):
             Output from git log
         '''
         return self.Execute(('log',) + flags, repo_path)
@@ -813,7 +813,7 @@ class Git(Singleton):
         :param repo_path:
             Path to the repository (local)
 
-        :returns str|None:
+        :returns unicode|None:
             The name of the current branch.
 
         :raises NotCurrentlyInAnyBranchError:
@@ -844,10 +844,10 @@ class Git(Singleton):
     @Memoize(500)
     def GetCurrentRef(self, path, fail_if_dirty=False):
         '''
-        :param str path:
+        :param unicode path:
             Path within a Git repository.
 
-        :returns str:
+        :returns unicode:
             Git ref for last commit that changed `path`
         '''
         # Just to be safe, make sure that `path` is absolute and standard
@@ -876,7 +876,7 @@ class Git(Singleton):
         '''
         Returns whether the repository of the given path is a submodule.
 
-        :param str path:
+        :param unicode path:
             Path within a Git repository.
 
         :return bool:
@@ -888,20 +888,20 @@ class Git(Singleton):
         '''
         Returns the git repository top-level (root) directory.
 
-        :param str path:
+        :param unicode path:
             Path within a Git repository.
 
-        :return str:
+        :return unicode:
         '''
         return self.Execute(['rev-parse', '--show-toplevel'], path, flat_output=True)
 
 
     def BranchExists(self, repo_path, branch_name, remote=False):
         '''
-        :param str repo_path:
+        :param unicode repo_path:
             Path to the repository (local)
 
-        :param str branch_name:
+        :param unicode branch_name:
             The branches' name
 
         :param bool remote:
@@ -919,10 +919,10 @@ class Git(Singleton):
         '''
         "Stash the changes in a dirty working directory away"
 
-        :param str repo_path:
+        :param unicode repo_path:
             Path to the repository (local)
 
-        :rtype: list(str)
+        :rtype: list(unicode)
         :returns:
             Output from git log
         '''
@@ -937,10 +937,10 @@ class Git(Singleton):
         "Remove a single stashed state from the stash list and apply it on top of the current
         working tree state"
 
-        :param str repo_path:
+        :param unicode repo_path:
             Path to the repository (local)
 
-        :rtype: list(str)
+        :rtype: list(unicode)
         :returns:
             Output from git log
         '''
@@ -956,10 +956,10 @@ class Git(Singleton):
         '''
         Lists remotes configured in a git repository.
 
-        :param str repo_path:
+        :param unicode repo_path:
             Path to the repository (local)
 
-        :rtype: list(str)
+        :rtype: list(unicode)
         :returns:
             List of remotes.
         '''
@@ -970,10 +970,10 @@ class Git(Singleton):
         '''
         Checks if a remote name exists in a git repository.
 
-        :param str repo_path:
+        :param unicode repo_path:
             Path to the repository (local)
 
-        :param str remote_name:
+        :param unicode remote_name:
             The remote name.
 
         :rtype: bool
@@ -987,13 +987,13 @@ class Git(Singleton):
         '''
         Returns the url associated with a remote in a git repository.
 
-        :param str repo_path:
+        :param unicode repo_path:
             Path to the repository (local)
 
-        :param str remote_name:
+        :param unicode remote_name:
             The remote name.
 
-        :rtype: str
+        :rtype: unicode
         :returns:
             The url of the remote.
         '''
@@ -1008,10 +1008,10 @@ class Git(Singleton):
         '''
         Removes a remote from the git repository.
 
-        :param str repo_path:
+        :param unicode repo_path:
             Path to the repository (local)
 
-        :param str remote_name:
+        :param unicode remote_name:
             The name of the remote.
         '''
         self.Execute(
@@ -1025,13 +1025,13 @@ class Git(Singleton):
         '''
         Add a remote in a git repository.
 
-        :param str repo_path:
+        :param unicode repo_path:
             Path to the repository (local)
 
-        :param str remote_name:
+        :param unicode remote_name:
             The (new) remote name.
 
-        :param str remote_url:
+        :param unicode remote_url:
             The (new) remote url.
         '''
         self.Execute(
@@ -1045,10 +1045,10 @@ class Git(Singleton):
         '''
         Prunes branches from a remote
 
-        :param str repo_path:
+        :param unicode repo_path:
             Path to the repository (local)
 
-        :param str remote_name:
+        :param unicode remote_name:
             The remote name.
         '''
         output = self.Execute(['remote', 'prune', remote_name], repo_path)
@@ -1065,7 +1065,7 @@ class Git(Singleton):
         '''
         Checks if the given path is a valid git repository
 
-        :param str repo_path:
+        :param unicode repo_path:
             Path to the repository (local)
 
         :rtype: bool
@@ -1086,10 +1086,10 @@ class Git(Singleton):
         '''
         Obtain the local working dir.
 
-        :param str path:
+        :param unicode path:
             A path INSIDE a local repository.
 
-        :returns str:
+        :returns unicode:
             The working (root) directory of the local git repository.
             Returns None if the given path does not belong to a local git repository.
         '''
@@ -1110,17 +1110,17 @@ class Git(Singleton):
         '''
         List the branches of the given repository.
 
-        :param str repo_path:
+        :param unicode repo_path:
             Path to the repository (local)
 
         :param bool remote:
             Considers the remote branches instead of the local ones.
 
-        :param str remote_name:
+        :param unicode remote_name:
             Name of the remote to check for the branch existence.
             Only used if the parameter remote=True.
 
-        :return list(str):
+        :return list(unicode):
             The first branch in the list is the current branch.
             All other branches are sorted alphabetically.
         '''
@@ -1150,13 +1150,13 @@ class Git(Singleton):
         '''
         Cleans a repository, removing files that match .gitignore (and nothing else).
 
-        :param str repo_path:
+        :param unicode repo_path:
             Path to the repository (local)
 
         :param bool ignored_only:
             If True, only delete files in .gitignore
 
-        :rtype: list(str)
+        :rtype: list(unicode)
         :returns:
             List of files removed
         '''
@@ -1187,13 +1187,13 @@ class Git(Singleton):
         Returns modified files from a repository (ignores untracked files).
         Parses output from git status to obtain this information.
 
-        :param str repo_path:
+        :param unicode repo_path:
             Path to the repository (local)
 
-        :param str source_dir:
+        :param unicode source_dir:
             .. seealso:: Git.Status
 
-        :rtype: list(tuple(str,str))
+        :rtype: list(tuple(unicode,unicode))
         :returns:
             List of (status, path) of modified files in a repository
         '''
@@ -1224,17 +1224,17 @@ class Git(Singleton):
         '''
         Creates a tag in the repository
 
-        :param str repo_path:
+        :param unicode repo_path:
             Path to the repository (local)
 
-        :param str name:
+        :param unicode name:
             Name of the tag
 
-        :type message: str | None
+        :type message: unicode | None
         :param message:
             If not None, adds a message to the tag
 
-        :type message_file: str | None
+        :type message_file: unicode | None
         :param message_file:
             If not None, reads file at this path and sets this as the tag message.
         '''
@@ -1249,13 +1249,13 @@ class Git(Singleton):
 
     def GetTags(self, repo_path, commit=None):
         '''
-        :param str repo_path:
+        :param unicode repo_path:
             Path to the repository (local)
 
-        :param str commit:
+        :param unicode commit:
             If given, only return tags that point to this commit.
 
-        :rtype: set(str)
+        :rtype: set(unicode)
         :returns:
             Set of available tag names
         '''
@@ -1266,13 +1266,13 @@ class Git(Singleton):
 
     def GetTagMessage(self, repo_path, tag_name):
         '''
-        :param str repo_path:
+        :param unicode repo_path:
             Path to the repository (local)
 
-        :param str tag_name:
+        :param unicode tag_name:
             Name of the tag being read
 
-        :returns str:
+        :returns unicode:
             Tag content
         '''
         tag_output = self.Execute(['cat-file', '-p', tag_name], repo_path, flat_output=True)
@@ -1295,13 +1295,13 @@ class Git(Singleton):
         Creates a new local branch, and stays in it.
         Equivalent to 'git checkout -b branch_name'
 
-        :param str repo_path:
+        :param unicode repo_path:
             Path to the repository (local)
 
-        :param str branch_name:
+        :param unicode branch_name:
             The name of the branch to be created.
 
-        :param str|None source:
+        :param unicode|None source:
             If a ref is given, branch is created from this point.
 
         :raises DirtyRepositoryError:
@@ -1329,10 +1329,10 @@ class Git(Singleton):
         '''
         Deletes a local branch
 
-        :param str repo_path:
+        :param unicode repo_path:
             Path to the repository (local)
 
-        :param str branch_name:
+        :param unicode branch_name:
             The name of the branch to be deleted.
 
         :raises BranchDoesNotExistError:
@@ -1355,10 +1355,10 @@ class Git(Singleton):
         '''
         Deletes a branch, both locally and remotely
 
-        :param str repo_path:
+        :param unicode repo_path:
             Path to the repository (local)
 
-        :param str branch_name:
+        :param unicode branch_name:
             The name of the branch to be deleted.
 
         :raises BranchDoesNotExistError:
@@ -1377,18 +1377,18 @@ class Git(Singleton):
         '''
         Creates a new branch in origin
 
-        :param str repo_path:
+        :param unicode repo_path:
             Path to the repository (local)
 
-        :type original_branch: str or None
+        :type original_branch: unicode or None
         :param original_branch:
             Name of the remote branch from which the new branch will be created.
             If None, uses the current local branch
 
-        :param str branch_name:
+        :param unicode branch_name:
             The name of the branch to be created.
 
-        :param str remote_name:
+        :param unicode remote_name:
             Name of the remote into which the new branch will be created.
 
         :raises DirtyRepositoryError:
@@ -1424,10 +1424,10 @@ class Git(Singleton):
         '''
         Deletes a branch in origin
 
-        :param str repo_path:
+        :param unicode repo_path:
             Path to the repository (local)
 
-        :param str branch_name:
+        :param unicode branch_name:
             The name of the branch to be deleted.
 
         :raises BranchDoesNotExistError:

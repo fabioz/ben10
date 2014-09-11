@@ -1,5 +1,6 @@
+from __future__ import unicode_literals
 from ben10.filesystem import CreateFile, GetFileContents
-from ben10.foundation.is_frozen import IsDevelopment, SetIsDevelopment, SetIsFrozen
+from ben10.foundation.is_frozen import IsDevelopment, SetIsDevelopment
 from ben10.foundation.types_ import (AsList, Boolean, CheckBasicType, CheckEnum, CheckFormatString,
     CheckIsNumber, CheckType, CreateDevelopmentCheckType, Flatten, Intersection, IsBasicType,
     IsNumber, MergeDictsRecursively, Null, OrderedIntersection, StringDictIO, _GetKnownNumberTypes)
@@ -45,13 +46,13 @@ class Test:
 
     def testPassing(self):
         # self.failIfRaises TypeError
-        CheckType('hellou', str)
+        CheckType('hellou', unicode)
 
         # self.failIfRaises TypeError,
-        CheckType('hellou', (int, str))
+        CheckType('hellou', (int, unicode))
 
         # self.failIfRaises TypeError,
-        CheckType(99, (int, str))
+        CheckType(99, (int, unicode))
 
 
     def testRaising(self):
@@ -62,7 +63,7 @@ class Test:
             CheckType('hellou', (int, float))
 
         with pytest.raises(TypeError):
-            CheckType(99, (str, float))
+            CheckType(99, (unicode, float))
 
 
     def testCheckFormatString(self):
@@ -312,8 +313,8 @@ class Test:
             MergeDictsRecursively({}, 'Foo')
 
         assert (
-            str(excinfo.value)
-            == 'Wrong types passed. Expecting two dictionaries, got: "dict" and "str"'
+            unicode(excinfo.value)
+            == 'Wrong types passed. Expecting two dictionaries, got: "dict" and "unicode"'
         )
 
 
@@ -373,7 +374,7 @@ class Test:
 
         # representation and conversion to a string
         assert repr(n) == '<Null>'
-        assert str(n) == 'Null'
+        assert unicode(n) == 'Null'
 
         # truth value
         assert bool(n) == False
@@ -392,7 +393,7 @@ class Test:
     def testNullCopy(self):
         n = Null()
         n1 = copy.copy(n)
-        assert str(n) == str(n1)
+        assert unicode(n) == unicode(n1)
 
 
     def testStringDictIO(self, embed_data):
@@ -461,25 +462,3 @@ class Test:
         # Test sorted
         StringDictIO.Save(ordered_dict, filename, sort_items=True)
         assert GetFileContents(filename) == 'a = last\nz = first\n'
-
-
-    def testStringDictIOUnicode(self, embed_data):
-        d = {
-            u'key' : 'value'
-        }
-        with pytest.raises(TypeError):
-            StringDictIO.Save(d, embed_data['testUnicode.txt'])
-
-        d = {
-            'key' : u'value'
-        }
-        with pytest.raises(TypeError):
-            StringDictIO.Save(d, embed_data['testUnicode.txt'])
-
-        d = {
-            'key' : u'a\xe7\xe3o'
-        }
-        with pytest.raises(TypeError) as excinfo:
-            StringDictIO.Save(d, embed_data['testUnicode.txt'])
-        assert str(excinfo.value) == 'The value of key "key", "a??o" is UNICODE!'
-

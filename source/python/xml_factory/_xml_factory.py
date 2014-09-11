@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 from ._pretty_xml import WritePrettyXMLElement
 from xml.etree import ElementTree
 

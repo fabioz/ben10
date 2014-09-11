@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 from .immutable import AsImmutable
 from .odict import odict
 from .types_ import Method
@@ -175,7 +176,7 @@ class AttributeBasedCachedMethod(CachedMethod):
         '''
         :type cached_method: bound method to be cached
         :param cached_method:
-        :type attr_name_list: attr names in a C{str} separated by spaces OR in a sequence of C{str}
+        :type attr_name_list: attr names in a C{unicode} separated by spaces OR in a sequence of C{unicode}
         :param attr_name_list:
         :type cache_size: the cache size
         :param cache_size:
@@ -183,7 +184,7 @@ class AttributeBasedCachedMethod(CachedMethod):
         :param results:
         '''
         CachedMethod.__init__(self, cached_method)
-        if isinstance(attr_name_list, str):
+        if isinstance(attr_name_list, unicode):
             self._attr_name_list = attr_name_list.split()
         else:
             self._attr_name_list = attr_name_list

@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 from clikit.command import Command, InvalidFixture
 from clikit.console import BufferedConsole
 import pytest
@@ -61,7 +62,7 @@ class Test:
         assert cmd.description == 'Hello function.'
 
         assert cmd.args.keys() == ['console_', 'filename', 'option', 'no_setup', 'no_default', 'config']
-        assert map(str, cmd.args.values()) == [
+        assert map(unicode, cmd.args.values()) == [
             'console_',
             'filename',
             'option=yes',
@@ -159,7 +160,7 @@ optional arguments:
         assert cmd.description == 'Hello function.'
 
         assert cmd.args.keys() == ['console_', 'first']
-        assert map(str, cmd.args.values()) == ['console_', "first=one"]
+        assert map(unicode, cmd.args.values()) == ['console_', "first=one"]
         assert cmd.kwargs is None
 
         console = BufferedConsole()

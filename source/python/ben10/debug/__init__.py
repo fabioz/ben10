@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 def IsPythonDebug():
     '''
     Returns True if it is running under a debug version of the python interpreter

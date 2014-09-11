@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 '''
 LRU module. Based around heapq.
 '''
@@ -66,7 +67,7 @@ class _Node(object):
 
     def __repr__(self):
         '''
-        :rtype: str
+        :rtype: unicode
         :returns:
             The representation of the item
         '''

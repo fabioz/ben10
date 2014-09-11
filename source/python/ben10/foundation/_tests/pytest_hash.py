@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 from StringIO import StringIO
 from ben10.foundation.hash import DumpDirHashToStringIO, GetRandomHash, IterHashes, Md5Hex
 import pytest
