@@ -23,6 +23,7 @@ class Test(object):
     def testDeleteCache(self, dir_cache, embed_data):
         CreateDirectory(embed_data['cache_dir/alpha'])
         CreateFile(embed_data['cache_dir/alpha/file.txt'], contents='')
+        dir_cache.TagCompleteCache()
 
         assert dir_cache.CacheExists()
         deleted = dir_cache.DeleteCache()
@@ -48,6 +49,7 @@ class Test(object):
         # Calling it twice does nothing.
         CreateFile(embed_data['cache_dir/alpha/new_file.txt'], 'This is new')
         assert IsFile(embed_data['cache_dir/alpha/new_file.txt'])
+
         dir_cache.CreateCache()
         assert IsFile(embed_data['cache_dir/alpha/new_file.txt'])
         assert dir_cache.RemoteExists()
