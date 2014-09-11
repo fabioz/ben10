@@ -300,16 +300,16 @@ def Execute(
     environ.update(replace_environ)
 
     try:
-        with Cwd(cwd):
-            popen = subprocess.Popen(
-                command_line,
-                stdin=subprocess.PIPE,
-                stdout=subprocess.PIPE if pipe_stdout else None,
-                stderr=subprocess.STDOUT,
-                env=environ,
-                bufsize=0,
-                shell=shell,
-            )
+        popen = subprocess.Popen(
+            command_line,
+            cwd=cwd,
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE if pipe_stdout else None,
+            stderr=subprocess.STDOUT,
+            env=environ,
+            bufsize=0,
+            shell=shell,
+        )
     except Exception, e:
         Reraise(
             e,
