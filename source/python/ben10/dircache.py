@@ -1,7 +1,7 @@
 from archivist import Archivist
-from ben10.filesystem import (CopyFile, CreateDirectory, CreateLink, CreateTemporaryDirectory,
-    DeleteDirectory, DeleteFile, DeleteLink, Exists, FileAlreadyExistsError, FileNotFoundError,
-    IsDir, IsLink, StandardizePath)
+from ben10.filesystem import (CopyFile, CreateDirectory, CreateFile, CreateLink,
+    CreateTemporaryDirectory, DeleteDirectory, DeleteFile, DeleteLink, Exists,
+    FileAlreadyExistsError, FileNotFoundError, IsDir, IsLink, StandardizePath)
 import os
 
 
@@ -75,6 +75,8 @@ class DirCache(object):
 
         self.__cache_base_dir = StandardizePath(os.path.abspath(cache_base_dir))
         self.__cache_dir = self.__cache_base_dir + '/' + self.__name
+
+        self.__complete_cache_tag = self.__cache_dir + '/.cache'
 
 
     @classmethod
@@ -162,7 +164,7 @@ class DirCache(object):
         :return bool:
             True if cache was deleted, False if it did not exist and no change was required.
         '''
-        if self.CacheExists():
+        if Exists(self.cache_dir):
             DeleteDirectory(self.cache_dir)
             return True
         return False
@@ -215,7 +217,26 @@ class DirCache(object):
         if not os.listdir(self.cache_dir):
             raise RuntimeError('Directory "%s" is empty.' % self.cache_dir)
 
+        self.TagCompleteCache()
+
         self._UploadRemote()
+
+
+    def TagCompleteCache(self):
+        '''
+        Tags a cache as complete.
+
+        This is done manually, or automatically when uploading the cache to a
+        remote directory.
+
+        If this file is not present, a cache is considered incomplete (i.e.,
+        CacheExists will return False)
+        '''
+        if not Exists(self.__complete_cache_tag):
+            CreateFile(
+                self.__complete_cache_tag,
+                contents='This file indicates that this cache was created correctly.'
+            )
 
 
     def RemoteExists(self):
@@ -238,11 +259,14 @@ class DirCache(object):
 
     def CacheExists(self):
         '''
-        Checks if the local cache exists and is not empty.
+        Checks if the local cache exists, is valid, and not empty.
+
+        Cache is valid if it was tagged as complete. .. seealso:: TagCompleteCache
 
         :returns bool:
         '''
-        return Exists(self.cache_dir) and os.listdir(self.cache_dir)
+        # Check for at least two files, since one is our `self.__complete_cache_tag`
+        return Exists(self.__complete_cache_tag) and len(os.listdir(self.cache_dir)) > 1
 
 
     def _DownloadRemote(self, target_dir):
