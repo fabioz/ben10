@@ -1,4 +1,5 @@
 from ben10.filesystem import OpenReadOnlyFile
+import mock
 import os
 import pytest
 import sys
@@ -18,7 +19,8 @@ def test_filename(embed_data):
 #=======================================================================================================================
 class Test:
 
-    def testOpenReadOnlyFile__serial(self, monkeypatch, test_filename):
+    @pytest.mark.serial
+    def testOpenReadOnlyFile(self, monkeypatch, test_filename):
         if sys.platform == 'win32':
 
             def ResetFlags():
@@ -35,31 +37,32 @@ class Test:
 
 
             self.open_file = None
-            monkeypatch.setattr(os, 'open', MockOpen)
+
             try:
-                # Check text, random
-                ResetFlags()
-                self.open_file = OpenReadOnlyFile(test_filename)
-                assert self.open_file.mode == 'r'
-                assert self.binary_flag is None
-                assert self.sequential_flag is None
-                self.open_file.close()
+                with mock.patch('os.open', MockOpen):
+                    # Check text, random
+                    ResetFlags()
+                    self.open_file = OpenReadOnlyFile(test_filename)
+                    assert self.open_file.mode == 'r'
+                    assert self.binary_flag is None
+                    assert self.sequential_flag is None
+                    self.open_file.close()
 
-                # Check binary, random
-                ResetFlags()
-                self.open_file = OpenReadOnlyFile(test_filename, binary=True)
-                assert self.open_file.mode == 'rb'
-                assert self.binary_flag is None
-                assert self.sequential_flag is None
-                self.open_file.close()
+                    # Check binary, random
+                    ResetFlags()
+                    self.open_file = OpenReadOnlyFile(test_filename, binary=True)
+                    assert self.open_file.mode == 'rb'
+                    assert self.binary_flag is None
+                    assert self.sequential_flag is None
+                    self.open_file.close()
 
-                # Check binary, sequential
-                ResetFlags()
-                self.open_file = OpenReadOnlyFile(test_filename, binary=True, sequential=True)
-                assert self.open_file.mode == 'rb'
-                assert self.binary_flag is not None
-                assert self.sequential_flag is not None
-                self.open_file.close()
+                    # Check binary, sequential
+                    ResetFlags()
+                    self.open_file = OpenReadOnlyFile(test_filename, binary=True, sequential=True)
+                    assert self.open_file.mode == 'rb'
+                    assert self.binary_flag is not None
+                    assert self.sequential_flag is not None
+                    self.open_file.close()
             finally:
                 if self.open_file:
                     self.open_file.close()

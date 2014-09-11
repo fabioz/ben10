@@ -14,6 +14,7 @@ These functions abstract file location, most of them work for either local, ftp 
 
     Keep in mind that this process can be slow if you perform many of such operations in sequence.
 '''
+from ben10.foundation.reraise import Reraise
 import contextlib
 import os
 import re
@@ -400,7 +401,6 @@ def _CopyFileLocal(source_filename, target_filename, copy_symlink=True):
             shutil.copyfile(source_filename, target_filename)
             shutil.copymode(source_filename, target_filename)
     except Exception, e:
-        from ben10.foundation.reraise import Reraise
         Reraise(e, 'While executiong _filesystem._CopyFileLocal(%s, %s)' % (source_filename, target_filename))
 
 
@@ -724,7 +724,6 @@ def DeleteFile(target_filename):
             from ._filesystem_exceptions import FileOnlyActionError
             raise FileOnlyActionError(target_filename)
     except Exception, e:
-        from ben10.foundation.reraise import Reraise
         Reraise(e, 'While executing filesystem.DeleteFile(%s)' % (target_filename))
 
 
@@ -1456,7 +1455,6 @@ def CreateLink(target_path, link_path, override=True):
         try:
             win32file.CreateSymbolicLink(link_path, target_path, 1)
         except Exception, e:
-            from ben10.foundation.reraise import Reraise
             Reraise(e, 'Creating link "%(link_path)s" pointing to "%(target_path)s"' % locals())
 
 
