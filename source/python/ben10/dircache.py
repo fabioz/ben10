@@ -235,7 +235,7 @@ class DirCache(object):
         if not Exists(self.__complete_cache_tag):
             CreateFile(
                 self.__complete_cache_tag,
-                contents='This file indicates that this cache was create correctly.'
+                contents='This file indicates that this cache was created correctly.'
             )
 
 
