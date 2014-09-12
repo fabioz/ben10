@@ -113,6 +113,9 @@ class _MethodWrapper(Method): #It needs to be a subclass of Method for interface
         #Maintaining the OriginalMethod() interface that clients expect.
         self.OriginalMethod = self._method
 
+    def __repr__(self):
+        return '_MethodWrapper(%s): %s' % (id(self), self._name)
+
 
     def __call__(self, *args, **kwargs):
 
