@@ -130,8 +130,28 @@ def FixIsFrozen(console_, path):
         ('coilib50.IsDevelopment', 'IsDevelopment', 'from ben10.foundation.is_frozen import IsDevelopment'),
         ('coilib50.SetIsFrozen', 'SetIsFrozen', 'from ben10.foundation.is_frozen import SetIsFrozen'),
         ('coilib50.SetIsDevelopment', 'SetIsDevelopment', 'from ben10.foundation.is_frozen import SetIsDevelopment'),
-        ('property.Create', 'property_.Create', 'from ben10 import property_'),
     ]
+
+    PROPERTY_MODULE_SYMBOLS = [
+        'PropertiesDescriptor',
+        'Property',
+        'Create',
+        'CreateDeprecatedProperties',
+        'CreateForwardProperties',
+        'FromCamelCase',
+        'MakeGetName',
+        'MakeSetGetName',
+        'MakeSetName',
+        'ToCamelCase',
+        'Copy',
+        'DeepCopy',
+        'Eq',
+        'PropertiesStr',
+    ]
+    for i_symbol in PROPERTY_MODULE_SYMBOLS:
+        FIND_REPLACE.append(
+            ('property.%s' % i_symbol, 'property_.%s' % i_symbol, 'from ben10 import property_'),
+        )
 
     for i_filename in FindFiles(path, ['*.py']):
         contents = GetFileContents(i_filename)
