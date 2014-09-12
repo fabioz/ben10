@@ -130,6 +130,7 @@ def FixIsFrozen(console_, path):
         ('coilib50.IsDevelopment', 'IsDevelopment', 'from ben10.foundation.is_frozen import IsDevelopment'),
         ('coilib50.SetIsFrozen', 'SetIsFrozen', 'from ben10.foundation.is_frozen import SetIsFrozen'),
         ('coilib50.SetIsDevelopment', 'SetIsDevelopment', 'from ben10.foundation.is_frozen import SetIsDevelopment'),
+        ('property.Create', 'property_.Create', 'from ben10 import property_'),
     ]
 
     for i_filename in FindFiles(path, ['*.py']):
