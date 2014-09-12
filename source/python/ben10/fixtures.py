@@ -27,29 +27,6 @@ class MultipleFilesNotFound(RuntimeError):
 
 
 #===================================================================================================
-# SkipIfImportError
-#===================================================================================================
-def SkipIfImportError(module_name):
-    '''
-    Used as a decorator on tests that should be skipped if a given module cannot be imported.
-
-    e.g.
-        @SkipIfImportError(numpy)
-        def testThatRequiresNumpy():
-            ...
-
-    :param str module_name:
-        Name of module being checked
-    '''
-    try:
-        __import__(module_name)
-        return pytest.mark.skipif('False')
-    except ImportError:
-        return pytest.mark.skipif('True')
-
-
-
-#===================================================================================================
 # embed_data
 #===================================================================================================
 

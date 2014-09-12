@@ -1,5 +1,5 @@
 from ben10.filesystem import CreateFile, StandardizePath
-from ben10.fixtures import MultipleFilesNotFound, SkipIfImportError, _EmbedDataFixture
+from ben10.fixtures import MultipleFilesNotFound, _EmbedDataFixture
 from ben10.foundation import is_frozen
 from ben10.foundation.string import Dedent
 import os
@@ -107,14 +107,6 @@ class Test(object):
         assert \
             '_EmbedDataFixture is not ready for execution inside an executable.' \
             in str(exception)
-
-
-    def testSkipIfImportError(self):
-        r = SkipIfImportError('sys')
-        assert repr(r) == "<MarkDecorator 'skipif' {'args': ('False',), 'kwargs': {}}>"
-
-        r = SkipIfImportError('invalid')
-        assert repr(r) == "<MarkDecorator 'skipif' {'args': ('True',), 'kwargs': {}}>"
 
 
     def testEmbedDataFixture(self, request):

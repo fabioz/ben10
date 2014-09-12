@@ -1,9 +1,8 @@
-from ben10.filesystem import GetFileContents, CreateFile
-from ben10.fixtures import SkipIfImportError
+from ben10.filesystem import CreateFile, GetFileContents
 from ben10.foundation.is_frozen import SetIsFrozen
 from ben10.foundation.types_ import (AsList, Boolean, CheckBasicType, CheckEnum, CheckFormatString,
     CheckIsNumber, CheckType, CreateDevelopmentCheckType, Flatten, Intersection, IsBasicType,
-    IsNumber, MergeDictsRecursively, Null, OrderedIntersection, _GetKnownNumberTypes, StringDictIO)
+    IsNumber, MergeDictsRecursively, Null, OrderedIntersection, StringDictIO, _GetKnownNumberTypes)
 import copy
 import pytest
 
@@ -109,23 +108,21 @@ class Test:
             CheckEnum('foo', range(10))
 
 
-    @SkipIfImportError('numpy')
     def testCheckNumber(self):
-        import numpy as np
+        numpy = pytest.importorskip('numpy')
 
         for number_class in [int, float, long]:
             converted = number_class(1)
             assert IsNumber(converted)
 
         # Checking numpy numbers
-        collection = np.zeros(1, np.float32)
+        collection = numpy.zeros(1, numpy.float32)
         assert IsNumber(collection[0])
 
 
-    @SkipIfImportError('numpy')
     def testGetKnownNumberTypes(self):
-        import numpy
         import sys
+        numpy = pytest.importorskip('numpy')
 
         assert _GetKnownNumberTypes() == (int, float, long, numpy.number)
 

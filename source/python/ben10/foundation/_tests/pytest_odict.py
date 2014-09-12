@@ -1,6 +1,6 @@
-from ben10.fixtures import SkipIfImportError
 from ben10.foundation.odict import _GetSymbol, _OrderedDict
 from ben10.foundation.pushpop import PushPopItem
+import pytest
 import sys
 
 
@@ -10,18 +10,16 @@ import sys
 #===================================================================================================
 class Test(object):
 
-    @SkipIfImportError('_ordereddict')
     def testOdict(self):
-        import _ordereddict
+        _ordereddict = pytest.importorskip('_ordereddict')
         assert _GetSymbol() == _ordereddict.ordereddict
 
         with PushPopItem(sys.modules, '_ordereddict', None):
             assert _GetSymbol() == _OrderedDict
 
 
-    @SkipIfImportError('_ordereddict')
     def testInsertOnC(self):
-        import _ordereddict
+        _ordereddict = pytest.importorskip('_ordereddict')
         d = _ordereddict.ordereddict()
         d[1] = 'alpha'
         d[3] = 'charlie'

@@ -1,4 +1,3 @@
-from ben10.fixtures import SkipIfImportError
 from ben10.foundation.klass import (AllBasesNames, CheckOverridden, GetClassHierarchy, IsInstance,
     IsSubclass)
 import pytest
@@ -144,7 +143,6 @@ class Test:
 #         print 'isinstance', timer.timeit()
 
 
-    @SkipIfImportError('mx.DateTime')
     def testIsInstanceWithDateTime(self):
         '''
         Make sure IsInstance works with DateTime objects.
@@ -152,9 +150,9 @@ class Test:
         Previously passing a DateTime to IsInstance would yield an AttributeError for __class__.
         Changed IsInstance to use type() instead.
         '''
-        import mx.DateTime
-        assert IsInstance(mx.DateTime.DateTime(2012), 'DateTime')
-        assert not IsInstance(mx.DateTime.DateTime(2012), 'Scalar')
+        mx_dt = pytest.importorskip('mx.DateTime')
+        assert IsInstance(mx_dt.DateTime(2012), 'DateTime')
+        assert not IsInstance(mx_dt.DateTime(2012), 'Scalar')
 
 
     def testCheckOverridden(self):
