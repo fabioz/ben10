@@ -451,6 +451,7 @@ class Test:
             FileError('alpha.txt')
 
 
+    @pytest.mark.serial
     def testFTPFileContents(self, monkeypatch, embed_data, ftpserver):
         obtained = GetFileContents(ftpserver.GetFTPUrl('file.txt'))
         expected = GetFileContents(embed_data['file.txt'])
@@ -502,6 +503,7 @@ class Test:
         assert GetFileContents(filename) == "alpha bravo charlie delta echo"
 
 
+    @pytest.mark.serial
     def testUnicodeFTP(self, embed_data, ftpserver):
         '''
         No FTP function supports non-ascii filenames / paths
@@ -589,6 +591,7 @@ class Test:
         assert obtained_contents == unicode_contents + unicode_contents
 
 
+    @pytest.mark.serial
     def testCreateFileInMissingDirectory(self, monkeypatch, embed_data, ftpserver):
         from ftputil.error import FTPIOError
 
@@ -929,12 +932,14 @@ class Test:
         assert not IsDir(embed_data['missing_dir'])
 
 
+    @pytest.mark.serial
     def testFTPIsDir(self, monkeypatch, embed_data, ftpserver):
         assert IsDir(ftpserver.GetFTPUrl('.'))
         assert not IsDir(ftpserver.GetFTPUrl('missing_dir'))
         assert not IsDir(ftpserver.GetFTPUrl('missing_dir/missing_sub_dir'))
 
 
+    @pytest.mark.serial
     def testFTPCopyFiles(self, monkeypatch, embed_data, ftpserver):
         source_dir = embed_data['files/source']
         target_dir = ftpserver.GetFTPUrl('ftp_target_dir')
@@ -952,6 +957,7 @@ class Test:
         assert set(ListFiles(source_dir)) == set(ListFiles(target_dir))
 
 
+    @pytest.mark.serial
     def testMoveDirectoryFTP(self, monkeypatch, embed_data, ftpserver):
         source_dir = ftpserver.GetFTPUrl('files/source')
         target_dir = ftpserver.GetFTPUrl('ftp_target_dir')
@@ -980,6 +986,7 @@ class Test:
             MoveDirectory(source_dir, target_dir)
 
 
+    @pytest.mark.serial
     def testFTPCopyFile(self, monkeypatch, embed_data, ftpserver):
         def CopyAndCheckFiles(source_file, target_file, override=True):
             CopyFile(
@@ -1009,6 +1016,7 @@ class Test:
             CopyFile(ftpserver.GetFTPUrl('alpha.txt'), 'ERROR://target')
 
 
+    @pytest.mark.serial
     def testFTPCreateFile(self, monkeypatch, embed_data, ftpserver):
         target_file = ftpserver.GetFTPUrl('ftp.txt')
         contents = 'This is a new file.'
@@ -1019,6 +1027,7 @@ class Test:
         assert GetFileContents(target_file) == contents
 
 
+    @pytest.mark.serial
     def testFTPIsFile(self, embed_data, ftpserver):
         assert IsFile(ftpserver.GetFTPUrl('file.txt'))
         assert IsFile(ftpserver.GetFTPUrl('files/source/alpha.txt'))
@@ -1027,6 +1036,7 @@ class Test:
         assert not IsFile(ftpserver.GetFTPUrl('files/doesnt_exist'))
 
 
+    @pytest.mark.serial
     def testFTPListFiles(self, monkeypatch, embed_data, ftpserver):
         # List FTP files
         assert ListFiles(ftpserver.GetFTPUrl('files/source')) == [
@@ -1039,6 +1049,7 @@ class Test:
         assert ListFiles(ftpserver.GetFTPUrl('/files/non-existent')) is None
 
 
+    @pytest.mark.serial
     def testFTPMakeDirs(self, monkeypatch, embed_data, ftpserver):
         CreateDirectory(ftpserver.GetFTPUrl('/ftp_dir1'))
         assert os.path.isdir(embed_data['ftp_dir1'])
