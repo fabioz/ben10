@@ -189,6 +189,9 @@ class Archivist(object):
         '''
         from ._rarfile import Rarfile
         rar_file = Rarfile().CreateRarFile(rar_filename)
+        # rarfile doesn't like relative paths inside the target folder.
+        # Eg.: alpha/../bravo
+        target_folder = os.path.normpath(target_folder)
         rar_file.extractall(target_folder)
         rar_file.close()
 
