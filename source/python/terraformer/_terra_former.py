@@ -28,7 +28,7 @@ class TerraFormer(object):
         file_size = len(source)
         if file_size > self.MAX_FILE_SIZE:
             # Some big files make the Parse algorithm get stuck.
-            raise RuntimeError('File too big: %d' % file_size)
+            raise RuntimeError('File %s too big: %d' % (filename, file_size))
 
         self.filename = filename
         self.source = source
