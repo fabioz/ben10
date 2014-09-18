@@ -1,4 +1,5 @@
 from ben10.filesystem import GetFileContents
+from ben10.foundation.memoize import Memoize
 
 
 
@@ -38,10 +39,16 @@ class TerraFormer(object):
 
         self.code = self._Parse(self.source)
 
-        from ._import_visitor import ImportVisitor
-        visitor = ImportVisitor()
-        visitor.visit(self.code)
+        from ._visitor import ASTVisitor
+        visitor = ASTVisitor()
+        visitor.Visit(self.code)
         self.symbols, self.import_blocks = visitor.symbols, visitor.import_blocks
+
+
+    @classmethod
+    @Memoize(maxsize=1000)
+    def Factory(self, filename, source=None):
+        return TerraFormer(source=source, filename=filename)
 
 
     @classmethod
@@ -51,13 +58,11 @@ class TerraFormer(object):
 
     @classmethod
     def _Parse(cls, code):
-        """String -> AST
-
-        Parse the string and return its AST representation. May raise
-        a ParseError exception.
-        """
+        '''
+        Parses the given code string returning its lib2to3 AST tree.
+        '''
         # Prioritary import.
-        from terraforming import _lib2to3
+        from . import _lib2to3  # @NotUsedImport
 
         # Other imports
         from ben10.foundation.reraise import Reraise
@@ -98,9 +103,47 @@ class TerraFormer(object):
         return result
 
 
+    @classmethod
+    def WalkLeafs(cls, node):
+        from lib2to3.pytree import Leaf
+
+        if isinstance(node, Leaf):
+            yield node
+        else:
+            for i_child in node.children:
+                for j_leaf in cls.WalkLeafs(i_child):
+                    yield j_leaf
+
+
+    def GetSymbolFromToken(self, token):
+        tokens = {i.GetToken() : i for i in self.symbols}
+        return tokens.get(token)
+
+
+    def GetModuleName(self):
+        '''
+        Returns the python module name.
+        Ex.
+            alpha10.parent.working.py -> alpha10.parent
+
+        IMPORTANT: For this to work the package must be importable in the current PYTHONPATH.
+
+        :return str:
+            The module name in the format:
+                xxx.yyy.zzz
+        '''
+        from ben10.module_finder import ModuleFinder
+
+        module_finder = ModuleFinder()
+        try:
+            return module_finder.ModuleName(self.filename).rsplit('.', 1)[0]
+        except RuntimeError:
+            return None
+
+
     def ReorganizeImports(
             self,
-            refactor=None,
+            refactor={},
             page_width=100
         ):
         '''
@@ -139,5 +182,9 @@ class TerraFormer(object):
 
 
     def AddImportSymbol(self, import_symbol):
-        symbol = self.import_blocks[0].AddImportSymbol(import_symbol)
-        self.symbols.add(symbol)
+        from ._symbol import ImportSymbol
+
+        import_block = self.import_blocks[0]
+        symbol = import_block.ObtainImportSymbol(import_symbol, kind=ImportSymbol.KIND_IMPORT_FROM)
+        if symbol:
+            self.symbols.add(symbol)

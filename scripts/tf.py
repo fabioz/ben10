@@ -4,7 +4,6 @@ from functools import partial
 import sys
 
 
-
 app = App('terraforming')
 
 
@@ -25,14 +24,14 @@ def Symbols(console_, filename):
     '''
     from terraformer import TerraFormer
 
-    terra = TerraFormer(filename=filename)
+    terra = TerraFormer.Factory(filename)
     for i_import_symbol in terra.symbols:
         console_.Print('%d: IMPORT %s' % (i_import_symbol.lineno, i_import_symbol.symbol))
 
 
 
 @app
-def FixFormat(console_, source, refactor=None, python_only=False, single_job=False, sorted=False, inverted_refactor=False):
+def FixFormat(console_, refactor=None, python_only=False, single_job=False, sorted=False, inverted_refactor=False, *sources):
     '''
     Perform the format fixes on sources files, including tabs, eol, eol-spaces and imports.
 
@@ -53,11 +52,11 @@ def FixFormat(console_, source, refactor=None, python_only=False, single_job=Fal
 
         REQUIREMENT: The package must be available on python path.
 
-    :param source: Source directory or file.
     :param refactor: Refactor ini file mapping source imports to target imports.
     :param python_only: Only handle python sources (.py).
     :param single_job: Avoid using multithread (for testing purposes).
     :param sorted: Sort the output.
+    :param sources: Source directories or files.
     '''
     from functools import partial
 
@@ -70,7 +69,7 @@ def FixFormat(console_, source, refactor=None, python_only=False, single_job=Fal
         return result
 
     extensions = _GetExtensions(python_only)
-    filenames = _GetFilenames((source,), extensions)
+    filenames = _GetFilenames(sources, extensions)
     refactor = GetRefactorDict(refactor, inverted_refactor)
     partial_fix_format = partial(_FixFormat, refactor=refactor)
     _Map(console_, partial_fix_format, filenames, sorted, single_job)
@@ -123,13 +122,15 @@ def FixCommit(console_, source, single_job=False):
 
 @app
 def FixIsFrozen(console_, path):
-    from ben10.filesystem import FindFiles, GetFileContents, CreateFile, EOL_STYLE_UNIX
+    from ben10.filesystem import CreateFile, EOL_STYLE_UNIX, FindFiles, GetFileContents
 
     FIND_REPLACE = [
         ('coilib50.IsFrozen', 'IsFrozen', 'from ben10.foundation.is_frozen import IsFrozen'),
         ('coilib50.IsDevelopment', 'IsDevelopment', 'from ben10.foundation.is_frozen import IsDevelopment'),
         ('coilib50.SetIsFrozen', 'SetIsFrozen', 'from ben10.foundation.is_frozen import SetIsFrozen'),
         ('coilib50.SetIsDevelopment', 'SetIsDevelopment', 'from ben10.foundation.is_frozen import SetIsDevelopment'),
+
+        ('coilib40.basic.IsInstance', 'IsInstance', 'from ben10.foundation.klass import IsInstance'),
     ]
 
     PROPERTY_MODULE_SYMBOLS = [
@@ -251,7 +252,7 @@ def _AddImportSymbol(filename, import_symbol):
     '''
     from terraformer import TerraFormer
 
-    terra = TerraFormer(filename=filename)
+    terra = TerraFormer.Factory(filename)
     terra.AddImportSymbol(import_symbol)
     changed = terra.Save()
 

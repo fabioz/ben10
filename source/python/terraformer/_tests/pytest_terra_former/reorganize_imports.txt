@@ -1,5 +1,15 @@
 ---
 ===
+try:
+    from archivist import Archivist
+except ImportError:
+    from ._archivist import Archivist
+---
+try:
+    from archivist import Archivist
+except ImportError:
+    from ._archivist import Archivist
+===
 from charlie import Charlie
 import echo as Echo
 from alpha import bravo as Bravo
@@ -7,6 +17,10 @@ from alpha import bravo as Bravo
 from alpha import bravo as Bravo
 from charlie import Charlie
 import echo as Echo
+===
+from alpha import Alpha, Alpha, Alpha
+---
+from alpha import Alpha
 ===
 import echo
 from alpha import bravo, charlie
@@ -231,50 +245,6 @@ try: # import for dist <= 1104
     from ftputil import PermanentError
 except: # import for dist >= 12.0
     from ftputil.ftp_error import PermanentError
-===
-from coilib50.basic import inter
-from coilib50.basic.inter import Interface
-from etk11.foundation.interface import Implements
-import alpha
-import bravo
-import coilib50.basic.inter
----
-from etk11.foundation import interface
-from etk11.foundation.interface import Implements, Interface
-import alpha
-import bravo
-import etk11.foundation.interface
-===
-from coilib50.basic import inter
-from coilib50.basic.inter import Interface
-from etk11.foundation.interface import Implements
-import alpha
-import bravo
-import coilib50.basic.inter
-
-
-def Main():
-    import charlie
-    import echo
-
-def Other():
-    import yankee
-    import zulu
----
-from etk11.foundation import interface
-from etk11.foundation.interface import Implements, Interface
-import alpha
-import bravo
-import etk11.foundation.interface
-
-
-def Main():
-    import charlie
-    import echo
-
-def Other():
-    import yankee
-    import zulu
 ===
 from coilib50.basic._import_module import ImportModule
 ---
@@ -482,11 +452,6 @@ if True:
         # This condition
         import alpha;alpha.Execute()
 ===
-from before_refactor_alpha import Alpha
-from before_refactor_bravo import Bravo
----
-from after_refactor import Alpha, Bravo
-===
 from alpha import Alpha
 from __future__ import with_statement
 import charlie, delta
@@ -522,10 +487,6 @@ if __name__ == '__main__':
     import bravo
     import zulu
 ===
-from alpha import *
----
-from alpha import *
-===
 from alpha import Alpha  # Comment
 raise Exception()
 ---
@@ -575,13 +536,92 @@ import alpha
 if True:
     import bravo
 import charlie
+===
+from alpha import *
+---
+from alpha import *
+===
+from alpha import *
+from alpha import Alpha
+---
+from alpha import Alpha
+from alpha import *
+===
+from . import alpha
+from .. import bravo
+from ... import charlie
+---
+from . import alpha
+from .. import bravo
+from ... import charlie
+===
+from before_refactor_alpha import Alpha
+from before_refactor_bravo import Bravo
+---
+from after_refactor import Alpha, Bravo
 ===
 from coilib50 import multithreading
 ---
 import multithreading
 ===
-from alpha import *
-from alpha import Alpha
+from coilib50.basic import inter
+from coilib50.basic.inter import Interface
+from etk11.foundation.interface import Implements
+import alpha
+import bravo
+import coilib50.basic.inter
 ---
-from alpha import Alpha
-from alpha import *
+from etk11.foundation import interface
+from etk11.foundation.interface import Implements, Interface
+import alpha
+import bravo
+import etk11.foundation.interface
+===
+from coilib50.basic import inter
+from coilib50.basic.inter import Interface
+from etk11.foundation.interface import Implements
+import alpha
+import bravo
+import coilib50.basic.inter
+
+
+def Main():
+    import charlie
+    import echo
+
+def Other():
+    import yankee
+    import zulu
+---
+from etk11.foundation import interface
+from etk11.foundation.interface import Implements, Interface
+import alpha
+import bravo
+import etk11.foundation.interface
+
+
+def Main():
+    import charlie
+    import echo
+
+def Other():
+    import yankee
+    import zulu
+===
+def CreateRarFile():
+    import alpha
+
+    bravo.charlie = delta.echo
+    return True
+
+    foxtrot.golf = hotel.italy
+    return True
+---
+def CreateRarFile():
+    import alpha
+
+    bravo.charlie = delta.echo
+    return True
+
+    foxtrot.golf = hotel.italy
+    return True

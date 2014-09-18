@@ -1,8 +1,8 @@
-import mock
 from ben10.foundation.callback import After
 from ben10.foundation.decorators import Override
 from ben10.foundation.singleton import (PushPopSingletonError, Singleton, SingletonAlreadySetError,
     SingletonNotSetError)
+import mock
 import pytest
 
 
@@ -133,7 +133,7 @@ class Test:
 
 
     def testGetSingletonThreadSafe(self):
-        from threading import Thread, Event
+        from threading import Event, Thread
 
         class MySingleton(Singleton):
             pass

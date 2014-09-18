@@ -1,8 +1,8 @@
 '''
 Perform maintenance operations on source code.
 '''
-from ben10.clikit.app import App
 from ben10.filesystem import CreateFile, FindFiles, GetFileLines
+from clikit.app import App
 
 
 

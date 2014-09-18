@@ -1,85 +1,37 @@
-from lib2to3.pgen2.parse import ParseError
 from ben10.foundation.pushpop import PushPop
 from ben10.foundation.string import Dedent
-from terraformer import ImportBlock, TerraFormer
+from terraformer import TerraFormer
 import pytest
 
 
 
-def testAstVisitor():
-    from terraformer._astvisitor import ASTVisitor
-
-    class LogVisitor(ASTVisitor):
-
-        def __init__(self):
-            ASTVisitor.__init__(self)
-            self.log = []
-
-        def visit_start(self, tree):
-            self.log.append('visit_start')
-
-        def visit_end(self, tree):
-            self.log.append('visit_end')
-
-        def visit_class(self, name, bases, body):
-            self.log.append('visit_class: %s' % name)
-            ASTVisitor.visit_class(self, name, bases, body)
-
-        def visit_function(self, name, args, body):
-            self.log.append('visit_function: %s' % name)
-            ASTVisitor.visit_function(self, name, args, body)
-
-        def visit_import(self, names, import_from, body):
-            self.log.append('visit_import: %s' % ','.join(map(str, names)))
-
-
-    code = TerraFormer._Parse(Dedent(
-        '''
-        from alpha import Alpha
-
-        class Zulu(Alpha):
-
-            def __init__(self, name):
-                self.name = name
-        '''
-    ))
-
-    visitor = LogVisitor()
-    visitor.visit(code)
-
-    assert visitor.log == [
-        'visit_start',
-        'visit_import: Alpha',
-        'visit_class: Zulu',
-        'visit_function: __init__',
-        'visit_end',
-    ]
-
-
 def testImportBlockZero(monkeypatch, embed_data):
 
-    def TestIt(input, expected, import_blocks):
+    def TestIt(input, symbols, expected, import_blocks):
         input = Dedent(input)
         expected = Dedent(expected) + '\n'
-        terra_former = TerraFormer(input)
-        assert map(str, terra_former.import_blocks) == import_blocks
 
-        terra_former.AddImportSymbol('__future__.unicode_literals')
+        terra_former = TerraFormer(input)
+        for i_symbol in symbols:
+            terra_former.AddImportSymbol(i_symbol)
         terra_former.ReorganizeImports()
 
         # Make sure that creating a TerraFormer won't make any changes to the AST
         obtained = str(terra_former.code)
         assert obtained == expected
 
+        assert map(str, terra_former.import_blocks) == import_blocks
+
     TestIt(
         '''
-        from __future__ import unicode_literals
+
         ''',
+        ['__future__.unicode_literals'],
         '''
         from __future__ import unicode_literals
         ''',
         [
-            '<ImportBlock #0 (1, 0): __future__.unicode_literals>',
+            'IMPORT-BLOCK (1, 0) import-block #0\n  IMPORT-FROM (0, 0) __future__\n    IMPORT (0, 0) __future__.unicode_literals',
         ]
     )
 
@@ -87,11 +39,25 @@ def testImportBlockZero(monkeypatch, embed_data):
         '''
 
         ''',
+        ['io'],
+        '''
+        import io
+        ''',
+        [
+            'IMPORT-BLOCK (1, 0) import-block #0\n  IMPORT (0, 0) io',
+        ]
+    )
+
+    TestIt(
+        '''
+        from __future__ import unicode_literals
+        ''',
+        ['__future__.unicode_literals'],
         '''
         from __future__ import unicode_literals
         ''',
         [
-            '<ImportBlock #0 (1, 0): >',
+            'IMPORT-BLOCK (1, 0) import-block #0\n  IMPORT-FROM (0, 0) __future__\n    IMPORT (1, 0) __future__.unicode_literals',
         ]
     )
 
@@ -100,13 +66,14 @@ def testImportBlockZero(monkeypatch, embed_data):
         def Function():
             pass
         ''',
+        ['__future__.unicode_literals'],
         '''
         from __future__ import unicode_literals
         def Function():
             pass
         ''',
         [
-            '<ImportBlock #0 (1, 0): >',
+            'IMPORT-BLOCK (1, 0) import-block #0\n  IMPORT-FROM (0, 0) __future__\n    IMPORT (0, 0) __future__.unicode_literals',
         ]
     )
 
@@ -119,6 +86,7 @@ def testImportBlockZero(monkeypatch, embed_data):
         def Function():
             pass
         ''',
+        ['__future__.unicode_literals'],
         '''
         from __future__ import unicode_literals
         """
@@ -129,7 +97,7 @@ def testImportBlockZero(monkeypatch, embed_data):
             pass
         ''',
         [
-            '<ImportBlock #0 (1, 0): >',
+            'IMPORT-BLOCK (1, 0) import-block #0\n  IMPORT-FROM (0, 0) __future__\n    IMPORT (0, 0) __future__.unicode_literals',
         ]
     )
 
@@ -140,6 +108,7 @@ def testImportBlockZero(monkeypatch, embed_data):
         def Function():
             pass
         ''',
+        ['__future__.unicode_literals'],
         '''
         from __future__ import unicode_literals
         # Comments
@@ -148,7 +117,7 @@ def testImportBlockZero(monkeypatch, embed_data):
             pass
         ''',
         [
-            '<ImportBlock #0 (1, 0): >',
+            'IMPORT-BLOCK (1, 0) import-block #0\n  IMPORT-FROM (0, 0) __future__\n    IMPORT (0, 0) __future__.unicode_literals',
         ]
     )
 
@@ -163,6 +132,7 @@ def testImportBlockZero(monkeypatch, embed_data):
             """
             print s
         ''',
+        ['__future__.unicode_literals'],
         '''
         from __future__ import unicode_literals
         #===================================================================================================
@@ -175,7 +145,7 @@ def testImportBlockZero(monkeypatch, embed_data):
             print s
         ''',
         [
-            '<ImportBlock #0 (1, 0): >',
+            'IMPORT-BLOCK (1, 0) import-block #0\n  IMPORT-FROM (0, 0) __future__\n    IMPORT (0, 0) __future__.unicode_literals',
         ]
     )
 
@@ -184,14 +154,15 @@ def testImportBlockZero(monkeypatch, embed_data):
         def Function(s):
             import alpha
         ''',
+        ['__future__.unicode_literals'],
         '''
         from __future__ import unicode_literals
         def Function(s):
             import alpha
         ''',
         [
-            '<ImportBlock #0 (1, 0): >',
-            '<ImportBlock #1 (2, 4): alpha>',
+            'IMPORT-BLOCK (1, 0) import-block #0\n  IMPORT-FROM (0, 0) __future__\n    IMPORT (0, 0) __future__.unicode_literals',
+            'IMPORT-BLOCK (2, 4) import-block #1\n  IMPORT (2, 0) alpha',
         ]
     )
 
@@ -208,6 +179,7 @@ def testImportBlockZero(monkeypatch, embed_data):
         RedirectOutput = _coilib50_cpp_module.RedirectOutput
         # [[[end]]] (checksum: e19f682169067c207e055a3a169feba7)
         ''',
+        ['__future__.unicode_literals'],
         '''
         from __future__ import unicode_literals
         # [[[cog
@@ -222,8 +194,8 @@ def testImportBlockZero(monkeypatch, embed_data):
         # [[[end]]] (checksum: e19f682169067c207e055a3a169feba7)
         ''',
         [
-            '<ImportBlock #0 (1, 0): >',
-            '<ImportBlock #1 (8, 0): coilib50._coilib50_cpp_module>',
+            'IMPORT-BLOCK (1, 0) import-block #0\n  IMPORT-FROM (0, 0) __future__\n    IMPORT (0, 0) __future__.unicode_literals',
+            'IMPORT-BLOCK (1, 0) import-block #1\n  IMPORT-FROM (0, 0) coilib50\n    IMPORT (8, 0) coilib50._coilib50_cpp_module',
         ]
     )
 
@@ -266,7 +238,7 @@ def testTerraFormer(monkeypatch, embed_data):
         )
     )
 
-    assert set([i.symbol for i in terra_former.symbols]) == {
+    assert set([i.name for i in terra_former.symbols]) == {
         'alpha.A1',
         'bravo',
         'bravo.B1',
@@ -286,11 +258,32 @@ def testTerraFormer(monkeypatch, embed_data):
     }
 
     assert map(str, terra_former.import_blocks) == [
-        '<ImportBlock #0 (1, 0): alpha.A1 bravo bravo.B1 bravo.B2 bravo.B3 charlie>',
-        '<ImportBlock #1 (6, 0): delta.charlie.delta.DeltaClass yankee.Y1 yankee.Y2 yankee.Y3 zulu.Z1 zulu.Z2 zulu.Z3>',
-        '<ImportBlock #2 (19, 4): india_one>',
-        '<ImportBlock #3 (23, 8): india_in>',
-        '<ImportBlock #4 (25, 4): india_out>',
+        'IMPORT-BLOCK (1, 0) import-block #0\n'
+        '  IMPORT (1, 0) bravo\n'
+        '  IMPORT (2, 0) charlie\n'
+        '  IMPORT-FROM (0, 0) alpha\n'
+        '    IMPORT (3, 0) alpha.A1\n'
+        '  IMPORT-FROM (0, 0) bravo\n'
+        '    IMPORT (4, 0) bravo.B1\n'
+        '    IMPORT (4, 0) bravo.B2\n'
+        '    IMPORT (4, 0) bravo.B3',
+        'IMPORT-BLOCK (5, 0) import-block #1\n'
+        '  IMPORT-FROM (0, 0) delta.charlie.delta\n'
+        '    IMPORT (6, 0) delta.charlie.delta.DeltaClass\n'
+        '  IMPORT-FROM (0, 0) zulu\n'
+        '    IMPORT (8, 0) zulu.Z1\n'
+        '    IMPORT (8, 0) zulu.Z2\n'
+        '    IMPORT (8, 0) zulu.Z3\n'
+        '  IMPORT-FROM (0, 0) yankee\n'
+        '    IMPORT (13, 0) yankee.Y1\n'
+        '    IMPORT (13, 0) yankee.Y2\n'
+        '    IMPORT (13, 0) yankee.Y3',
+        'IMPORT-BLOCK (19, 4) import-block #2\n'
+        '  IMPORT (19, 0) india_one',
+        'IMPORT-BLOCK (23, 8) import-block #3\n'
+        '  IMPORT (23, 0) india_in',
+        'IMPORT-BLOCK (25, 4) import-block #4\n'
+        '  IMPORT (25, 0) india_out',
     ]
 
     changed, output = terra_former.ReorganizeImports()
@@ -355,11 +348,14 @@ def testQuotedBlock():
 
 
 def testParse():
+    from lib2to3.pgen2.parse import ParseError
     with pytest.raises(ParseError):
         TerraFormer._Parse('class Class:\n')
 
 
 def testLocalImports(monkeypatch, embed_data):
+    from terraformer._symbol import ImportBlock
+
     monkeypatch.setattr(ImportBlock, 'PYTHON_EXT', '.py_')
 
     def TestIt(filename):
@@ -385,6 +381,90 @@ def testLocalImports(monkeypatch, embed_data):
         with pytest.raises(RuntimeError):
             monkeypatch.setattr(TerraFormer, 'MAX_FILE_SIZE', 5)
             TestIt('quilo')
+
+
+def testSymbolVisitor():
+
+    def PrintScopes(scopes):
+        result = []
+        for i in sorted(scopes, key=lambda x:x.name):
+            result.append( '- %s' % i)
+            for j in sorted(i.uses):
+                result.append( '  - %s' % j)
+        return '\n'.join(result)
+
+    source_code = Dedent(
+        '''
+        from alpha import Alpha
+        import coilib50
+
+        class Zulu(Alpha):
+            """
+            Zulu class docs.
+            """
+
+            def __init__(self, name):
+                """
+                Zulu.__init__ docs.
+                """
+                self._name = name
+                alpha = bravo
+                coilib50.Charlie()
+                f = coilib50.Delta(echo, foxtrot)
+        '''
+    )
+
+    from terraformer._visitor import ASTVisitor
+    code = TerraFormer._Parse(source_code)
+    visitor = ASTVisitor()
+    visitor.Visit(code)
+
+    assert visitor._module.AsString() == Dedent(
+        '''
+            module (1, 0) module
+              IMPORT-BLOCK (1, 0) import-block #0
+                IMPORT-FROM (0, 0) alpha
+                  IMPORT (1, 0) alpha.Alpha
+                IMPORT (2, 0) coilib50
+              USE (3, 0) Alpha
+              class (0, 0) Zulu
+                def (8, 4) __init__
+                  ARG (9, 17) self
+                  ARG (9, 23) name
+                  DEF (13, 8) self._name
+                  USE (13, 21) name
+                  DEF (14, 8) alpha
+                  USE (14, 16) bravo
+                  USE (15, 8) coilib50.Charlie
+                  DEF (16, 8) f
+                  USE (16, 12) coilib50.Delta
+                  USE (16, 27) echo
+                  USE (16, 33) foxtrot
+        '''
+    )
+
+    from compiler.symbols import SymbolVisitor
+    from compiler.transformer import parse
+    from compiler.visitor import walk
+
+    code = parse(source_code)
+    symbol_visitor = SymbolVisitor()
+    walk(code, symbol_visitor)
+
+    assert PrintScopes(symbol_visitor.scopes.values()) == Dedent(
+        '''
+            - <ClassScope: Zulu>
+            - <FunctionScope: __init__>
+              - bravo
+              - coilib50
+              - echo
+              - foxtrot
+              - name
+              - self
+            - <ModuleScope: global>
+              - Alpha
+          '''
+    )
 
 
 
@@ -461,45 +541,3 @@ def testLineTester(line_tester):
     with pytest.raises(Exception) as excinfo:
         line_tester.TestLines('===\nalpha\n\n\n---\n(alpha)\n()\n()', RaiseException)
     assert "While processing lines::" in str(excinfo.value)
-
-
-def testSymbolVisitor():
-
-    source_code = Dedent(
-        '''
-        from alpha import Alpha
-
-        class Zulu(Alpha):
-
-            def __init__(self, name):
-                self._name = name
-                alpha = bravo
-                coilib50.Charlie()
-                f = coilib50.Delta(echo, foxtrot)
-        '''
-    )
-
-    from terraformer._import_visitor import ImportVisitor
-    code = TerraFormer._Parse(source_code)
-    visitor = ImportVisitor()
-    visitor.visit(code)
-
-    for i in visitor.scopes:
-        print '+', i
-        for j in i.uses:
-            print '  +', j
-
-    from compiler.symbols import SymbolVisitor
-    from compiler.transformer import parse
-    from compiler.visitor import walk
-
-    code = parse(source_code)
-    symbol_visitor = SymbolVisitor()
-    walk(code, symbol_visitor)
-
-    for i in symbol_visitor.scopes.itervalues():
-        print '-', i
-        for j in i.uses:
-            print '  -', j
-
-    #assert False

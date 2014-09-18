@@ -115,7 +115,7 @@ class TerraForming(object):
         from terraformer import TerraFormer
 
         try:
-            terra = TerraFormer(filename=filename)
+            terra = TerraFormer.Factory(filename)
             changed, output = terra.ReorganizeImports(refactor=refactor)
             CreateFile(filename, output, eol_style=EOL_STYLE_UNIX)
             return changed
@@ -136,7 +136,7 @@ class TerraForming(object):
         from terraformer import TerraFormer
 
         try:
-            terra = TerraFormer(source=source_code, filename=filename)
+            terra = TerraFormer.Factory(filename=filename, source=source_code)
             changed, _output = terra.ReorganizeImports(refactor=refactor)
             return changed
         except Exception, e:
@@ -234,17 +234,17 @@ class TerraForming(object):
         :return:
             Parsed lib2to3 syntax tree.
         '''
-        from ._lib2to3 import ParseString, WalkLeafs
+        from terraformer import TerraFormer
 
         code += '\n' # Append EOL so ParseString works
         try:
-            result = ParseString(code)
+            result = TerraFormer._Parse(code)
         except Exception, e:
             Reraise(e, 'While parsing code::\n%s' % code)
 
         # Find the added EOL in the resulting tree
         last_eol_leaf = None
-        for i in WalkLeafs(result.children[0]):
+        for i in TerraFormer.WalkLeafs(result.children[0]):
             if i.value == '\n':
                 last_eol_leaf = i
         last_eol_leaf.remove()
@@ -273,7 +273,7 @@ class TerraForming(object):
         :param next_lines_prefix:
             The prefix for the next lines.
         '''
-        from ._lib2to3 import WalkLeafs
+        from terraformer import TerraFormer
 
         # Fist line
         tree.prefix = first_line_prefix
@@ -282,7 +282,7 @@ class TerraForming(object):
         if next_lines_prefix and '\n' in str(tree):
             prefix_next = ''
             skip = True
-            for i_leaf in WalkLeafs(tree.children[0]):
+            for i_leaf in TerraFormer.WalkLeafs(tree.children[0]):
                 # Skips the first node to avoid re-applying the prefix
                 if skip:
                     skip = False
@@ -300,7 +300,9 @@ class TerraForming(object):
 
 
     def _ConvertToPytestImpl(self, source_code, refactor={}):
-        from ._lib2to3 import BaseFix, MyRefactoringTool, ParseString, WalkLeafs
+        from ._lib2to3 import MyRefactoringTool
+        from lib2to3.fixer_base import BaseFix
+        from terraformer import TerraFormer
 
         class ConvertPyTestFix(BaseFix):
 
@@ -508,7 +510,7 @@ class TerraForming(object):
                 new_node = TerraForming.GetCodeTree(new_code)
 
                 if 'replace' in dd:
-                    for i_leaf in WalkLeafs(new_node):
+                    for i_leaf in TerraFormer.WalkLeafs(new_node):
                         if i_leaf.value in ('arg1', 'arg2', 'arg3'):
                             node_ = copy(dd[i_leaf.value])
                             node_.prefix = i_leaf.prefix
@@ -541,7 +543,7 @@ class TerraForming(object):
                 node.replace(new_node)
 
         try:
-            tree = ParseString(source_code)
+            tree = TerraFormer._Parse(source_code)
         except Exception as exception:
             Reraise(exception, 'While processing source::\n%s\n---\n' % source_code)
 
