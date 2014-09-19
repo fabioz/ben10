@@ -207,15 +207,9 @@ class DirCache(object):
 
         :raise FileAlreadyExistsError:
             If the remote already exists
-
-        :raise RuntimeError:
-            If `self.cache_dir` is empty (nothing to upload).
         '''
         if self.RemoteExists():
             raise FileAlreadyExistsError(self.remote)
-
-        if not os.listdir(self.cache_dir):
-            raise RuntimeError('Directory "%s" is empty.' % self.cache_dir)
 
         self.TagCompleteCache()
 

@@ -108,10 +108,6 @@ class Test(object):
         DeleteFile(dir_cache.remote)
         assert not IsFile(dir_cache.remote)
 
-        # We can't create remote cache if cache_dir is empty
-        with pytest.raises(RuntimeError) as e:
-            dir_cache.CreateRemote()
-
         CreateFile(dir_cache.cache_dir + '/' + 'alpha.txt', contents='')
         dir_cache.CreateRemote()
 
