@@ -1,6 +1,5 @@
 from ben10.dircache import DirCache
-from ben10.filesystem import (CreateDirectory, CreateFile, DeleteFile, FileAlreadyExistsError,
-    IsDir, IsFile, IsLink)
+from ben10.filesystem import CreateDirectory, CreateFile, DeleteFile, IsDir, IsFile, IsLink
 import os
 import pytest
 
@@ -100,9 +99,8 @@ class Test(object):
         # Create some stuff in the cache_dir
         CreateDirectory(dir_cache.cache_dir)
 
-        # Raise an error if the remote already exists
-        with pytest.raises(FileAlreadyExistsError):
-            dir_cache.CreateRemote()
+        # Does nothing if remote already exists
+        dir_cache.CreateRemote()
 
         # Make sure that the remote does not exist
         DeleteFile(dir_cache.remote)

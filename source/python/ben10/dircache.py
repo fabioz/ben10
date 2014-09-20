@@ -1,7 +1,8 @@
+
 from archivist import Archivist
 from ben10.filesystem import (CopyFile, CreateDirectory, CreateFile, CreateLink,
-    CreateTemporaryDirectory, DeleteDirectory, DeleteFile, DeleteLink, Exists,
-    FileAlreadyExistsError, FileNotFoundError, IsDir, IsLink, StandardizePath)
+    CreateTemporaryDirectory, DeleteDirectory, DeleteFile, DeleteLink, Exists, FileNotFoundError,
+    IsDir, IsLink, StandardizePath)
 import os
 
 
@@ -205,11 +206,13 @@ class DirCache(object):
         '''
         Creates the remote cache from the contents of `local_dir`.
 
-        :raise FileAlreadyExistsError:
-            If the remote already exists
+        Does nothing if remote already exists.
+
+        :raise RuntimeError:
+            If `self.cache_dir` is empty (nothing to upload).
         '''
         if self.RemoteExists():
-            raise FileAlreadyExistsError(self.remote)
+            return
 
         self.TagCompleteCache()
 
