@@ -124,12 +124,12 @@ class Test:
         import sys
         numpy = pytest.importorskip('numpy')
 
-        assert _GetKnownNumberTypes() == (int, float, long, numpy.number)
+        assert _GetKnownNumberTypes() == (int, float, long, complex, numpy.number)
 
         numpy_module = sys.modules['numpy']
         try:
             sys.modules['numpy'] = None
-            assert _GetKnownNumberTypes() == (int, float, long)
+            assert _GetKnownNumberTypes() == (int, float, long, complex)
         finally:
             sys.modules['numpy'] = numpy_module
 

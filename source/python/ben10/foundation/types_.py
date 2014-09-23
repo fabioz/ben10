@@ -11,7 +11,7 @@ from ben10.foundation.weak_ref import WeakList
 _TRUE_VALUES = ['TRUE', 'YES', '1']
 _FALSE_VALUES = ['FALSE', 'NO', '0']
 _TRUE_FALSE_VALUES = _TRUE_VALUES + _FALSE_VALUES
-
+_KNOWN_NUMBER_TYPES = None
 
 
 def _GetKnownNumberTypes():
@@ -22,16 +22,14 @@ def _GetKnownNumberTypes():
     This code replaces an old implementation with "code replacement". Not checked if we have any
     performance penalties.
     '''
-    result = [int, float, long]
+    result = [int, float, long, complex]
     try:
         import numpy
-        result.append(numpy.number)
     except ImportError:
         pass
+    else:
+        result.append(numpy.number)
     return tuple(result)
-
-KNOWN_NUMBER_TYPES = _GetKnownNumberTypes()
-
 
 
 #===================================================================================================
@@ -180,9 +178,9 @@ def CheckFormatString(format, *arguments):
 
 
 #===================================================================================================
-# IsNumber
+# _IsNumber
 #===================================================================================================
-def IsNumber(v):
+def _IsNumber(v):
     '''
     Actual function code for IsNumber.
 
@@ -191,7 +189,34 @@ def IsNumber(v):
     @return bool
         True if the given value is a number, False otherwise
     '''
-    return isinstance(v, KNOWN_NUMBER_TYPES)
+    return isinstance(v, _KNOWN_NUMBER_TYPES)
+
+
+#===================================================================================================
+# IsNumber
+#===================================================================================================
+def IsNumber(v):
+    '''
+    Checks if the given value is a number
+
+    @return bool
+        True if the given value is a number, False otherwise
+
+    .. note:: This function will replace it's implementation to a lighter code, but first it must
+        define which types are known as a number.
+        The code replacement is made to avoid the call to import and listing the know numeric types.
+    '''
+    # There are cases were the numpy will not be available (for example when the aasimar is building
+    # the environment the numpy is not available yet). Delegate this import to the IsNumber would
+    # cause a severe performance impact. So we will attempt to import the numpy, but if the lib is
+    # not available let us move on the know number types.
+    global _KNOWN_NUMBER_TYPES
+    _KNOWN_NUMBER_TYPES = _GetKnownNumberTypes()
+
+    # Replaces this function by an optimazed version _IsNumber.
+    IsNumber.func_code = _IsNumber.func_code
+
+    return _IsNumber(v)
 
 
 
