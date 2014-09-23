@@ -174,6 +174,9 @@ class Test(object):
         with pytest.raises(TargetDirAlreadyExistsError):
             git.Clone(embed_data['remote.git'], working_dir)
 
+        # Unless we allow it
+        git.Clone(embed_data['remote.git'], working_dir, update_if_already_exists=True)
+
         from ben10.filesystem import Cwd
         with Cwd(embed_data['.']):
             # Using a bad ssh server should also raise an error

@@ -160,6 +160,7 @@ class Git(Singleton):
             if ListFiles(target_dir):
                 if not update_if_already_exists:
                     raise TargetDirAlreadyExistsError(target_dir)
+                self.Checkout(target_dir, 'master')
                 self.Pull(target_dir, output_callback=output_callback)
 
             # If there's nothing there, just clone it
