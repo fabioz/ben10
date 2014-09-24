@@ -559,6 +559,14 @@ class Null(object):
         "Ignore deleting attributes."
         return self
 
+    # context manager
+
+    def __enter__(self):
+        pass
+
+    def __exit__(self, type, value, traceback):
+        pass
+
     # misc.
 
     def __repr__(self):

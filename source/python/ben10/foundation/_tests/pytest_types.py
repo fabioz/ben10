@@ -374,7 +374,9 @@ class Test:
         assert bool(n.foo()) == False
 
         dummy = Null()
-        assert dummy.__name__ == 'Null'  # Name should return a string.
+        # context manager
+        with dummy:
+            assert dummy.__name__ == 'Null'  # Name should return a st
 
         # Null objects are always equal to other null object
         assert n != 1

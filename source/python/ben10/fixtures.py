@@ -10,6 +10,32 @@ import pytest
 
 
 #===================================================================================================
+# pytest_sessionstart
+#===================================================================================================
+def pytest_sessionstart(session):
+    """
+    pytest hook called before each session begins (including on each slave when running in xdist).
+
+    We use this hook in order to configure global settings that should be set for all tests
+    in our runs.
+    """
+    from ben10.foundation.is_frozen import SetIsDevelopment
+    import sys
+
+    # The system does not display the Windows Error Reporting dialog
+    if sys.platform.startswith('win'):
+        import ctypes
+        # From MSDN
+        # http://msdn.microsoft.com/en-us/library/windows/desktop/ms680621%28v=vs.85%29.aspx
+        SEM_NOGPFAULTERRORBOX = 0x0002
+        ctypes.windll.kernel32.SetErrorMode(SEM_NOGPFAULTERRORBOX)
+
+    # enable development-only checks
+    SetIsDevelopment(True)
+
+
+
+#===================================================================================================
 # MultipleFilesNotFound
 #===================================================================================================
 class MultipleFilesNotFound(RuntimeError):
