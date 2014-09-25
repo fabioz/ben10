@@ -4,30 +4,26 @@ class ASTError(Exception):
     pass
 
 
-def is_leaf_of_type(leaf, *types):
+def IsLeafOfType(leaf, *types):
     from lib2to3.pytree import Leaf
 
     return isinstance(leaf, Leaf) and leaf.type in types
 
 
-def is_node_of_type(node, *types):
+def IsNodeOfType(node, *types):
     from lib2to3.pytree import Node, type_repr
     return isinstance(node, Node) and type_repr(node.type) in types
 
 
-def leaf_value(leaf):
-    return leaf.value
-
-
-def remove_commas(nodes):
+def RemoveCommas(nodes):
     from lib2to3.pgen2 import token
 
     def isnt_comma(node):
-        return not is_leaf_of_type(node, token.COMMA)
+        return not IsLeafOfType(node, token.COMMA)
     return filter(isnt_comma, nodes)
 
 
-def remove_defaults(nodes):
+def RemoveDefaults(nodes):
     from lib2to3.pgen2 import token
 
     ignore_next = False
@@ -35,109 +31,109 @@ def remove_defaults(nodes):
         if ignore_next is True:
             ignore_next = False
             continue
-        if is_leaf_of_type(node, token.EQUAL):
+        if IsLeafOfType(node, token.EQUAL):
             ignore_next = True
             continue
         yield node
 
 
-def derive_class_name(node):
+def DeriveClassName(node):
     return str(node).strip()
 
 
-def derive_class_names(node):
+def DeriveClassNames(node):
     if node is None:
         return []
-    elif is_node_of_type(node, 'arglist'):
-        return map(derive_class_name, remove_commas(node.children))
+    elif IsNodeOfType(node, 'arglist'):
+        return map(DeriveClassName, RemoveCommas(node.children))
     else:
-        return [derive_class_name(node)]
+        return [DeriveClassName(node)]
 
 
-def derive_argument(node):
+def DeriveArgument(node):
     from lib2to3.pgen2 import token
 
-    if is_leaf_of_type(node, token.NAME):
+    if IsLeafOfType(node, token.NAME):
         return node
-    elif is_node_of_type(node, 'tfpdef'):
+    elif IsNodeOfType(node, 'tfpdef'):
         return tuple(
             map(
-                derive_argument,
-                remove_commas(node.children[1].children)
+                DeriveArgument,
+                RemoveCommas(node.children[1].children)
             )
         )
 
 
-def derive_arguments_from_typedargslist(typedargslist):
+def DeriveArgumentsFromTypedArgList(typedargslist):
     from lib2to3.pgen2 import token
 
     prefix = ''
-    for node in remove_defaults(remove_commas(typedargslist.children)):
-        if is_leaf_of_type(node, token.STAR):
+    for node in RemoveDefaults(RemoveCommas(typedargslist.children)):
+        if IsLeafOfType(node, token.STAR):
             prefix = '*'
-        elif is_leaf_of_type(node, token.DOUBLESTAR):
+        elif IsLeafOfType(node, token.DOUBLESTAR):
             prefix = '**'
         elif prefix:
             #node.prefix = prefix
-            yield derive_argument(node)
+            yield DeriveArgument(node)
             prefix = ''
         else:
-            yield derive_argument(node)
+            yield DeriveArgument(node)
 
 
-def derive_arguments(node):
+def DeriveArguments(node):
     if node == []:
         return []
-    elif is_node_of_type(node, 'typedargslist'):
-        return list(derive_arguments_from_typedargslist(node))
+    elif IsNodeOfType(node, 'typedargslist'):
+        return list(DeriveArgumentsFromTypedArgList(node))
     else:
-        return [derive_argument(node)]
+        return [DeriveArgument(node)]
 
 
-def derive_import_name(node):
+def DeriveImportName(node):
     from lib2to3.pgen2 import token
 
-    if is_leaf_of_type(node, token.NAME, token.STAR, token.DOT):
+    if IsLeafOfType(node, token.NAME, token.STAR, token.DOT):
         return node.value
-    elif is_node_of_type(node, 'dotted_as_name', 'import_as_name'):
+    elif IsNodeOfType(node, 'dotted_as_name', 'import_as_name'):
         return (
-            derive_import_name(node.children[0]),
-            derive_import_name(node.children[2])
+            DeriveImportName(node.children[0]),
+            DeriveImportName(node.children[2])
         )
-    elif is_node_of_type(node, 'dotted_name'):
-        return "".join(map(leaf_value, node.children))
+    elif IsNodeOfType(node, 'dotted_name'):
+        return "".join([i.value for i in node.children])
     elif node is None:
         return
     else:
-        raise ASTError("derive_import_name: unknown node type: %r." % node)
+        raise ASTError("DeriveImportName: unknown node type: %r." % node)
 
 
-def derive_import_names(node):
+def DeriveImportNames(node):
     if node is None:
         return None
-    elif is_node_of_type(node, 'dotted_as_names', 'import_as_names'):
+    elif IsNodeOfType(node, 'dotted_as_names', 'import_as_names'):
         return map(
-            derive_import_name,
-            remove_commas(node.children)
+            DeriveImportName,
+            RemoveCommas(node.children)
         )
     else:
-        return [derive_import_name(node)]
+        return [DeriveImportName(node)]
 
 
 class ASTVisitor(object):
 
     PATTERNS = [
-        ('_visit_all', "file_input< nodes=any* >"),
-        ('_visit_all', "suite< nodes=any* >"),
-        ('_visit_class', "body=classdef< 'class' name=NAME ['(' bases=any ')'] ':' any >"),
-        ('_visit_function', "body=funcdef< 'def' name=NAME parameters< '(' [args=any] ')' > ':' any >"),
-        ('_visit_import',
+        ('_VisitAll', "file_input< nodes=any* >"),
+        ('_VisitAll', "suite< nodes=any* >"),
+        ('_VisitClass', "body=classdef< 'class' name=NAME ['(' bases=any ')'] ':' any >"),
+        ('_VisitFunction', "body=funcdef< 'def' name=NAME parameters< '(' [args=any] ')' > ':' any >"),
+        ('_VisitImport',
             "body=import_name< 'import' names=any > | "
             "body=import_from< 'from' import_from=any 'import' names=any > | "
             "body=import_from< 'from' import_from=any 'import' '(' names=any ')' >"
         ),
-        ('_visit_power_symbol', "body=power< left=NAME trailer< middle='.' right=NAME > any* >"),
-        ('_visit_assignment', "body=expr_stmt< name=any '=' value=any >"),
+        ('_VisitPowerSymbol', "body=power< left=NAME trailer< middle='.' right=NAME > any* >"),
+        ('_VisitAssignment', "body=expr_stmt< name=any '=' value=any >"),
     ]
 
     def __init__(self):
@@ -162,7 +158,7 @@ class ASTVisitor(object):
 
     def Visit(self, tree):
         self.EvVisitStart(tree)
-        result = self._visit(tree)
+        result = self._Visit(tree)
         self.EvVisitEnd(tree)
         return result
 
@@ -315,9 +311,9 @@ class ASTVisitor(object):
         assert body.children[2] is value
         self._current_import_block = None
         self._assignment = 1
-        self._visit(name)
+        self._Visit(name)
         self._assignment = 2
-        self._visit(value)
+        self._Visit(value)
         self.__assignment = 0
 
 
@@ -342,7 +338,7 @@ class ASTVisitor(object):
 
         self._klass_stack.append(scope)
         self._scope_stack.append(scope)
-        self._visit(body.children)  # Visit only CODE child, not the class declaration.
+        self._Visit(body.children)  # Visit only CODE child, not the class declaration.
         self._scope_stack.pop()
         self._klass_stack.pop()
         #self.handle_free_vars(scope, parent)
@@ -366,7 +362,7 @@ class ASTVisitor(object):
 
         # self._do_args(scope, node.argnames)
         self._scope_stack.append(scope)
-        self._visit(body.children)
+        self._Visit(body.children)
         self._scope_stack.pop()
         # self.handle_free_vars(scope, parent)
 
@@ -379,7 +375,7 @@ class ASTVisitor(object):
                 break
         else:
             # For unknown nodes simply descend to their list of children.
-            self._visit(node.children)
+            self._Visit(node.children)
 
 
     # Utitilites -----------------------------------------------------------------------------------
@@ -428,7 +424,7 @@ class ASTVisitor(object):
 
     # Pattern Handlers -----------------------------------------------------------------------------
 
-    def _visit(self, tree):
+    def _Visit(self, tree):
         """Main entry point of the ASTVisitor class.
         """
         from lib2to3.pytree import Leaf, Node
@@ -439,35 +435,40 @@ class ASTVisitor(object):
             self._VisitNode(tree)
         elif isinstance(tree, list):
             for subtree in tree:
-                self._visit(subtree)
+                self._Visit(subtree)
         else:
             raise ASTError("Unknown tree type: %r." % tree)
 
-    def _visit_all(self, results):
-        self._visit(results['nodes'])
 
-    def _visit_class(self, results):
+    def _VisitAll(self, results):
+        self._Visit(results['nodes'])
+
+
+    def _VisitClass(self, results):
         self.EvVisitClass(
             name=results['name'].value,
-            bases=derive_class_names(results.get('bases')),
+            bases=DeriveClassNames(results.get('bases')),
             body=results['body']
         )
 
-    def _visit_function(self, results):
+
+    def _VisitFunction(self, results):
         self.EvVisitFuncion(
             name=results['name'].value,
-            args=derive_arguments(results.get('args', [])),
+            args=DeriveArguments(results.get('args', [])),
             body=results['body']
         )
 
-    def _visit_import(self, results):
+
+    def _VisitImport(self, results):
         self.EvVisitImport(
-            names=derive_import_names(results['names']),
-            import_from=derive_import_name(results.get('import_from')),
+            names=DeriveImportNames(results['names']),
+            import_from=DeriveImportName(results.get('import_from')),
             body=results['body']
         )
 
-    def _visit_power_symbol(self, results):
+
+    def _VisitPowerSymbol(self, results):
         left=results.get('left')
         middle=results.get('middle')
         right=results.get('right')
@@ -477,18 +478,14 @@ class ASTVisitor(object):
             nodes=[left,middle,right],
             body=body
         )
-        self._visit(body.children[2:])
+        self._Visit(body.children[2:])
 
-    def _visit_assignment(self, results):
+
+    def _VisitAssignment(self, results):
         name=results.get('name')
         value=results.get('value')
         self.EvVisitAssignment(
             name=name,
             value=value,
-            body=results['body']
-        )
-
-    def _visit_name(self, results):
-        self.EvVisitName(
             body=results['body']
         )
