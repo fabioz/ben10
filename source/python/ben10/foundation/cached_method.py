@@ -10,8 +10,8 @@ from .weak_ref import WeakMethodRef
 #===================================================================================================
 class AbstractCachedMethod(Method):
     '''
-        Base class for cache-manager.
-        The abstract class does not implement the storage of results.
+    Base class for cache-manager.
+    The abstract class does not implement the storage of results.
     '''
 
     def __init__(self, cached_method=None):
@@ -43,7 +43,7 @@ class AbstractCachedMethod(Method):
 
     def GetCacheKey(self, *args, **kwargs):
         '''
-            Use the arguments to build the cache-key.
+        Use the arguments to build the cache-key.
         '''
         if args:
             if kwargs:
@@ -118,13 +118,13 @@ class CachedMethod(AbstractCachedMethod):
 #===================================================================================================
 class ImmutableParamsCachedMethod(CachedMethod):
     '''
-        Expects all parameters to already be immutable
-        Considers only the positional parameters of key, ignoring the keyword arguments
+    Expects all parameters to already be immutable
+    Considers only the positional parameters of key, ignoring the keyword arguments
     '''
 
     def GetCacheKey(self, *args, **kwargs):
         '''
-            Use the arguments to build the cache-key.
+        Use the arguments to build the cache-key.
         '''
         return args
 
@@ -135,7 +135,7 @@ class ImmutableParamsCachedMethod(CachedMethod):
 #===================================================================================================
 class LastResultCachedMethod(AbstractCachedMethod):
     '''
-        A cache that stores only the last result.
+    A cache that stores only the last result.
     '''
 
     def __init__(self, cached_method=None):

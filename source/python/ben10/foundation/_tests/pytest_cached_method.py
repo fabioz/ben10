@@ -4,42 +4,10 @@ import pytest
 
 
 
-@pytest.fixture
-def _cached_obj():
-    '''
-    A test_object common to many cached_method tests.
-    '''
-
-    class TestObj:
-        def __init__(self):
-            self.method_count = 0
-
-        def CachedMethod(self, *args, **kwargs):
-            self.method_count += 1
-            return self.method_count
-
-        def CheckCounts(self, cache, method=0, miss=0, hit=0):
-
-            if not hasattr(cache, 'check_counts'):
-                cache.check_counts = dict(method=0, miss=0, hit=0, call=0)
-
-            cache.check_counts['method'] += method
-            cache.check_counts['miss'] += miss
-            cache.check_counts['hit'] += hit
-            cache.check_counts['call'] += (miss + hit)
-
-            assert self.method_count == cache.check_counts['method']
-            assert cache.miss_count == cache.check_counts['miss']
-            assert cache.hit_count == cache.check_counts['hit']
-            assert cache.call_count == cache.check_counts['call']
-
-    return TestObj()
-
-
 #===================================================================================================
 # Test
 #===================================================================================================
-class Test:
+class Test(object):
 
     def setUp(self):
         self.method_count = 0
@@ -193,3 +161,41 @@ class Test:
         alpha.Foo('test3')
         assert alpha.n_calls == 4
         assert len(alpha.Foo._results) == 3
+
+
+
+#===================================================================================================
+# _cached_obj
+#===================================================================================================
+@pytest.fixture
+def _cached_obj():
+    '''
+    A test_object common to many cached_method tests.
+    '''
+
+    class TestObj:
+        def __init__(self):
+            self.method_count = 0
+
+        def CachedMethod(self, *args, **kwargs):
+            self.method_count += 1
+            return self.method_count
+
+        def CheckCounts(self, cache, method=0, miss=0, hit=0):
+
+            if not hasattr(cache, 'check_counts'):
+                cache.check_counts = dict(method=0, miss=0, hit=0, call=0)
+
+            cache.check_counts['method'] += method
+            cache.check_counts['miss'] += miss
+            cache.check_counts['hit'] += hit
+            cache.check_counts['call'] += (miss + hit)
+
+            assert self.method_count == cache.check_counts['method']
+            assert cache.miss_count == cache.check_counts['miss']
+            assert cache.hit_count == cache.check_counts['hit']
+            assert cache.call_count == cache.check_counts['call']
+
+    return TestObj()
+
+
