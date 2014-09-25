@@ -10,7 +10,7 @@ app = App('terraforming')
 # Valid extensions for fix-format.
 EXTENSIONS = {'.py', '.cpp', '.c', '.h', '.hpp', '.hxx', '.cxx', '.java', '.js'}
 
-# Python excentions.
+# Python extensions.
 # This is overridden for test purposes.
 PYTHON_EXT = '.py'
 
@@ -56,6 +56,7 @@ def FixFormat(console_, refactor=None, python_only=False, single_job=False, sort
     :param python_only: Only handle python sources (.py).
     :param single_job: Avoid using multithread (for testing purposes).
     :param sorted: Sort the output.
+    :param inverted_refactor: Invert refactor names and values loaded from refactor file.
     :param sources: Source directories or files.
     '''
     from functools import partial

@@ -332,16 +332,12 @@ class ASTVisitor(object):
         scope = ClassScope(parent, name, None)
         if parent.nested or isinstance(parent, FunctionScope):
             scope.nested = 1
-        # if node.doc is not None:
-        #     scope.add_def('__doc__')
-        # scope.add_def('__module__')
 
         self._klass_stack.append(scope)
         self._scope_stack.append(scope)
         self._Visit(body.children)  # Visit only CODE child, not the class declaration.
         self._scope_stack.pop()
         self._klass_stack.pop()
-        #self.handle_free_vars(scope, parent)
 
 
     def EvVisitFuncion(self, name, args, body):
@@ -350,21 +346,15 @@ class ASTVisitor(object):
         self._current_import_block = None
 
         parent = self._scope_stack[-1]
-        # if node.decorators:  # We dont have "decorators" on lib2to3 AST
-        #     self.visit(node.decorators, parent)
-        # for n in node.defaults:  # We dont have "defaults" on lib2to3 AST
-        #     self.visit(n, parent)
         scope = FunctionScope(parent, name, body)  # TODO: We should have the function name as body.
         if parent.nested or isinstance(parent, FunctionScope):
             scope.nested = 1
 
         scope.HandleArgs(args, body)
 
-        # self._do_args(scope, node.argnames)
         self._scope_stack.append(scope)
         self._Visit(body.children)
         self._scope_stack.pop()
-        # self.handle_free_vars(scope, parent)
 
 
     def _VisitNode(self, node):

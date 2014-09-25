@@ -153,7 +153,7 @@ class TerraFormer(object):
             A dictionary mapping old symbols to new symbols.
 
         :param int page_width:
-            The page-width (try) to format the import statements.
+            The page-width to format the import statements.
 
         :return boolean, str:
             Returns True if any changes were made.
