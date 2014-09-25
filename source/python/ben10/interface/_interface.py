@@ -487,7 +487,7 @@ class CacheInterfaceAttrs(object):
         :param Attribute attribute_class:
             An Attribute class to register as an attribute class.
 
-        :return: set
+        :return set(Attribute):
             Returns a set with all the current attribute classes.
         '''
         result = set(cls._ATTRIBUTE_CLASSES)
