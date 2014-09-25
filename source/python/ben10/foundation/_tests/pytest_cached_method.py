@@ -197,5 +197,3 @@ def _cached_obj():
             assert cache.call_count == cache.check_counts['call']
 
     return TestObj()
-
-
