@@ -156,8 +156,7 @@ def CheckOverridden(instance, current_method_class, method_name):
 
     If B().method() is called in this case it'll throw an error.
 
-    This is meant for non abstract methods where the usually usually must override calling and
-    super().
+    This is meant for non-abstract methods where the user usually overrides and calls super().
     '''
     if instance.__class__ == current_method_class:
         return

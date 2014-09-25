@@ -5,6 +5,4 @@ def IsPythonDebug():
     '''
     import sys
 
-
-
     return hasattr(sys, 'gettotalrefcount')  # Only exists in debug versions

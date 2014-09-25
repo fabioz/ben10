@@ -66,7 +66,7 @@ def SetIsDevelopment(is_development):
 
     DevelopmentCheckType is an example of a method using IsDevelopment to be enabled.
 
-    So always mind this difference and think
+    So always mind this difference and think.
     '''
     global _is_development
     _is_development = is_development
