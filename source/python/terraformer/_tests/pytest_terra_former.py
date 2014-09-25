@@ -287,7 +287,6 @@ def testTerraFormer(monkeypatch, embed_data):
     ]
 
     changed, output = terra_former.ReorganizeImports()
-    print output
 
     assert output == Dedent(
         '''
