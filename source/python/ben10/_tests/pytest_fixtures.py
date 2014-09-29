@@ -1,6 +1,7 @@
 from ben10.filesystem import CreateFile, StandardizePath
 from ben10.fixtures import MultipleFilesNotFound, _EmbedDataFixture
 from ben10.foundation import is_frozen
+from ben10.foundation.is_frozen import IsFrozen, SetIsFrozen
 from ben10.foundation.string import Dedent
 import os
 import pytest
@@ -99,14 +100,18 @@ class Test(object):
         '''
         We fail to create data directory IF we are inside a generated executable (IsFrozen).
         '''
-        monkeypatch.setattr(is_frozen, 'IsFrozen', lambda:True)
+        is_frozen = IsFrozen()
+        try:
+            SetIsFrozen(True)
 
-        with pytest.raises(RuntimeError) as exception:
-            embed_data.CreateDataDir()
+            with pytest.raises(RuntimeError) as exception:
+                embed_data.CreateDataDir()
 
-        assert \
-            '_EmbedDataFixture is not ready for execution inside an executable.' \
-            in str(exception)
+            assert \
+                '_EmbedDataFixture is not ready for execution inside an executable.' \
+                in str(exception)
+        finally:
+            SetIsFrozen(is_frozen)
 
 
     def testEmbedDataFixture(self, request):
