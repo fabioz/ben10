@@ -1,0 +1,5 @@
+path = /anyfile.txt
+accept-encoding = identity
+connection = close
+host = 127.0.0.1:XXXXX
+user-agent = ESSS/User/Company/Other

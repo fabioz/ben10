@@ -1,7 +1,8 @@
-*.pyc
 *.pickle
+*.pyc
 .coverage
 /.idea/
+/artifacts/
 /build/
 /dist/
 /docs/build/
