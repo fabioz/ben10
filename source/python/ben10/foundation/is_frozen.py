@@ -69,4 +69,7 @@ def SetIsDevelopment(is_development):
     So always mind this difference and think.
     '''
     global _is_development
-    _is_development = is_development
+    try:
+        return _is_development
+    finally:
+        _is_development = is_development

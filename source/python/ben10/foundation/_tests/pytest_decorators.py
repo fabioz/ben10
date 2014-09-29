@@ -104,7 +104,7 @@ def testDeprecated(monkeypatch):
 
     monkeypatch.setattr(warnings, 'warn', MyWarn)
 
-    old_is_development = is_frozen.SetIsDevelopment(True)
+    was_development = is_frozen.SetIsDevelopment(True)
     try:
         # Emit messages when in development
         warn_params = []
@@ -138,7 +138,7 @@ def testDeprecated(monkeypatch):
         FrozenMethod()
         assert warn_params == []
     finally:
-        is_frozen.SetIsDevelopment(old_is_development)
+        is_frozen.SetIsDevelopment(was_development)
 
 
 def testAbstract():
