@@ -104,7 +104,7 @@ def testDeprecated(monkeypatch):
 
     monkeypatch.setattr(warnings, 'warn', MyWarn)
 
-    old_is_frozen = is_frozen.SetIsFrozen(False)
+    old_is_frozen = is_frozen.SetIsDevelopment(True)
     try:
         # Emit messages when in development (not frozen)
         warn_params = []
@@ -127,7 +127,7 @@ def testDeprecated(monkeypatch):
         ]
 
         # No messages on release code (frozen)
-        is_frozen.SetIsFrozen(True)
+        is_frozen.SetIsDevelopment(False)
 
         warn_params = []
 
@@ -138,7 +138,7 @@ def testDeprecated(monkeypatch):
         FrozenMethod()
         assert warn_params == []
     finally:
-        is_frozen.SetIsFrozen(old_is_frozen)
+        is_frozen.SetIsDevelopment(old_is_frozen)
 
 
 def testAbstract():
