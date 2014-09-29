@@ -3,7 +3,6 @@ Extensions to python native types.
 '''
 from ben10.foundation.is_frozen import IsDevelopment
 from ben10.foundation.klass import IsInstance
-from ben10.foundation.translation import tr
 from ben10.foundation.weak_ref import WeakList
 
 
@@ -148,7 +147,6 @@ def CheckType(object_, type_, message=None):
 # CheckType only in development mode.
 #===================================================================================================
 def CreateDevelopmentCheckType():
-    from .is_frozen import IsDevelopment
     if not IsDevelopment():
         return lambda *args, **kwargs: None  # it's a no-op if we're not in dev mode!
     else:
