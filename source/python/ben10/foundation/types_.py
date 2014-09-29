@@ -249,7 +249,7 @@ def IsBasicType(value, accept_compound=False, additional=None):
     :returns:
         True if the passed value is from a basic python type
     '''
-    if isinstance(value, (int, str, long, float, bool)) or value is None or (additional and isinstance(value, additional)):
+    if isinstance(value, (int, str, long, float, bool, complex)) or value is None or (additional and isinstance(value, additional)):
         return True
 
     if accept_compound:
