@@ -148,6 +148,7 @@ def CheckType(object_, type_, message=None):
 # CheckType only in development mode.
 #===================================================================================================
 def CreateDevelopmentCheckType():
+    from .is_frozen import IsDevelopment
     if not IsDevelopment():
         return lambda *args, **kwargs: None  # it's a no-op if we're not in dev mode!
     else:
