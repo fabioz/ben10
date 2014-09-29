@@ -28,7 +28,7 @@ class Test(object):
         factory['login'] = 'Bravo'
 
         assert (
-            factory.GetContent(xml_header=True)
+            factory.GetContents(xml_header=True)
             == Dedent(self.testSimplest.__doc__)
         )
 
@@ -49,7 +49,7 @@ class Test(object):
         factory['location/city'] = 'Charlie'
 
         assert (
-            factory.GetContent()
+            factory.GetContents()
             == Dedent(self.testSimple.__doc__)
         )
 
@@ -70,7 +70,7 @@ class Test(object):
         factory['bravo/charlie@three'] = '3'
 
         assert (
-            factory.GetContent()
+            factory.GetContents()
             == Dedent(self.testAttributes.__doc__)
         )
 
@@ -106,7 +106,7 @@ class Test(object):
         factory['components/component+/name'] = 'Charlie'
 
         assert (
-            factory.GetContent()
+            factory.GetContents()
             == Dedent(self.testRepeatingTags.__doc__)
         )
 
@@ -158,7 +158,7 @@ class Test(object):
         factory['customWorkspace'] = 'WORKSPACE'
 
         assert (
-            factory.GetContent()
+            factory.GetContents()
             == Dedent(self.testHudsonJob.__doc__)
         )
 
@@ -175,7 +175,7 @@ class Test(object):
         triggers['@class'] = 'vector'
 
         assert (
-            factory.GetContent()
+            factory.GetContents()
             == Dedent(self.testTriggerClass.__doc__)
         )
 
