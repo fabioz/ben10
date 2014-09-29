@@ -1,9 +1,46 @@
-import cProfile as profile
+'''
+Basic use for the profile structure:
+
+For a quick text-only output:
+=============================
+
+from coilib50.debug.profiling import ProfileMethod
+@ProfileMethod(None)
+def MyFunc():
+    ...
+
+MyFunc()
+
+
+For showing a graph:
+====================
+
+In this case, first, dependencies must be satisfied:
+
+ai load graphviz
+aa eden.install graphviz
+ai .
+
+(restart your IDE so that it gets an updated env)
+
+from coilib50.debug.profiling import ProfileMethod
+@ProfileMethod('out.prof', show_graph=True)
+def MyFunc():
+    ...
+
+MyFunc()
+
+
+'''
+
 import os
 import pstats
 import subprocess
 import sys
-
+try:
+    import cProfile as profile
+except ImportError:
+    import profile
 
 
 #===================================================================================================

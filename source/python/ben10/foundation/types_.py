@@ -1,7 +1,6 @@
 '''
 Extensions to python native types.
 '''
-from ben10.foundation.is_frozen import IsFrozen
 from ben10.foundation.klass import IsInstance
 from ben10.foundation.translation import tr
 from ben10.foundation.weak_ref import WeakList
@@ -148,7 +147,7 @@ def CheckType(object_, type_, message=None):
 # CheckType only in development mode.
 #===================================================================================================
 def CreateDevelopmentCheckType():
-    if IsFrozen():
+    if not IsDevelopment():
         return lambda *args, **kwargs: None  # it's a no-op if we're not in dev mode!
     else:
         return CheckType
@@ -213,7 +212,7 @@ def IsNumber(v):
     global _KNOWN_NUMBER_TYPES
     _KNOWN_NUMBER_TYPES = _GetKnownNumberTypes()
 
-    # Replaces this function by an optimazed version _IsNumber.
+    # Replaces this function by an optimized version _IsNumber.
     IsNumber.func_code = _IsNumber.func_code
 
     return _IsNumber(v)
@@ -249,7 +248,8 @@ def IsBasicType(value, accept_compound=False, additional=None):
     :returns:
         True if the passed value is from a basic python type
     '''
-    if isinstance(value, (int, str, long, float, bool, complex)) or value is None or (additional and isinstance(value, additional)):
+    if isinstance(value, (int, str, long, float, bool, complex)) or \
+        value is None or (additional and isinstance(value, additional)):
         return True
 
     if accept_compound:
@@ -379,7 +379,20 @@ def AsList(arg):
 #===================================================================================================
 def Flatten(iterable, skip_types=None):
     '''
-    Flattens recursively the passed iterable with subsequences into a flat list.
+    :rtype: list
+    :returns:
+        A list with the elements of the initial iterable flattened.
+    '''
+    return list(IterFlattened(iterable, skip_types))
+
+
+
+#===================================================================================================
+# IterFlattened
+#===================================================================================================
+def IterFlattened(iterable, skip_types=None):
+    """
+    Flattens recursively the passed iterable with subsequences into a flat iterator.
 
     Warning: This method also flattens tuples
 
@@ -390,10 +403,9 @@ def Flatten(iterable, skip_types=None):
     :param list(type) skip_types:
         These types won't be flattened if they happen to be iterable.
 
-    :rtype: list
-    :returns:
-        A list with the elements of the initial iterable flattened.
-    '''
+    :rtype: iterator
+    :returns: Iterator over the flattened given iterable.
+    """
     if skip_types is None:
         skip_types = []
 
@@ -403,7 +415,6 @@ def Flatten(iterable, skip_types=None):
 
     skip_types_tuple = tuple(skip_types)
 
-    result = []
     for element in iterable:
         element_iter = None  # will be None if element is not iterable, or hold an iterator otherwise
 
@@ -414,11 +425,11 @@ def Flatten(iterable, skip_types=None):
                 pass
 
         if element_iter is None:
-            result.append(element)
+            yield element
         else:
-            result.extend(Flatten(element_iter, skip_types))
+            for x in IterFlattened(element_iter, skip_types):
+                yield x
 
-    return result
 
 
 #===================================================================================================
@@ -456,6 +467,38 @@ def MergeDictsRecursively(original_dict, merging_dict):
 
     return original_dict
 
+
+#===================================================================================================
+# ListDuplicates
+#===================================================================================================
+def ListDuplicates(iterable):
+    '''
+    Given a sequence, returns a list containing all the items in 'iterable' that appear more than
+    once. E.g. ListDuplicates([1,2,3,1]) returns [1].
+
+    :type iterable: an iterable object, ie, an object that iter() can handle.
+    '''
+    seen = set()
+    seen_add = seen.add
+    # adds all elements it doesn't know yet to seen and all other to seen_twice
+    seen_twice = set(x for x in iterable if x in seen or seen_add(x))
+    # turn the set into a list (as requested)
+    return list(seen_twice)
+
+
+#===================================================================================================
+# RemoveDuplicates
+#===================================================================================================
+def RemoveDuplicates(iterable):
+    '''
+    Given a sequence, returns a list with duplicate elements removed (only the first appearance
+    of the element is kept). Preserves order.
+
+    :type iterable: an iterable object, ie, an object that iter() can handle.
+    '''
+    seen = set()
+    seen_add = seen.add
+    return [ x for x in iterable if x not in seen and not seen_add(x)]
 
 
 #===================================================================================================

@@ -1,7 +1,7 @@
 '''
 Collection of decorator with ONLY standard library dependencies.
 '''
-from ben10.foundation.is_frozen import IsFrozen
+from ben10.foundation.is_frozen import IsDevelopment
 import warnings
 
 
@@ -108,7 +108,7 @@ def Deprecated(name=None):
     :param str name:
         The name of the method that substitutes this one, if any.
     '''
-    if IsFrozen():
+    if not IsDevelopment():
         # Optimization: we don't want deprecated to add overhead in release mode.
 
         def DeprecatedDecorator(func):
