@@ -5,7 +5,7 @@ from ben10.foundation.is_frozen import IsDevelopment, IsFrozen, SetIsDevelopment
 def testIsFrozenIsDevelopment():
     # Note: this test is checking if we're always running tests while not in frozen mode,
     # still, we have to do a try..finally to make sure we restore things to the proper state.
-    old_is_frozen = IsFrozen()
+    was_frozen = IsFrozen()
     try:
         assert IsFrozen() == False
         assert IsDevelopment() == True
@@ -26,4 +26,4 @@ def testIsFrozenIsDevelopment():
         assert IsFrozen() == False
         assert IsDevelopment() == True
     finally:
-        SetIsFrozen(old_is_frozen)
+        SetIsFrozen(was_frozen)

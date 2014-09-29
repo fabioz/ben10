@@ -41,7 +41,7 @@ class Test():
 
 
     def testGetApplicationDir(self):
-        is_frozen_ = is_frozen.SetIsFrozen(False)
+        was_frozen = is_frozen.SetIsFrozen(False)
         try:
             assert GetApplicationDir() == sys.path[0]
 
@@ -49,7 +49,7 @@ class Test():
             is_frozen.SetIsFrozen(True)
             assert GetApplicationDir() == os.path.dirname(os.path.dirname(sys.executable))
         finally:
-            is_frozen.SetIsFrozen(is_frozen_)
+            is_frozen.SetIsFrozen(was_frozen)
 
 
     def testGetExecutableDir(self):

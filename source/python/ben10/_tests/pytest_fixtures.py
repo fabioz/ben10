@@ -100,7 +100,7 @@ class Test(object):
         '''
         We fail to create data directory IF we are inside a generated executable (IsFrozen).
         '''
-        is_frozen = IsFrozen()
+        was_frozen = IsFrozen()
         try:
             SetIsFrozen(True)
 
@@ -111,7 +111,7 @@ class Test(object):
                 '_EmbedDataFixture is not ready for execution inside an executable.' \
                 in str(exception)
         finally:
-            SetIsFrozen(is_frozen)
+            SetIsFrozen(was_frozen)
 
 
     def testEmbedDataFixture(self, request):
