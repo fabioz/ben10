@@ -1,6 +1,7 @@
 '''
 Extensions to python native types.
 '''
+from ben10.foundation.is_frozen import IsDevelopment
 from ben10.foundation.klass import IsInstance
 from ben10.foundation.translation import tr
 from ben10.foundation.weak_ref import WeakList
