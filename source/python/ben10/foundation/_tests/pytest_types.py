@@ -1,5 +1,5 @@
 from ben10.filesystem import CreateFile, GetFileContents
-from ben10.foundation.is_frozen import SetIsFrozen
+from ben10.foundation.is_frozen import IsDevelopment, SetIsDevelopment, SetIsFrozen
 from ben10.foundation.types_ import (AsList, Boolean, CheckBasicType, CheckEnum, CheckFormatString,
     CheckIsNumber, CheckType, CreateDevelopmentCheckType, Flatten, Intersection, IsBasicType,
     IsNumber, MergeDictsRecursively, Null, OrderedIntersection, StringDictIO, _GetKnownNumberTypes)
@@ -27,14 +27,20 @@ class Test:
 
 
     def testDevelopmentCheckType(self):
-        was_frozen = SetIsFrozen(False)
-        assert CreateDevelopmentCheckType() is CheckType
+        was_dev = IsDevelopment()
+        try:
+            assert CreateDevelopmentCheckType() is CheckType
 
-        SetIsFrozen(True)
-        func = CreateDevelopmentCheckType()
-        assert isinstance(func, type(lambda: None)) and func.__name__ == '<lambda>'
+            SetIsDevelopment(False)
+            func = CreateDevelopmentCheckType()
+            assert isinstance(func, type(lambda: None)) and func.__name__ == '<lambda>'
 
-        SetIsFrozen(was_frozen)
+            SetIsDevelopment(True)
+            func = CreateDevelopmentCheckType()
+            assert not (isinstance(func, type(lambda: None)) and func.__name__ == '<lambda>')
+
+        finally:
+            SetIsDevelopment(was_dev)
 
 
     def testPassing(self):
