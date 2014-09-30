@@ -363,6 +363,9 @@ def FTPIsDir(url):
     '''
     with FTPHost(url) as ftp_host:
         try:
+            # NOTE: Raising an error because ftputil enters a infinite loop if the path starts with
+            # two slashes.
+            assert not url.path.startswith('//'), "Invalid URL: Path starts with two slashes."
             return ftp_host.path.isdir(url.path)
         except PermanentError, e:
             if e.errno == 550:
@@ -392,10 +395,10 @@ def FTPListFiles(url):
     '''
     with FTPHost(url) as ftp_host:
         try:
-            if ftp_host.path.isdir(url.path):
-                return ftp_host.listdir(url.path)
-            else:
-                return None
+            # NOTE: Raising an error because ftputil enters a infinite loop if the path starts with
+            # two slashes.
+            assert not url.path.startswith('//'), "Invalid URL: Path starts with two slashes."
+            return ftp_host.listdir(url.path)
         except PermanentError, e:
             if e.errno == 550:
                 # "No such file or directory"

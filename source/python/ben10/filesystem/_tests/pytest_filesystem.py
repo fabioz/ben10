@@ -1046,7 +1046,11 @@ class Test:
         ]
 
         # Try listing a directory that does not exist
-        assert ListFiles(ftpserver.GetFTPUrl('/files/non-existent')) is None
+        assert ListFiles(ftpserver.GetFTPUrl('files/non-existent')) is None
+
+        # Check for assertion for invalid url: starts with two slashes.
+        with pytest.raises(AssertionError):
+            ListFiles(ftpserver.GetFTPUrl('//files/non-existent'))
 
 
     @pytest.mark.serial
