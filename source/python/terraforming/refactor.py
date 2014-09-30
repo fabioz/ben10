@@ -159,11 +159,12 @@ class TerraForming(object):
             Returns True if the file was changed.
         '''
         try:
-            input_lines = GetFileLines(filename)
+            input_lines = GetFileContents(filename, binary=True).split('\n')
             lines = self._RightTrimSpacesImpl(input_lines)
             lines = self._FixTabsImpl(lines)
-            content = '\n'.join(lines)
-            CreateFile(filename, content, eol_style=EOL_STYLE_UNIX)
+            lines = [i.rstrip('\r') for i in lines]
+            contents = '\n'.join(lines)
+            CreateFile(filename, contents, eol_style=EOL_STYLE_UNIX)
             return input_lines != lines
         except Exception, e:
             Reraise(e, "On TerraForming.FixAll with filename: %s" % filename)
