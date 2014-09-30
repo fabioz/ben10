@@ -392,7 +392,10 @@ def FTPListFiles(url):
     '''
     with FTPHost(url) as ftp_host:
         try:
-            return ftp_host.listdir(url.path)
+            if ftp_host.path.isdir(url.path):
+                return ftp_host.listdir(url.path)
+            else:
+                return None
         except PermanentError, e:
             if e.errno == 550:
                 # "No such file or directory"
