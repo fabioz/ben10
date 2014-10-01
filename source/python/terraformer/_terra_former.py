@@ -3,6 +3,15 @@ from ben10.foundation.memoize import Memoize
 
 
 
+class FileTooBigError(RuntimeError):
+    '''
+    Exception raised when a big file is detected.
+    We raise this exception before asking lib2to3 to handle it because if we let this to lib2to3 we
+    end getting a infinite loop.
+    '''
+
+
+
 #===================================================================================================
 # TerraFormer
 #===================================================================================================
@@ -29,7 +38,7 @@ class TerraFormer(object):
         file_size = len(source)
         if file_size > self.MAX_FILE_SIZE:
             # Some big files make the Parse algorithm get stuck.
-            raise RuntimeError('File %s too big: %d' % (filename, file_size))
+            raise FileTooBigError('File %s too big: %d' % (filename, file_size))
 
         self.filename = filename
         self.source = source
