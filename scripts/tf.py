@@ -29,7 +29,6 @@ def Symbols(console_, filename):
         console_.Print('%d: IMPORT %s' % (i_import_symbol.lineno, i_import_symbol.symbol))
 
 
-
 @app
 def FixFormat(console_, refactor=None, python_only=False, single_job=False, sorted=False, inverted_refactor=False, *sources):
     '''
@@ -77,16 +76,16 @@ def FixFormat(console_, refactor=None, python_only=False, single_job=False, sort
 
 
 @app
-def AddImportSymbol(console_, source, import_symbol, single_job=False):
+def AddImportSymbol(console_, import_symbol, single_job=False, *sources):
     '''
     Adds an import-symbol in all files.
     The import statement is added in the first line of the code, before comments and string docs.
 
-    :param source: Source directory or file.
+    :param sources: Source directories or files.
     :param import_symbol: The symbol to import. Ex. "__future__.unicode_literals"
     :param single_job: Avoid using multithread (for testing purposes).
     '''
-    filenames = _GetFilenames((source,), [PYTHON_EXT])
+    filenames = _GetFilenames(sources, [PYTHON_EXT])
     partial_add_import_symbol = partial(_AddImportSymbol, import_symbol=import_symbol)
     _Map(console_, partial_add_import_symbol, filenames, sorted, single_job)
 
