@@ -49,8 +49,6 @@ class Test:
         # Creating it again should simply override
         CreateLink(target, link_name, override=True)
 
-        # CreateDirectory(os.path.join(link_name, 'dirname/more'))
-
         # It counts as a dir, and a link
         assert IsDir(link_name)
         assert IsLink(link_name)
@@ -612,6 +610,11 @@ class Test:
         finally:
             DeleteFile(single_file)
 
+
+    @pytest.mark.serial
+    def testFTPCreateFileInMissingDirectory(self, ftpserver):
+        from ftputil.error import FTPIOError
+
         target_ftp_file = ftpserver.GetFTPUrl('missing_ftp_dir/sub_dir/file.txt')
 
         with pytest.raises(FTPIOError):
@@ -1115,7 +1118,7 @@ class Test:
         assert obtained == expected
 
 
-    def testCheckIsFile(self, monkeypatch, embed_data, ftpserver):
+    def testCheckIsFile(self, monkeypatch, embed_data):
         # assert not raises Exception
         CheckIsFile(embed_data['file.txt'])
 
@@ -1125,6 +1128,9 @@ class Test:
         with pytest.raises(FileNotFoundError):
             CheckIsFile(embed_data.GetDataDirectory())  # Not a file
 
+
+    @pytest.mark.serial
+    def testFTPCheckIsFile(self, ftpserver):
         # assert not raises Exception
         CheckIsFile(ftpserver.GetFTPUrl('file.txt'))
         with pytest.raises(FileNotFoundError):
@@ -1147,7 +1153,7 @@ class Test:
             assert GetDriveType(r'\\fileserversc\dev') == DRIVE_REMOTE
 
 
-    def testCheckIsDir(self, monkeypatch, embed_data, ftpserver):
+    def testCheckIsDir(self, monkeypatch, embed_data):
         # assert not raises Exception
         CheckIsDir(embed_data.GetDataDirectory())
 
@@ -1157,6 +1163,9 @@ class Test:
         with pytest.raises(DirectoryNotFoundError):
             CheckIsDir(embed_data['file.txt'])  # Not a directory
 
+
+    @pytest.mark.serial
+    def testFTPCheckIsDir(self, ftpserver):
         # assert not raises Exception
         CheckIsDir(ftpserver.GetFTPUrl('.'))
 
@@ -1287,12 +1296,8 @@ def ftpserver(monkeypatch, embed_data, request):
 
             url = ftpserver.GetFTPUrl('filename.txt')
     '''
-    from pyftpdlib import ftpserver
-
-    # Redirect ftpserver messages to "logging"
-    monkeypatch.setattr(ftpserver, 'log', logging.info)
-    monkeypatch.setattr(ftpserver, 'logline', logging.info)
-    monkeypatch.setattr(ftpserver, 'logerror', logging.info)
+    pyftpdlib_log = logging.getLogger('pyftpdlib')
+    pyftpdlib_log.disabled = True
 
     class FtpServerFixture():
 
@@ -1345,6 +1350,7 @@ def ftpserver(monkeypatch, embed_data, request):
     return r_ftpserver
 
 
+
 class _PhonyFtpServer(object):
     '''
     Creates a phony ftp-server in the given port serving the given directory. Register
@@ -1369,78 +1375,30 @@ class _PhonyFtpServer(object):
         :returns:
             The port the ftp-server is serving
         '''
-        from pyftpdlib import ftpserver
+        from pyftpdlib.authorizers import DummyAuthorizer
+        from pyftpdlib.handlers import FTPHandler
+        from pyftpdlib.servers import FTPServer
         from threading import Thread
 
-
-        class MyFTPServer(ftpserver.FTPServer):
-
-            def ServeForever(self, timeout=1.0, use_poll=False, count=None):
-                """A wrap around asyncore.loop(); starts the asyncore polling
-                loop including running the scheduler.
-                The arguments are the same expected by original asyncore.loop()
-                function:
-
-                 - (float) timeout: the timeout passed to select() or poll()
-                   system calls expressed in seconds (default 1.0).
-
-                 - (bool) use_poll: when True use poll() instead of select()
-                   (default False).
-
-                 - (int) count: how many times the polling loop gets called
-                   before returning.  If None loops forever (default None).
-                """
-                import asyncore
-
-                if use_poll and hasattr(asyncore.select, 'poll'):
-                    poll_fun = asyncore.poll2
-                else:
-                    poll_fun = asyncore.poll
-
-                self.__running = True
-                try:
-                    if count is None:
-                        ftpserver.log("Serving FTP on %s:%s" % self.socket.getsockname()[:2])
-                        try:
-                            while self.__running and (asyncore.socket_map or ftpserver._tasks):
-                                poll_fun(timeout)
-                                ftpserver._scheduler()
-                        except (KeyboardInterrupt, SystemExit, asyncore.ExitNow):
-                            log("Shutting down FTP server.")
-                            self.close_all()
-                    else:
-                        while self.__running and (asyncore.socket_map or ftpserver._tasks) and count > 0:
-                            if asyncore.socket_map:
-                                poll_fun(timeout)
-                            if ftpserver._tasks:
-                                ftpserver._scheduler()
-                            count = count - 1
-                finally:
-                    self.__running = False
-
-            def StopServing(self):
-                self.__running = False
-
-
-        authorizer = ftpserver.DummyAuthorizer()
+        authorizer = DummyAuthorizer()
         authorizer.add_user("dev", "123", self._directory, perm="elradfmw")
         authorizer.add_anonymous(self._directory)
 
-        handler = ftpserver.FTPHandler
+        handler = FTPHandler
         handler.authorizer = authorizer
 
         address = ("127.0.0.1", port)
-        self.ftpd = MyFTPServer(address, handler)
+        self.ftpd = FTPServer(address, handler)
         if port == 0:
             _address, port = self.ftpd.getsockname()
 
-        self.thread = Thread(target=self.ftpd.ServeForever)
+        self.thread = Thread(target=self.ftpd.serve_forever)
         self.thread.start()
 
         return port
 
 
     def Stop(self):
-        self.ftpd.StopServing()
+        self.ftpd.close_all()
         self.thread.join()
 

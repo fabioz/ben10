@@ -4,7 +4,7 @@ coverage==3.7.1
 ftputil==3.0
 path.py==5.2
 py==1.4.23
-pyftpdlib==0.6.0
+pyftpdlib==1.4.0
 pytest-cov==1.8
 pytest-localserver==0.3.3
 pytest-timeout==0.3
