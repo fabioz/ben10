@@ -1,11 +1,10 @@
 from ben10.filesystem import CreateFile, StandardizePath
 from ben10.fixtures import MultipleFilesNotFound, _EmbedDataFixture
-from ben10.foundation import is_frozen
 from ben10.foundation.is_frozen import IsFrozen, SetIsFrozen
 from ben10.foundation.string import Dedent
+import faulthandler
 import os
 import pytest
-
 
 
 pytest_plugins = ["ben10.fixtures"]
@@ -15,7 +14,7 @@ pytest_plugins = ["ben10.fixtures"]
 #===================================================================================================
 # Test
 #===================================================================================================
-class Test(object):
+class TestEmbedData(object):
 
     def testEmbedData(self, embed_data):
         assert not os.path.isdir('data_fixtures__testEmbedData')
@@ -127,3 +126,15 @@ class Test(object):
             embed_data.Finalizer()
 
         assert os.path.isdir('data_fixtures__testEmbedDataFixture') == False
+
+
+@pytest.mark.parametrize('i', [0, 1])
+def testFaultHandler(i, request):
+    """
+    Make sure that faulthandler library is enabled during tests run.
+
+    .. note:: we use a parametrized test here to ensure we are taking parametrization in account
+        when we generate the file name for the fault handler log file.
+    """
+    assert faulthandler.is_enabled()
+    assert os.path.isfile(request.node.fault_handler_stream.name)

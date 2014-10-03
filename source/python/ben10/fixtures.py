@@ -4,9 +4,9 @@ Collection of fixtures for pytests.
 .. note::
     Coverage for this file gives a lot of misses, just like calling coverage from module's main.
 '''
+import faulthandler
 import os
 import pytest
-
 
 
 #===================================================================================================
@@ -33,6 +33,46 @@ def pytest_sessionstart(session):
     # enable development-only checks
     SetIsDevelopment(True)
 
+
+#===================================================================================================
+# pytest_runtest_setup
+#===================================================================================================
+def pytest_runtest_setup(item):
+    """
+    pytest call during the setup stage of each test item.
+
+    - faulthandler: we enable a fault handler in the current process, which will stream crash errors
+        to a file in the user's $HOME directory.
+        The file is named based on the module and test name, for example:
+            "~/ben10._tests.pytest_fixtures.testFaultHandler.txt"
+
+        Since this file is only useful if a a test crashes, it is removed during tear down if
+        no crash occurred.
+    """
+    name = '%s.%s.txt'  % (item.module.__name__, item.name)
+    filename = os.path.expanduser(os.path.join('~', name))
+    item.fault_handler_stream = open(filename, 'w')
+    faulthandler.enable(item.fault_handler_stream)
+
+
+#===================================================================================================
+# pytest_runtest_teardown
+#===================================================================================================
+def pytest_runtest_teardown(item, nextitem):
+    """
+    pytest hook called during tear down stage of each test item.
+
+    We remove the fault handler log file created during `pytest_runtest_setup`.
+    """
+    faulthandler.disable()
+    stream = getattr(item, 'fault_handler_stream', None)
+    if stream:
+        item.fault_handler_stream = None
+        stream.close()
+        try:
+            os.remove(stream.name)
+        except (IOError, OSError):
+            pass
 
 
 #===================================================================================================
