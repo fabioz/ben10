@@ -1,4 +1,3 @@
-
 from archivist import Archivist
 from ben10.filesystem import (CopyFile, CreateDirectory, CreateFile, CreateLink,
     CreateTemporaryDirectory, DeleteDirectory, DeleteFile, DeleteLink, Exists, IsDir, IsLink,
@@ -40,9 +39,13 @@ class DirCacheLocal(object):
 
     :ivar str cache_dirname:
         Basename of `cache_dir` (just the final directory)
+
+    :ivar str cache_tag_contents:
+        Contents of the '.cache' tag file. This should be something useful to determine how the
+        cache was created.
     '''
 
-    def __init__(self, local_dir, cache_base_dir, cache_dirname):
+    def __init__(self, local_dir, cache_base_dir, cache_dirname, cache_tag_contents=''):
         '''
         .. seealso:: class docs for params.
         '''
@@ -53,7 +56,9 @@ class DirCacheLocal(object):
         self._cache_base_dir = StandardizePath(os.path.abspath(cache_base_dir))
         self._cache_dir = self._cache_base_dir + '/' + self._name
 
-        self._complete_cache_tag = self._cache_dir + '/.cache'
+        self._cache_tag_filename = self._cache_dir + '/.cache'
+        self._cache_tag_contents = cache_tag_contents
+
 
 
 
@@ -161,17 +166,14 @@ class DirCacheLocal(object):
         '''
         Tags a cache as complete.
 
-        This is done manually, or automatically when uploading the cache to a
-        remote directory.
+        This is done manually, or automatically by subclasses that call this method when uploading
+        the cache to a remote directory.
 
         If this file is not present, a cache is considered incomplete (i.e.,
         CacheExists will return False)
         '''
-        if not Exists(self._complete_cache_tag):
-            CreateFile(
-                self._complete_cache_tag,
-                contents='This file indicates that this cache was created correctly.'
-            )
+        if not Exists(self._cache_tag_filename):
+            CreateFile(self._cache_tag_filename, self._cache_tag_contents)
 
 
     def LocalExists(self):
@@ -191,8 +193,8 @@ class DirCacheLocal(object):
 
         :returns bool:
         '''
-        # Check for at least two files, since one is our `self._complete_cache_tag`
-        return Exists(self._complete_cache_tag) and len(os.listdir(self.cache_dir)) > 1
+        # Check for at least two files, since one is our `self._cache_tag_filename`
+        return Exists(self._cache_tag_filename) and len(os.listdir(self.cache_dir)) > 1
 
 
 
@@ -251,7 +253,7 @@ class DirCache(DirCacheLocal):
         Basename of `cache_dir` (just the final directory_
     '''
 
-    def __init__(self, remote, local_dir, cache_base_dir):
+    def __init__(self, remote, local_dir, cache_base_dir, cache_tag_contents=''):
         '''
         .. seealso:: class docs for params.
         '''
@@ -261,7 +263,7 @@ class DirCache(DirCacheLocal):
         self._filename = os.path.basename(self._remote)
         cache_dirname = os.path.splitext(self._filename)[0]
 
-        DirCacheLocal.__init__(self, local_dir, cache_base_dir, cache_dirname)
+        DirCacheLocal.__init__(self, local_dir, cache_base_dir, cache_dirname, cache_tag_contents)
 
 
     @classmethod

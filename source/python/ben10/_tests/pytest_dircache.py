@@ -1,5 +1,6 @@
 from ben10.dircache import DirCache
 from ben10.filesystem import CreateDirectory, CreateFile, DeleteFile, IsDir, IsFile, IsLink
+from ben10.filesystem._filesystem import GetFileContents
 import os
 import pytest
 
@@ -82,6 +83,8 @@ class Test(object):
         dir_cache.CreateLocal()
         assert dir_cache.CacheExists()
         assert os.path.isfile(embed_data['cache_dir/alpha/file.txt'])
+        assert os.path.isfile(embed_data['cache_dir/alpha/.cache'])
+        assert GetFileContents(embed_data['cache_dir/alpha/.cache']) == 'mock_contents'
 
         assert dir_cache.LocalExists()
         # note: isdir returns true even if zulu is a directory.
@@ -154,4 +157,5 @@ def dir_cache(embed_data):
         embed_data['remotes/alpha.zip'],
         embed_data['local/zulu'],
         embed_data['cache_dir'],
+        cache_tag_contents='mock_contents'
     )
