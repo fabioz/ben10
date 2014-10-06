@@ -10,7 +10,7 @@ class XmlFactory(object):
     '''
     Fast and easy XML creation class.
 
-    This class provides a simple and fast way of creating XML files in Python. It tries to deduce as
+    This class provides a simple a fast way of creating XML files in Python. It tries to deduce as
     much information as possible, creating intermediate elements as necessary.
 
     Example:
@@ -20,15 +20,13 @@ class XmlFactory(object):
         xml['alpha/bravo.one'] # Create attribute on "alpha/bravo" tag
         xml['alpha/delta'] = 'XXX' # Create delta tag with text
 
-        xmlWrite('filename.xml') # Always write with a pretty XML format
+        xml.Write('filename.xml') # Always write with a pretty XML format
     '''
 
     def __init__(self, root_element):
         '''
         :type root_element: str | Element
         :param root_element:
-            The name of the root element.
-            Well formated XML files have only one root element.
         '''
         if isinstance(root_element, (str, unicode)):
             self.root = ElementTree.Element(root_element)
@@ -63,7 +61,7 @@ class XmlFactory(object):
             result.attrib[attr_name] = str(value)
         else:
             result = self._ObtainElement(name)
-            result.text = None if value is None else str(value)
+            result.text = str(value)
         return XmlFactory(result)
 
 
@@ -110,20 +108,45 @@ class XmlFactory(object):
         return result
 
 
-    def GetContent(self, xml_header=False):
+    def Print(self, oss=None, xml_header=False):
         '''
-        Returns the full XML contents.
+        Prints the resulting XML in the stdout or the given output stream.
 
-        :param bool xml_header:
-            Prepends the XML with xml version header: '<?xml version="1.0" ?>'
-
-        :return str:
+        :type oss: file-like object | None
+        :param oss:
+            A file-like object where to write the XML output. If None, writes the output in the
+            stdout.
         '''
-        from StringIO import StringIO
 
-        oss = StringIO()
+        if oss is None:
+            import sys
+            oss = sys.stdout
+
         if xml_header:
             oss.write('<?xml version="1.0" ?>\n')
         WritePrettyXMLElement(oss, self.root)
-        return oss.getvalue()
 
+
+    def Write(self, filename, xml_header=False):
+        '''
+        Writes the XML in a file with the given filename.
+
+        :param str filename:
+            A filename.
+        '''
+        from ben10.filesystem import CreateFile
+
+        CreateFile(filename, self.GetContents(xml_header=xml_header))
+
+
+    def GetContents(self, xml_header=False):
+        '''
+        Returns the resulting XML.
+
+        :return str:
+        '''
+        import StringIO
+
+        oss = StringIO.StringIO()
+        self.Print(oss, xml_header=xml_header)
+        return oss.getvalue()

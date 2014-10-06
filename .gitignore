@@ -2,7 +2,7 @@
 *.pyc
 .coverage
 /.idea/
-/artifacts/
+/artifacts
 /build/
 /dist/
 /docs/build/
