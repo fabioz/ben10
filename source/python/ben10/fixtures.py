@@ -75,11 +75,10 @@ def pytest_addoption(parser):
     :param optparse.OptionParser parser:
     """
     group = parser.getgroup("debugconfig") # default pytest group for debugging/reporting
-    default_dir = os.path.expanduser('~')
     group.addoption(
         '--fault-handler-dir',
         dest="fault_handler_dir",
-        default=default_dir,
+        default=os.getcwd(),
         metavar="dir",
         help="directory where to save crash reports (must exist)")
 
