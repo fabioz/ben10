@@ -450,7 +450,7 @@ class Test:
 
 
     @pytest.mark.serial
-    def testFTPFileContents(self, monkeypatch, embed_data, ftpserver):
+    def todo_testFTPFileContents(self, monkeypatch, embed_data, ftpserver):
         obtained = GetFileContents(ftpserver.GetFTPUrl('file.txt'))
         expected = GetFileContents(embed_data['file.txt'])
         assert obtained == expected
@@ -595,7 +595,7 @@ class Test:
 
 
     @pytest.mark.serial
-    def testCreateFileInMissingDirectory(self, monkeypatch, embed_data, ftpserver):
+    def todo_testCreateFileInMissingDirectory(self, monkeypatch, embed_data, ftpserver):
         from ftputil.error import FTPIOError
 
         # Trying to create a file in a directory that does not exist should raise an error
@@ -617,7 +617,7 @@ class Test:
 
 
     @pytest.mark.serial
-    def testFTPCreateFileInMissingDirectory(self, ftpserver):
+    def todo_testFTPCreateFileInMissingDirectory(self, ftpserver):
         from ftputil.error import FTPIOError
 
         target_ftp_file = ftpserver.GetFTPUrl('missing_ftp_dir/sub_dir/file.txt')
@@ -941,14 +941,14 @@ class Test:
 
 
     @pytest.mark.serial
-    def testFTPIsDir(self, monkeypatch, embed_data, ftpserver):
+    def todo_testFTPIsDir(self, monkeypatch, embed_data, ftpserver):
         assert IsDir(ftpserver.GetFTPUrl('.'))
         assert not IsDir(ftpserver.GetFTPUrl('missing_dir'))
         assert not IsDir(ftpserver.GetFTPUrl('missing_dir/missing_sub_dir'))
 
 
     @pytest.mark.serial
-    def testFTPCopyFiles(self, monkeypatch, embed_data, ftpserver):
+    def todo_testFTPCopyFiles(self, monkeypatch, embed_data, ftpserver):
         source_dir = embed_data['files/source']
         target_dir = ftpserver.GetFTPUrl('ftp_target_dir')
 
@@ -966,7 +966,7 @@ class Test:
 
 
     @pytest.mark.serial
-    def testMoveDirectoryFTP(self, monkeypatch, embed_data, ftpserver):
+    def todo_testMoveDirectoryFTP(self, monkeypatch, embed_data, ftpserver):
         source_dir = ftpserver.GetFTPUrl('files/source')
         target_dir = ftpserver.GetFTPUrl('ftp_target_dir')
 
@@ -995,7 +995,7 @@ class Test:
 
 
     @pytest.mark.serial
-    def testFTPCopyFile(self, monkeypatch, embed_data, ftpserver):
+    def todo_testFTPCopyFile(self, monkeypatch, embed_data, ftpserver):
         def CopyAndCheckFiles(source_file, target_file, override=True):
             CopyFile(
                 source_file,
@@ -1025,7 +1025,7 @@ class Test:
 
 
     @pytest.mark.serial
-    def testFTPCreateFile(self, monkeypatch, embed_data, ftpserver):
+    def todo_testFTPCreateFile(self, monkeypatch, embed_data, ftpserver):
         target_file = ftpserver.GetFTPUrl('ftp.txt')
         contents = 'This is a new file.'
         CreateFile(
@@ -1036,7 +1036,7 @@ class Test:
 
 
     @pytest.mark.serial
-    def testFTPIsFile(self, embed_data, ftpserver):
+    def todo_testFTPIsFile(self, embed_data, ftpserver):
         assert IsFile(ftpserver.GetFTPUrl('file.txt'))
         assert IsFile(ftpserver.GetFTPUrl('files/source/alpha.txt'))
         assert not IsFile(ftpserver.GetFTPUrl('doesnt_exist'))
@@ -1045,7 +1045,7 @@ class Test:
 
 
     @pytest.mark.serial
-    def testFTPListFiles(self, monkeypatch, embed_data, ftpserver):
+    def todo_testFTPListFiles(self, monkeypatch, embed_data, ftpserver):
         # List FTP files
         assert ListFiles(ftpserver.GetFTPUrl('files/source')) == [
             'alpha.txt',
@@ -1062,7 +1062,7 @@ class Test:
 
 
     @pytest.mark.serial
-    def testFTPMakeDirs(self, monkeypatch, embed_data, ftpserver):
+    def todo_testFTPMakeDirs(self, monkeypatch, embed_data, ftpserver):
         CreateDirectory(ftpserver.GetFTPUrl('/ftp_dir1'))
         assert os.path.isdir(embed_data['ftp_dir1'])
 
@@ -1135,7 +1135,7 @@ class Test:
 
 
     @pytest.mark.serial
-    def testFTPCheckIsFile(self, ftpserver):
+    def todo_testFTPCheckIsFile(self, ftpserver):
         # assert not raises Exception
         CheckIsFile(ftpserver.GetFTPUrl('file.txt'))
         with pytest.raises(FileNotFoundError):
@@ -1145,7 +1145,7 @@ class Test:
 
 
     @pytest.mark.skipif(not sys.platform.startswith('win'), reason="drives are only valid in windows filesystems")
-    def testCheckDriveType(self, monkeypatch, embed_data, ftpserver):
+    def todo_testCheckDriveType(self, monkeypatch, embed_data, ftpserver):
         assert GetDriveType('') == DRIVE_FIXED
         assert GetDriveType(embed_data['file.txt']) == DRIVE_FIXED
         assert GetDriveType(os.path.abspath(embed_data['file.txt'])) == DRIVE_FIXED
@@ -1170,7 +1170,7 @@ class Test:
 
 
     @pytest.mark.serial
-    def testFTPCheckIsDir(self, ftpserver):
+    def todo_testFTPCheckIsDir(self, ftpserver):
         # assert not raises Exception
         CheckIsDir(ftpserver.GetFTPUrl('.'))
 
