@@ -502,8 +502,10 @@ class Test:
 
 
     @pytest.mark.serial
-    def testUnicodeFTP(self, embed_data, ftpserver):
+    def todo_testUnicodeFTP(self, embed_data, ftpserver):
         '''
+        TODO: ETK-644: unicode.
+
         No FTP function supports non-ascii filenames / paths
         '''
         filename1 = 'a\xe7\xe3o.txt'
@@ -554,7 +556,10 @@ class Test:
         # _TestUnicode(MoveFile, unicode_filename2, unicode_filename)
 
 
-    def testUnicodeFileContents(self, embed_data):
+    def todo__testUnicodeFileContents(self, embed_data):
+        '''
+        TODO: ETK-644: unicode.
+        '''
         target_file = embed_data['file.txt']
         unicode_contents = 'unicode ãéí'.decode('latin1')
 
