@@ -50,7 +50,7 @@ def pytest_runtest_protocol(item, __multicall__):
         no crash occurred.
     """
     name = '%s.%s.txt'  % (item.module.__name__, item.name)
-    filename = os.path.expanduser(os.path.join('~', name))
+    filename = os.path.join(item.config.getoption('fault_handler_dir'), name)
     item.fault_handler_stream = open(filename, 'w')
     faulthandler.enable(item.fault_handler_stream)
     try:
@@ -62,6 +62,37 @@ def pytest_runtest_protocol(item, __multicall__):
             os.remove(filename)
         except (OSError, IOError):
             pass
+
+
+#===================================================================================================
+# pytest_addoption
+#===================================================================================================
+def pytest_addoption(parser):
+    """
+    Add an option to pytest to change the default directory where to write fault handler report
+    files. Specially useful in the CI server.
+
+    :param optparse.OptionParser parser:
+    """
+    group = parser.getgroup("debugconfig") # default pytest group for debugging/reporting
+    default_dir = os.path.expanduser('~')
+    group.addoption(
+        '--fault-handler-dir',
+        dest="fault_handler_dir",
+        default=default_dir,
+        metavar="dir",
+        help="directory where to save crash reports (must exist)")
+
+
+#===================================================================================================
+# pytest_report_header
+#===================================================================================================
+def pytest_report_header(config):
+    """
+    pytest hook to add a line to the report header showing the directory where fault handler report
+    files will be generated.
+    """
+    return ['fault handler directory: %s' % config.getoption('fault_handler_dir')]
 
 
 #===================================================================================================
