@@ -42,7 +42,7 @@ def pytest_runtest_protocol(item, __multicall__):
     pytest hook that implements the full test run protocol, setup/call/teardown.
 
     - faulthandler: we enable a fault handler in the current process, which will stream crash errors
-        to a file in the user's $HOME directory.
+        to a file in the directory configured by the "--fault-handler-dir" command-line option.
         The file is named based on the module and test name, for example:
             "~/ben10._tests.pytest_fixtures.testFaultHandler.txt"
 
