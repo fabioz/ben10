@@ -35,11 +35,11 @@ def pytest_sessionstart(session):
 
 
 #===================================================================================================
-# pytest_runtest_setup
+# pytest_runtest_protocol
 #===================================================================================================
-def pytest_runtest_setup(item):
+def pytest_runtest_protocol(item, __multicall__):
     """
-    pytest call during the setup stage of each test item.
+    pytest hook that implements the full test run protocol, setup/call/teardown.
 
     - faulthandler: we enable a fault handler in the current process, which will stream crash errors
         to a file in the user's $HOME directory.
@@ -53,25 +53,14 @@ def pytest_runtest_setup(item):
     filename = os.path.expanduser(os.path.join('~', name))
     item.fault_handler_stream = open(filename, 'w')
     faulthandler.enable(item.fault_handler_stream)
-
-
-#===================================================================================================
-# pytest_runtest_teardown
-#===================================================================================================
-def pytest_runtest_teardown(item, nextitem):
-    """
-    pytest hook called during tear down stage of each test item.
-
-    We remove the fault handler log file created during `pytest_runtest_setup`.
-    """
-    faulthandler.disable()
-    stream = getattr(item, 'fault_handler_stream', None)
-    if stream:
+    try:
+        return __multicall__.execute()
+    finally:
+        item.fault_handler_stream.close()
         item.fault_handler_stream = None
-        stream.close()
         try:
-            os.remove(stream.name)
-        except (IOError, OSError):
+            os.remove(filename)
+        except (OSError, IOError):
             pass
 
 
