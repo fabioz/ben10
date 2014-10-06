@@ -160,9 +160,9 @@ class TerraForming(object):
         '''
         try:
             input_lines = GetFileContents(filename, binary=True).split('\n')
-            lines = self._RightTrimSpacesImpl(input_lines)
+            lines = [i.rstrip('\r') for i in input_lines]
+            lines = self._RightTrimSpacesImpl(lines)
             lines = self._FixTabsImpl(lines)
-            lines = [i.rstrip('\r') for i in lines]
             contents = '\n'.join(lines)
             CreateFile(filename, contents, eol_style=EOL_STYLE_UNIX)
             return input_lines != lines

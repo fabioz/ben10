@@ -56,8 +56,8 @@ class TerraFormer(object):
 
     @classmethod
     @Memoize(maxsize=1000)
-    def Factory(self, filename, source=None):
-        return TerraFormer(source=source, filename=filename)
+    def Factory(cls, filename, source=None):
+        return cls(source=source, filename=filename)
 
 
     @classmethod
