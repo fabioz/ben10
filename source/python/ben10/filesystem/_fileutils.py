@@ -1,13 +1,13 @@
-from __future__ import unicode_literals
 '''
 This module contains an open function that should be used with care.
 
 Reading files in windows can have a good performance gain is the reading is made sequentially and
 a flag is set in the file opened
 '''
-
+from __future__ import unicode_literals
 import os
 import sys
+
 
 _sys_platform = sys.platform
 
@@ -76,4 +76,4 @@ def OpenReadOnlyFile(filename, binary=False, sequential=False):
         return read_only_file
 
     else:
-        return file(filename, mode)
+        return builtin_open(filename, mode)

@@ -18,3 +18,11 @@ except ImportError:
 
 if not hasattr(builtins, 'tr'):
     builtins.tr = _tr
+
+
+
+# Adding an alias to `open`: since use of bare `open` is deprecated since we ported to unicode-only
+# strings, this alias exists so code that can't work with io.open (usually because it passes the file
+# object to C++, which won't work with the wrapper object returned by io.open) use this to
+# communicate this intention
+builtins.builtin_open = open
