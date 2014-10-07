@@ -4,9 +4,9 @@ Collection of fixtures for pytests.
 .. note::
     Coverage for this file gives a lot of misses, just like calling coverage from module's main.
 '''
+import faulthandler
 import os
 import pytest
-
 
 
 #===================================================================================================
@@ -33,6 +33,65 @@ def pytest_sessionstart(session):
     # enable development-only checks
     SetIsDevelopment(True)
 
+
+#===================================================================================================
+# pytest_runtest_protocol
+#===================================================================================================
+def pytest_runtest_protocol(item, __multicall__):
+    """
+    pytest hook that implements the full test run protocol, setup/call/teardown.
+
+    - faulthandler: we enable a fault handler in the current process, which will stream crash errors
+        to a file in the directory configured by the "--fault-handler-dir" command-line option.
+        The file is named based on the module and test name, for example:
+            "~/ben10._tests.pytest_fixtures.testFaultHandler.txt"
+
+        Since this file is only useful if a a test crashes, it is removed during tear down if
+        no crash occurred.
+    """
+    name = '%s.%s.txt'  % (item.module.__name__, item.name)
+    filename = os.path.join(item.config.getoption('fault_handler_dir'), name)
+    item.fault_handler_stream = open(filename, 'w')
+    faulthandler.enable(item.fault_handler_stream)
+    try:
+        return __multicall__.execute()
+    finally:
+        item.fault_handler_stream.close()
+        item.fault_handler_stream = None
+        try:
+            os.remove(filename)
+        except (OSError, IOError):
+            pass
+
+
+#===================================================================================================
+# pytest_addoption
+#===================================================================================================
+def pytest_addoption(parser):
+    """
+    Add an option to pytest to change the default directory where to write fault handler report
+    files. Specially useful in the CI server.
+
+    :param optparse.OptionParser parser:
+    """
+    group = parser.getgroup("debugconfig") # default pytest group for debugging/reporting
+    group.addoption(
+        '--fault-handler-dir',
+        dest="fault_handler_dir",
+        default=os.getcwd(),
+        metavar="dir",
+        help="directory where to save crash reports (must exist)")
+
+
+#===================================================================================================
+# pytest_report_header
+#===================================================================================================
+def pytest_report_header(config):
+    """
+    pytest hook to add a line to the report header showing the directory where fault handler report
+    files will be generated.
+    """
+    return ['fault handler directory: %s' % config.getoption('fault_handler_dir')]
 
 
 #===================================================================================================
