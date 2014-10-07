@@ -33,25 +33,33 @@ class TerraFormer(object):
 
     def __init__(self, source=None, filename=None):
         if source is None:
-            source = GetFileContents(filename)
+            # Stores the original loaded sources into __source.
+            # This variable must be updated if we happen to save the file with any changes.
+            self.__source = GetFileContents(filename, newline='', encoding='UTF-8').decode('UTF-8')
+        else:
+            self.__source = source
 
-        file_size = len(source)
+        file_size = len(self.__source)
         if file_size > self.MAX_FILE_SIZE:
             # Some big files make the Parse algorithm get stuck.
             raise FileTooBigError('File %s too big: %d' % (filename, file_size))
 
         self.filename = filename
-        self.source = source
         self.symbols = set()
         self.names = set()
         self.import_blocks = []
 
-        self.code = self._Parse(self.source)
+        self.code = self._Parse(self.__source)
 
         from ._visitor import ASTVisitor
         visitor = ASTVisitor()
         visitor.Visit(self.code)
         self.symbols, self.import_blocks = visitor.symbols, visitor.import_blocks
+
+
+    @property
+    def source(self):
+        return unicode(self.code)
 
 
     @classmethod
@@ -69,7 +77,19 @@ class TerraFormer(object):
     def _Parse(cls, code):
         '''
         Parses the given code string returning its lib2to3 AST tree.
+
+        :return lib2to3.AST:
+            Returns the lib2to3 AST.
         '''
+
+        def _GetLastLeaf(node):
+            from lib2to3.pytree import Leaf
+
+            r_leaf = node
+            while not isinstance(r_leaf, Leaf):
+                r_leaf = r_leaf.children[-1]
+            return r_leaf
+
         # Prioritary import.
         from . import _lib2to3  # @NotUsedImport
 
@@ -82,13 +102,9 @@ class TerraFormer(object):
         from lib2to3.pytree import Leaf, Node
         from lib2to3.refactor import _detect_future_features
 
-        if isinstance(code, str):
-            code = code.decode('latin1')
-
-        added_newline = False
-        if code and not code.endswith("\n"):
+        added_newline = code and not code.endswith("\n")
+        if added_newline:
             code += "\n"
-            added_newline = True
 
         # Selects the appropriate grammar depending on the usage of "print_function" future feature.
         future_features = _detect_future_features(code)
@@ -107,7 +123,14 @@ class TerraFormer(object):
         if isinstance(result, Leaf):
             result = Node(python_symbols.file_input, [result])
 
-        result.added_newline = added_newline
+        # Remove AST-leaf for the added newline.
+        if added_newline:
+            last_leaf = _GetLastLeaf(result)
+            if not (last_leaf.type == 0 and last_leaf.value == ''):
+                if last_leaf.prefix:
+                    last_leaf.prefix = last_leaf.prefix[:-1]
+                else:
+                    last_leaf.remove()
 
         return result
 
@@ -164,28 +187,24 @@ class TerraFormer(object):
         :param int page_width:
             The page-width to format the import statements.
 
-        :return boolean, str:
+        :return boolean:
             Returns True if any changes were made.
-            Returns the reorganized source code.
         '''
         for i_import_block in self.import_blocks:
             i_import_block.Reorganize(page_width, refactor, self.filename)
-
-        output = unicode(self.code)
-        output = output.encode('latin1')
-        changed = output != self.source
-
-        return changed, output
+        return self.__source != self.source
 
 
-    def Save(self):
+    def Save(self, refactor={}, page_width=100):
         from ben10.filesystem import CreateFile, EOL_STYLE_UNIX
 
-        changed, output = self.ReorganizeImports()
+        changed = self.ReorganizeImports(refactor=refactor, page_width=page_width)
 
         if changed:
             assert self.filename is not None, "No filename set on TerraFormer."
-            CreateFile(self.filename, output, eol_style=EOL_STYLE_UNIX)
+            assert self.__source is not None, "No original content set on TerraFormer."
+            self.__source = self.source
+            CreateFile(self.filename, self.__source, eol_style=EOL_STYLE_UNIX, encoding='UTF-8')
 
         return changed
 

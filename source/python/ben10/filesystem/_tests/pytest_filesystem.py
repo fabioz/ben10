@@ -375,15 +375,17 @@ class Test:
         oss.close()
 
         # Use OpenFile to obtain the file contents, with binary=False and binary=True
-        iss = OpenFile(test_filename, binary=False)
-        assert iss.read() == 'Alpha\nBravo\nCharlie\nDelta'
-
-        # NOTE: Here it converts windows eol ('\r\n') to '\n' but not '\r' to '\n'.
-        iss = OpenFile(test_filename, universal_newlines=False)
-        assert iss.read() == 'Alpha\nBravo\nCharlie\rDelta'
+        iss = OpenFile(test_filename)
+        obtained = iss.read()
+        assert obtained == u'Alpha\nBravo\nCharlie\nDelta'
 
         iss = OpenFile(test_filename, binary=True)
-        assert iss.read() == 'Alpha\nBravo\r\nCharlie\rDelta'
+        obtained = iss.read()
+        assert obtained == u'Alpha\nBravo\r\nCharlie\rDelta'
+
+        iss = OpenFile(test_filename, newline='')
+        obtained = iss.read()
+        assert obtained == u'Alpha\nBravo\r\nCharlie\rDelta'
 
         # Emulating many urllib errors and their "nicer" versions provided by filesystem.
         class Raise():
@@ -1310,7 +1312,7 @@ class Test:
                 pass
 
             def communicate(self):
-                stdoutdata = GetFileContents(embed_data['net_use.txt'])
+                stdoutdata = GetFileContents(embed_data['net_use.txt'], encoding='cp1252')
                 return stdoutdata.replace("\n", EOL_STYLE_WINDOWS), ''
 
         monkeypatch.setattr(subprocess, 'Popen', MyPopen)

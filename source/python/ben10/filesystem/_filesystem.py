@@ -14,6 +14,7 @@ These functions abstract file location, most of them work for either local, ftp 
 
     Keep in mind that this process can be slow if you perform many of such operations in sequence.
 '''
+import io
 from ben10.foundation.reraise import Reraise
 import contextlib
 import os
@@ -896,7 +897,7 @@ def MoveDirectory(source_dir, target_dir):
 #===================================================================================================
 # GetFileContents
 #===================================================================================================
-def GetFileContents(filename, binary=False, encoding=None):
+def GetFileContents(filename, binary=False, newline=None, encoding=None):
     '''
     Reads a file and returns its contents. Works for both local and remote files.
 
@@ -904,6 +905,10 @@ def GetFileContents(filename, binary=False, encoding=None):
 
     :param bool binary:
         If True returns the file as is, ignore any EOL conversion.
+
+    :param None|''|'\n'|'\r'|'\r\n' newline:
+        Controls universal newlines.
+        See 'io.open' newline parameter documentation for more details.
 
     :param str encoding:
         File's encoding. If not None, contents obtained from file will be decoded using this
@@ -915,25 +920,29 @@ def GetFileContents(filename, binary=False, encoding=None):
 
     .. seealso:: FTP LIMITATIONS at this module's doc for performance issues information
     '''
-    source_file = OpenFile(filename, binary=binary)
+    source_file = OpenFile(filename, binary=binary, newline=newline)
     try:
         contents = source_file.read()
     finally:
         source_file.close()
 
-    if encoding is not None:
-        contents = contents.decode(encoding)
+    if not binary and encoding is None:
+        contents = contents.encode('ascii')
     return contents
 
 
 #===================================================================================================
 # GetFileLines
 #===================================================================================================
-def GetFileLines(filename, encoding=None):
+def GetFileLines(filename, newline=None, encoding=None):
     '''
     Reads a file and returns its contents as a list of lines. Works for both local and remote files.
 
     :param str filename:
+
+    :param None|''|'\n'|'\r'|'\r\n' newline:
+        Controls universal newlines.
+        See 'io.open' newline parameter documentation for more details.
 
     :param str encoding:
         File's encoding. If not None, contents obtained from file will be decoded using this
@@ -944,10 +953,15 @@ def GetFileLines(filename, encoding=None):
 
     .. seealso:: FTP LIMITATIONS at this module's doc for performance issues information
     '''
-    return GetFileContents(filename, binary=False, encoding=encoding).split('\n')
+    return GetFileContents(
+        filename,
+        binary=False,
+        encoding=encoding,
+        newline=newline,
+    ).split('\n')
 
 
-def OpenFile(filename, binary=False, universal_newlines=True):
+def OpenFile(filename, binary=False, newline=None, encoding=None):
     '''
     Open a file and returns it.
     Consider the possibility of a remote file (HTTP, HTTPS, FTP)
@@ -959,9 +973,13 @@ def OpenFile(filename, binary=False, universal_newlines=True):
         If True returns the file as is, ignore any EOL conversion.
         If set ignores univeral_newlines parameter.
 
-    :param bool universal_newlines:
-        Opens the file as a text file, but lines terminated by any EOL conversion will be converted
-        to '\n'.
+    :param None|''|'\n'|'\r'|'\r\n' newline:
+        Controls universal newlines.
+        See 'io.open' newline parameter documentation for more details.
+
+    :param str encoding:
+        File's encoding. If not None, contents obtained from file will be decoded using this
+        `encoding`.
 
     :returns file:
         The open file, it must be closed by the caller
@@ -982,9 +1000,7 @@ def OpenFile(filename, binary=False, universal_newlines=True):
         mode = 'r'
         if binary:
             mode += 'b'
-        elif universal_newlines:
-            mode += 'U'
-        return file(filename, mode)
+        return io.open(filename, mode, encoding=encoding, newline=newline)
 
     # Not local
     import _filesystem_remote
