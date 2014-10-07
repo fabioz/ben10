@@ -858,8 +858,7 @@ def GetFileContents(filename, binary=False, encoding=None):
         File's encoding. If not None, contents obtained from file will be decoded using this
         `encoding`.
 
-    :rtype: str | unicode
-    :returns:
+    :returns str|unicode:
         The file's contents.
         Returns unicode string when `encoding` is not None.
 
@@ -879,19 +878,22 @@ def GetFileContents(filename, binary=False, encoding=None):
 #===================================================================================================
 # GetFileLines
 #===================================================================================================
-def GetFileLines(filename):
+def GetFileLines(filename, encoding=None):
     '''
     Reads a file and returns its contents as a list of lines. Works for both local and remote files.
 
     :param str filename:
 
-    :rtype: list(str)
-    :returns:
+    :param str encoding:
+        File's encoding. If not None, contents obtained from file will be decoded using this
+        `encoding`.
+
+    :returns list(str):
         The file's lines
 
     .. seealso:: FTP LIMITATIONS at this module's doc for performance issues information
     '''
-    return GetFileContents(filename, binary=False).split('\n')
+    return GetFileContents(filename, binary=False, encoding=encoding).split('\n')
 
 
 def OpenFile(filename, binary=False):
@@ -925,8 +927,6 @@ def OpenFile(filename, binary=False):
         mode = 'r'
         if binary:
             mode += 'b'
-        else:
-            mode += 'U'
         return file(filename, mode)
 
     # Not local

@@ -1,4 +1,5 @@
-from ben10.filesystem import FindFiles, IsDir, StandardizePath
+from __future__ import unicode_literals
+from ben10.filesystem import EOL_STYLE_UNIX, FindFiles, GetFileLines, IsDir, StandardizePath
 from clikit.app import App
 from functools import partial
 import sys
@@ -214,6 +215,47 @@ def FixIsFrozen(console_, path):
             lines = lines[0:index] + list(imports) + lines[index:]
             contents = '\n'.join(lines)
             CreateFile(i_filename, contents, eol_style=EOL_STYLE_UNIX)
+
+
+@app
+def FixEncoding(console_, path):
+    from ben10.filesystem import CreateFile, OpenFile
+    import io
+
+    def GetPythonEncoding(filename):
+        import re
+
+        with open(filename, mode='rb') as iss:
+            for i, i_line in enumerate(iss.readlines()):
+                if i > 10:
+                    # Only searches the first lines for encoding information.
+                    break
+                r = re.match('#.*coding:[ ]*([\w\-\d]*)', i_line)
+                if r is not None:
+                    return i, r.group(1)
+        return 0, None
+
+    for i_filename in FindFiles(path, ['*.py']):
+        try:
+            # Try to open using ASCII. If it fails means that we have a non-ascii file.
+            with io.open(i_filename, encoding='ascii') as iss:
+                iss.read()
+        except UnicodeDecodeError:
+            try:
+                line_no, encoding = GetPythonEncoding(i_filename)
+                if encoding is None:
+                    console_.Print('%s: <red>UKNOWN</r> Please configure the file coding.' % i_filename)
+                    continue
+                console_.Print('%s: %s (line:%s)' % (i_filename, encoding, line_no))
+                lines = OpenFile(i_filename, encoding=encoding).read().split('\n')
+                del lines[line_no]
+                lines = ['# -*- coding: UTF-8 -*-'] + lines
+                contents = '\n'.join(lines)
+                CreateFile(i_filename, contents, encoding='UTF-8', eol_style=EOL_STYLE_UNIX)
+            except:
+                console_.Print('<red>%s: ERROR</>' % i_filename)
+                raise
+
 
 
 def _GetFilenames(paths, extensions):
