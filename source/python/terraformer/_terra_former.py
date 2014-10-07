@@ -35,11 +35,11 @@ class TerraFormer(object):
         if source is None:
             # Stores the original loaded sources into __source.
             # This variable must be updated if we happen to save the file with any changes.
-            self.__source = GetFileContents(filename, newline='', encoding='UTF-8').decode('UTF-8')
+            self.__original_source = GetFileContents(filename, newline='', encoding='UTF-8').decode('UTF-8')
         else:
-            self.__source = source
+            self.__original_source = source
 
-        file_size = len(self.__source)
+        file_size = len(self.__original_source)
         if file_size > self.MAX_FILE_SIZE:
             # Some big files make the Parse algorithm get stuck.
             raise FileTooBigError('File %s too big: %d' % (filename, file_size))
@@ -49,7 +49,7 @@ class TerraFormer(object):
         self.names = set()
         self.import_blocks = []
 
-        self.code = self._Parse(self.__source)
+        self.code = self._Parse(self.__original_source)
 
         from ._visitor import ASTVisitor
         visitor = ASTVisitor()
@@ -57,8 +57,12 @@ class TerraFormer(object):
         self.symbols, self.import_blocks = visitor.symbols, visitor.import_blocks
 
 
-    @property
-    def source(self):
+    def GenerateSource(self):
+        '''
+        Generates the source code from the AST Tree.
+
+        :return unicode:
+        '''
         return unicode(self.code)
 
 
@@ -137,6 +141,12 @@ class TerraFormer(object):
 
     @classmethod
     def WalkLeafs(cls, node):
+        '''
+        Walks leafs on the given node.
+
+        :param node lib2to3.pytree.Node:
+        :return lib2to3.pytree.Leaf:
+        '''
         from lib2to3.pytree import Leaf
 
         if isinstance(node, Leaf):
@@ -148,6 +158,12 @@ class TerraFormer(object):
 
 
     def GetSymbolFromToken(self, token):
+        '''
+        Returns the symbol instance for the given token.
+
+        :param unicode token:
+        :return Symbol:
+        '''
         tokens = {i.GetToken() : i for i in self.symbols}
         return tokens.get(token)
 
@@ -192,7 +208,7 @@ class TerraFormer(object):
         '''
         for i_import_block in self.import_blocks:
             i_import_block.Reorganize(page_width, refactor, self.filename)
-        return self.__source != self.source
+        return self.__original_source != self.GenerateSource()
 
 
     def Save(self, refactor={}, page_width=100):
@@ -202,9 +218,9 @@ class TerraFormer(object):
 
         if changed:
             assert self.filename is not None, "No filename set on TerraFormer."
-            assert self.__source is not None, "No original content set on TerraFormer."
-            self.__source = self.source
-            CreateFile(self.filename, self.__source, eol_style=EOL_STYLE_UNIX, encoding='UTF-8')
+            assert self.__original_source is not None, "No original content set on TerraFormer."
+            self.__original_source = self.GenerateSource()
+            CreateFile(self.filename, self.__original_source, eol_style=EOL_STYLE_UNIX, encoding='UTF-8')
 
         return changed
 

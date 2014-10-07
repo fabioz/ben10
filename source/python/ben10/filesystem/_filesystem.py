@@ -897,7 +897,7 @@ def MoveDirectory(source_dir, target_dir):
 #===================================================================================================
 # GetFileContents
 #===================================================================================================
-def GetFileContents(filename, binary=False, newline=None, encoding=None):
+def GetFileContents(filename, binary=False, encoding=None, newline=None):
     '''
     Reads a file and returns its contents. Works for both local and remote files.
 
@@ -906,13 +906,13 @@ def GetFileContents(filename, binary=False, newline=None, encoding=None):
     :param bool binary:
         If True returns the file as is, ignore any EOL conversion.
 
-    :param None|''|'\n'|'\r'|'\r\n' newline:
-        Controls universal newlines.
-        See 'io.open' newline parameter documentation for more details.
-
     :param str encoding:
         File's encoding. If not None, contents obtained from file will be decoded using this
         `encoding`.
+
+    :param None|''|'\n'|'\r'|'\r\n' newline:
+        Controls universal newlines.
+        See 'io.open' newline parameter documentation for more details.
 
     :returns str|unicode:
         The file's contents.
@@ -1184,7 +1184,7 @@ def ReplaceInFile(filename, old, new, encoding=None):
     :return unicode:
         The new contents of the file.
     '''
-    content = GetFileContents(filename)
+    content = GetFileContents(filename, encoding=encoding)
     content = content.replace(old, new)
     CreateFile(filename, content, encoding=encoding)
     return content

@@ -17,7 +17,7 @@ def testImportBlockZero(monkeypatch, embed_data):
         terra_former.ReorganizeImports()
 
         # Make sure that creating a TerraFormer won't make any changes to the AST
-        assert terra_former.source == expected
+        assert terra_former.GenerateSource() == expected
 
         assert map(str, terra_former.import_blocks) == import_blocks
 
@@ -287,7 +287,7 @@ def testTerraFormer(monkeypatch, embed_data):
 
     changed = terra_former.ReorganizeImports()
 
-    assert terra_former.source == Dedent(
+    assert terra_former.GenerateSource() == Dedent(
         '''
             from alpha import A1
             from bravo import B1, B2, B3
@@ -331,7 +331,7 @@ def testReorganizeImports(embed_data, line_tester):
                 'before_refactor_bravo.Bravo': 'after_refactor.Bravo',
             }
         )
-        return terra.source.splitlines()
+        return terra.GenerateSource().splitlines()
 
     line_tester.TestLines(
         GetFileContents(embed_data['reorganize_imports.txt'], encoding='latin1'),
