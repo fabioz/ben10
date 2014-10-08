@@ -50,7 +50,7 @@ def pytest_runtest_protocol(item, __multicall__):
         no crash occurred.
     """
     name = '%s.%s.txt'  % (item.module.__name__, item.name)
-    invalid_chars = [os.sep, os.pathsep, ':']
+    invalid_chars = [os.sep, os.pathsep, ':', '<', '>', '@']
     if os.altsep:
         invalid_chars.append(os.altsep)
     for c in invalid_chars:
