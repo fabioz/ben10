@@ -50,6 +50,11 @@ def pytest_runtest_protocol(item, __multicall__):
         no crash occurred.
     """
     name = '%s.%s.txt'  % (item.module.__name__, item.name)
+    invalid_chars = [os.sep, os.pathsep, ':', '<', '>', '@']
+    if os.altsep:
+        invalid_chars.append(os.altsep)
+    for c in invalid_chars:
+        name = name.replace(c, '-')
     filename = os.path.join(item.config.getoption('fault_handler_dir'), name)
     item.fault_handler_stream = open(filename, 'w')
     faulthandler.enable(item.fault_handler_stream)
