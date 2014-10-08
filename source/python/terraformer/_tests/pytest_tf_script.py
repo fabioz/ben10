@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 from __future__ import unicode_literals
-from ben10.filesystem import CreateFile, OpenFile
+from ben10.filesystem import CreateFile, GetFileContents
 from ben10.foundation.string import Dedent
 from terraformer.tf_script import app
 
@@ -84,7 +84,7 @@ def testFixFormat(embed_data):
             ''' % locals()
         )
     )
-    assert OpenFile(filename, encoding='UTF-8').read() == Dedent(
+    assert GetFileContents(filename, encoding='UTF-8', unicode=True) == Dedent(
         '''
             from bravo import Bravo
             import alpha
@@ -110,7 +110,7 @@ def testFixFormat(embed_data):
         )
     )
 
-    assert OpenFile(filename, encoding='UTF-8').read() == Dedent(
+    assert GetFileContents(filename, encoding='UTF-8', unicode=True) == Dedent(
         '''
             from __future__ import unicode_literals
             from bravo import Bravo
@@ -150,8 +150,8 @@ def testFixEncoding(embed_data):
             )
         )
 
-        obtained = OpenFile(filename, encoding='UTF-8')
-        assert obtained.read() == Dedent(expected)
+        obtained = GetFileContents(filename, encoding='UTF-8', unicode=True)
+        assert obtained == Dedent(expected)
 
     TestFixEncoding(
         '''
@@ -215,7 +215,7 @@ def testFixIsFrozen(embed_data):
             ''' % locals()
         )
     )
-    assert OpenFile(filename, encoding='UTF-8').read() == Dedent(
+    assert GetFileContents(filename, encoding='UTF-8', unicode=True) == Dedent(
         '''
         from ben10 import property_
         from ben10.foundation.is_frozen import IsFrozen

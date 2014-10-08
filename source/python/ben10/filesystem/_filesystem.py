@@ -14,9 +14,9 @@ These functions abstract file location, most of them work for either local, ftp 
 
     Keep in mind that this process can be slow if you perform many of such operations in sequence.
 '''
-import io
 from ben10.foundation.reraise import Reraise
 import contextlib
+import io
 import os
 import re
 import sys
@@ -500,8 +500,6 @@ def CopyFilesX(file_mapping):
 
     .. seealso:: FTP LIMITATIONS at this module's doc for performance issues information
     '''
-    from ._duplicates import ExtendedPathMask, FindFiles
-
     # List files that match the mapping
     files = []
     for i_target_path, i_source_path_mask in file_mapping:
@@ -897,7 +895,7 @@ def MoveDirectory(source_dir, target_dir):
 #===================================================================================================
 # GetFileContents
 #===================================================================================================
-def GetFileContents(filename, binary=False, encoding=None, newline=None):
+def GetFileContents(filename, binary=False, encoding=None, newline=None, unicode=False):
     '''
     Reads a file and returns its contents. Works for both local and remote files.
 
@@ -920,14 +918,17 @@ def GetFileContents(filename, binary=False, encoding=None, newline=None):
 
     .. seealso:: FTP LIMITATIONS at this module's doc for performance issues information
     '''
-    source_file = OpenFile(filename, binary=binary, newline=newline)
+    source_file = OpenFile(filename, encoding=encoding, binary=binary, newline=newline)
     try:
         contents = source_file.read()
     finally:
         source_file.close()
 
     if not binary and encoding is None:
+        # When binary, read() call above returns bytes already.
+        # When encoding is undefined (None) we must convert to bytes using encode.
         contents = contents.encode('ascii')
+
     return contents
 
 
@@ -1000,6 +1001,7 @@ def OpenFile(filename, binary=False, newline=None, encoding=None):
         mode = 'r'
         if binary:
             mode += 'b'
+            encoding = None
         return io.open(filename, mode, encoding=encoding, newline=newline)
 
     # Not local
@@ -1184,10 +1186,10 @@ def ReplaceInFile(filename, old, new, encoding=None):
     :return unicode:
         The new contents of the file.
     '''
-    content = GetFileContents(filename, encoding=encoding)
-    content = content.replace(old, new)
-    CreateFile(filename, content, encoding=encoding)
-    return content
+    contents = GetFileContents(filename, encoding=encoding)
+    contents = contents.replace(old, new)
+    CreateFile(filename, contents, encoding=encoding)
+    return contents
 
 
 
