@@ -334,7 +334,7 @@ def testReorganizeImports(embed_data, line_tester):
         return terra.GenerateSource().splitlines()
 
     line_tester.TestLines(
-        GetFileContents(embed_data['reorganize_imports.txt'], encoding='UTF-8', unicode=True),
+        GetFileContents(embed_data['reorganize_imports.txt'], encoding='UTF-8'),
         Doit,
     )
 

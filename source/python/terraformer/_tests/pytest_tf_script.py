@@ -84,7 +84,7 @@ def testFixFormat(embed_data):
             ''' % locals()
         )
     )
-    assert GetFileContents(filename, encoding='UTF-8', unicode=True) == Dedent(
+    assert GetFileContents(filename, encoding='UTF-8') == Dedent(
         '''
             from bravo import Bravo
             import alpha
@@ -110,7 +110,7 @@ def testFixFormat(embed_data):
         )
     )
 
-    assert GetFileContents(filename, encoding='UTF-8', unicode=True) == Dedent(
+    assert GetFileContents(filename, encoding='UTF-8') == Dedent(
         '''
             from __future__ import unicode_literals
             from bravo import Bravo
@@ -150,7 +150,7 @@ def testFixEncoding(embed_data):
             )
         )
 
-        obtained = GetFileContents(filename, encoding='UTF-8', unicode=True)
+        obtained = GetFileContents(filename, encoding='UTF-8')
         assert obtained == Dedent(expected)
 
     TestFixEncoding(
@@ -215,7 +215,7 @@ def testFixIsFrozen(embed_data):
             ''' % locals()
         )
     )
-    assert GetFileContents(filename, encoding='UTF-8', unicode=True) == Dedent(
+    assert GetFileContents(filename, encoding='UTF-8') == Dedent(
         '''
         from ben10 import property_
         from ben10.foundation.is_frozen import IsFrozen

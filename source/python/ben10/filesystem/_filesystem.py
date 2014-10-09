@@ -895,7 +895,7 @@ def MoveDirectory(source_dir, target_dir):
 #===================================================================================================
 # GetFileContents
 #===================================================================================================
-def GetFileContents(filename, binary=False, encoding=None, newline=None, unicode=False):
+def GetFileContents(filename, binary=False, encoding=None, newline=None):
     '''
     Reads a file and returns its contents. Works for both local and remote files.
 

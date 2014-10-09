@@ -252,7 +252,7 @@ def FixEncoding(console_, *sources):
                     console_.Print('%s: <red>UKNOWN</r> Please configure the file coding.' % i_filename)
                     continue
                 console_.Item('%s: %s (line:%s)' % (i_filename, encoding, line_no))
-                lines = GetFileContents(i_filename, encoding=encoding, unicode=True).split('\n')
+                lines = GetFileContents(i_filename, encoding=encoding).split('\n')
                 del lines[line_no]
                 lines = ['# -*- coding: UTF-8 -*-'] + lines
                 contents = '\n'.join(lines)
