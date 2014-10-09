@@ -122,6 +122,23 @@ def FixCommit(console_, source, single_job=False):
 
 @app
 def FixIsFrozen(console_, path):
+    '''
+    Fix some pre-determinated set of symbols usage with the format:
+
+        <module>.<symbol>
+
+    Eg.:
+        from coilib50.basic import property
+        property.Create
+        ---
+        from ben10 import property_
+        property_.Create
+
+    This was necessary for BEN-30. Today TerraFormer only acts on import-statements. We have plans
+    to also act on imported symbols usage.
+
+    :param path: Directory to search for python modules (recursivelly).
+    '''
     from ben10.filesystem import CreateFile, EOL_STYLE_UNIX, FindFiles, GetFileContents
 
     FIND_REPLACE = [
@@ -235,12 +252,12 @@ def _FixFormat(filename, refactor):
         if filename.endswith(PYTHON_EXT):
             changed = terra.ReorganizeImports(filename, refactor=refactor) or changed
     except Exception, e:
-        result = '- %s: ERROR:\n  %s' % (filename, e)
+        result = ('- %s: ERROR:\n  %s' % (filename, e), 0)
     else:
         if changed:
-            result = '- %s: FIXED' % filename
+            result = ('- %s: FIXED' % filename, 1)
         else:
-            result = '- %s: skipped' % filename
+            result = ('- %s: skipped' % filename, 2)
     return result
 
 
@@ -288,27 +305,6 @@ def _FilterFilenames(filenames, extensions=EXTENSIONS):
         ]
 
 
-def _GetStatusColor(output):
-    """
-    Returns the color to be used in the console for the given output from a TerraForming command.
-
-    Used to easily highlight which files were terra-formed and those that were skipped.
-
-    :param str output:
-        Output from the terra-forming command.
-
-    :return: color string name.
-    """
-    if 'skipped' in output:
-        return 'YELLOW'
-    elif 'FIXED' in output:
-        return 'GREEN'
-    elif 'ERROR' in output:
-        return 'RED'
-    else:
-        return 'WHITE'
-
-
 def _GetExtensions(python_only):
     '''
     Returns a list of extensions based on command line options.
@@ -354,13 +350,18 @@ def _Map(console_, func, func_params, _sorted, single_job):
 
     output = []
     for i_result in imap(func, func_params):
-        if _sorted:
-            output.append(i_result)
+        if isinstance(i_result, tuple):
+            text, verbosity = i_result
         else:
-            console_.Print(i_result)  #, color=_GetStatusColor(i_result))
+            text = i_result
+            verbosity = 1
+        if _sorted:
+            output.append(text)
+        else:
+            console_.Print(text, verbosity=verbosity)
 
     for i_output_line in sorted(output):
-        console_.Print(i_output_line)  #, color=_GetStatusColor(i_output_line))
+        console_.Print(i_output_line)
 
 
 

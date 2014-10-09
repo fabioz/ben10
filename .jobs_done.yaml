@@ -34,3 +34,4 @@ branch_patterns:
 - fb-*
 - ama*
 
+notify_stash:
