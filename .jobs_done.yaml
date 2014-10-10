@@ -25,6 +25,8 @@ matrix:
   - win64,windows
   - redhat64,linux
 
+label_expression: "{platform} && {name} && BOS"
+
 display_name: "[{branch}] {name} {dist}-{platform}"
 
 branch_patterns:
