@@ -819,6 +819,12 @@ class Git(Singleton):
         :raises NotCurrentlyInAnyBranchError:
             If not on any branch.
         '''
+
+        # TODO: Submodules support.
+        # Returns the branch of the host repository if the given repo_path is a submodule.
+        if self._IsSubModule(repo_path):
+            repo_path = self._GetTopLevel(os.path.dirname(self._GetTopLevel(repo_path)))
+
         branches = self.Execute(['branch'], repo_path)
 
         for branch in branches:
@@ -852,7 +858,7 @@ class Git(Singleton):
         if fail_if_dirty:
             # Always look for dirty files in root directory. Since we usually have many refs in a
             # single repository, this reduces the amount of 'git log' we have to execute
-            git_root_dir = self.Execute(['rev-parse', '--show-toplevel'], path, flat_output=True)
+            git_root_dir = self._GetTopLevel(path)
 
             modified_files_in_repo = [
                 posixpath.join(git_root_dir, dirty_file)
@@ -864,6 +870,30 @@ class Git(Singleton):
                 raise DirtyRepositoryError(git_root_dir, modified_files_in_path)
 
         return self.Log(path, ('-n1', '--pretty=format:%H', '.'))[0]
+
+
+    def _IsSubModule(self, path):
+        '''
+        Returns whether the repository of the given path is a submodule.
+
+        :param str path:
+            Path within a Git repository.
+
+        :return bool:
+        '''
+        return os.path.isfile(self._GetTopLevel(path) + '/.git')
+
+
+    def _GetTopLevel(self, path):
+        '''
+        Returns the git repository top-level (root) directory.
+
+        :param str path:
+            Path within a Git repository.
+
+        :return str:
+        '''
+        return self.Execute(['rev-parse', '--show-toplevel'], path, flat_output=True)
 
 
     def BranchExists(self, repo_path, branch_name):
