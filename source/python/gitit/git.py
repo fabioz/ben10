@@ -1105,6 +1105,28 @@ class Git(Singleton):
         return None
 
 
+    def ListLocalBranches(self, repo_path):
+        '''
+        Returns a list of local branches for the given repository.
+
+        :param str repo_path:
+            Path to the repository (local)
+
+        :return list(str):
+            The first branch in the list is the current branch.
+            All other branches are sorted alphabetically.
+        '''
+        r_current = None
+        r_branches = []
+        for i_branch in self.Execute('branch', repo_path):
+            branch = i_branch.strip('* ')
+            if '*' in i_branch:
+                r_current = branch
+            elif branch:
+                r_branches.append(branch)
+        return [r_current] + sorted(r_branches)
+
+
     def ListRemoteBranches(self, repo_path, remote_name='origin'):
         '''
         Lists branches in the given repo's origin
