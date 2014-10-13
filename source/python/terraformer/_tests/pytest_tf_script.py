@@ -67,7 +67,7 @@ def testSymbols(embed_data):
 def testFixFormat(embed_data):
     '''
     General test for tbe "tf fix-format" command.
-    This is a smoke test for the command interation since most of the real testing is done on
+    This is a smoke test for the command interaction since most of the real testing is done on
     pytest_terra_former.py
     '''
 
@@ -115,10 +115,34 @@ def testFixFormat(embed_data):
         '''
     )
 
+
+def testAddImportSymbol(embed_data):
+    '''
+    General test for tbe "tf add-import-symbol" command.
+    '''
+    filename = embed_data['testFixFormat.py']
+    data_dir = embed_data.GetDataDirectory()
+
+    original = '''
+        import zulu
+        from bravo import Bravo
+        import alpha
+
+        class Alpha(object):
+
+            def Method(self):
+                pass
+
+        def Function():
+            pass
+
+    '''
+    assert CreateFile(filename, Dedent(original), encoding='UTF-8')
+
     app.TestScript(
         Dedent(
             '''
-                >terraformer add-import-symbol "__future__.unicode_literals" %(filename)s
+                >terraformer add-import-symbol --single-job "__future__.unicode_literals" %(filename)s
                 - %(filename)s: FIXED
             ''' % locals()
         )

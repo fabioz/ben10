@@ -820,7 +820,7 @@ class Git(Singleton):
             If not on any branch.
         '''
 
-        # TODO: Submodules support.
+        # TODO: BEN-47: Find the correct way of handling submodules on DevSpace jobs.
         # Returns the branch of the host repository if the given repo_path is a submodule.
         if self._IsSubModule(repo_path):
             repo_path = self._GetTopLevel(os.path.dirname(self._GetTopLevel(repo_path)))
