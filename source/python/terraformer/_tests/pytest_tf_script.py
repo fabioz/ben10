@@ -6,7 +6,11 @@ from terraformer.tf_script import app
 
 
 
-def testIt():
+def testDocs():
+    '''
+    Test "tf" API by printing the general documentation.
+    '''
+
     app.TestScript(
         Dedent(
             '''
@@ -29,6 +33,11 @@ def testIt():
 
 
 def testSymbols(embed_data):
+    '''
+    Test tf symbols command.
+    This command is a WIP and should grow as "tf" interprets more and more symbols from python
+    modules.
+    '''
 
     filename = embed_data['testSymbols.py_']
     original = '''
@@ -56,6 +65,11 @@ def testSymbols(embed_data):
 
 
 def testFixFormat(embed_data):
+    '''
+    General test for tbe "tf fix-format" command.
+    This is a smoke test for the command interation since most of the real testing is done on
+    pytest_terra_former.py
+    '''
 
     filename = embed_data['testFixFormat.py']
     data_dir = embed_data.GetDataDirectory()
@@ -130,6 +144,9 @@ def testFixFormat(embed_data):
 
 
 def testFixEncoding(embed_data):
+    '''
+    General test for tbe "tf fix-encoding" command.
+    '''
 
     def TestFixEncoding(original, expected, encoding, lineno=0):
         filename = embed_data['testFixEncoding.py_']
@@ -192,6 +209,9 @@ def testFixEncoding(embed_data):
 
 
 def testFixIsFrozen(embed_data):
+    '''
+    General test for tbe "tf is-frozen" command.
+    '''
 
     filename = embed_data['testFixIsFrozen.py']
     data_dir = embed_data.GetDataDirectory()

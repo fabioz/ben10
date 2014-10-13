@@ -1173,17 +1173,17 @@ def ReplaceInFile(filename, old, new, encoding=None):
     :param unicode filename:
         The name of the file.
 
-    :param unicode old:
+    :param str  old:
         The string to search for.
 
-    :param unicode new:
+    :param str new:
         Replacement string.
 
-    :param unicode encoding:
+    :param str encoding:
         Target file's content encoding.
         Defaults to sys.getdefaultencoding()
 
-    :return unicode:
+    :return str:
         The new contents of the file.
     '''
     contents = GetFileContents(filename, encoding=encoding)
@@ -1759,11 +1759,9 @@ class ExtendedPathMask(object):
 def CheckForUpdate(source, target):
     '''
     Checks if the given target filename should be re-generated because the source has changed.
-    :param  source:
-            the source filename.
-    :param  target:
-            the target filename.
-    @return:
+    :param source: the source filename.
+    :param target: the target filename.
+    :return bool:
         True if the target is out-dated, False otherwise.
     '''
     return \
@@ -1779,11 +1777,10 @@ def MatchMasks(filename, filters):
     '''
     Verifies if a filename match with given patterns.
 
-    :type filename: the filename to match.
-    :param filename:
-    :type filters: the patterns to search in the filename.
-    :param filters:
-    :rtype: True if the filename has matched with one pattern, False otherwise.
+    :param str filename: The filename to match.
+    :param list(str) filters: The patterns to search in the filename.
+    :return bool:
+        True if the filename has matched with one pattern, False otherwise.
     '''
     import fnmatch
     if not isinstance(filters, (list, tuple)):
@@ -1803,19 +1800,14 @@ def FindFiles(dir_, in_filters=None, out_filters=None, recursive=True, include_r
     '''
     Searches for files in a given directory that match with the given patterns.
 
-    :type dir_: the directory root, to search the files.
-    :param dir_:
-    :type in_filters: a list with patterns to match (default = all). E.g.: ['*.py']
-    :param in_filters:
-    :type out_filters: a list with patterns to ignore (default = none). E.g.: ['*.py']
-    :param out_filters:
-    :type recursive: if True search in subdirectories, otherwise, just in the root.
-    :param recursive:
-    :type include_root_dir: if True, includes the directory being searched in the returned paths
-    :param include_root_dir:
-    :type standard_paths: if True, always uses unix path separators "/"
-    :param standard_paths:
-    :rtype: a list of strings with the files that matched (with the full path in the filesystem).
+    :param str dir_: the directory root, to search the files.
+    :param list(str) in_filters: a list with patterns to match (default = all). E.g.: ['*.py']
+    :param list(str) out_filters: a list with patterns to ignore (default = none). E.g.: ['*.py']
+    :param bool recursive: if True search in subdirectories, otherwise, just in the root.
+    :param bool include_root_dir: if True, includes the directory being searched in the returned paths
+    :param bool standard_paths: if True, always uses unix path separators "/"
+    :return list(str):
+        A list of strings with the files that matched (with the full path in the filesystem).
     '''
     # all files
     if in_filters is None:
