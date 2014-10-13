@@ -388,7 +388,7 @@ class Test:
 
         app.TestScript(Dedent(
             '''
-            >test command --foo --bar
+            >test command --foo --bar [retcode=1]
             ERROR: Unrecognized arguments: --foo --bar
 
             (no description)
