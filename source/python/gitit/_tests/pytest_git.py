@@ -466,6 +466,23 @@ class Test(object):
         assert git.GetWorkingDir(str(tmpdir.mkdir('not_a_git_dir'))) is None
 
 
+    def testListLocaleBranches(self, git, embed_data):
+        cloned_complex = embed_data['cloned_complex']
+        git.Clone(embed_data['complex.git'], cloned_complex)
+        git.Checkout(cloned_complex, 'branch_1')
+
+        assert set(git.ListLocalBranches(cloned_complex)) == set(['master', 'branch_1'])
+
+        git.CreateLocalBranch(
+            cloned_complex,
+            branch_name='branch-with-hyphens'
+        )
+        assert (
+            set(git.ListLocalBranches(cloned_complex))
+            == set(['master', 'branch_1', 'branch-with-hyphens'])
+        )
+
+
     def testListRemoteBranches(self, git, embed_data):
         cloned_complex = embed_data['cloned_complex']
         git.Clone(embed_data['complex.git'], cloned_complex)
