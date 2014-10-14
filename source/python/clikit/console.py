@@ -95,7 +95,7 @@ class Console(object):
             self.colorama = True
         elif colorama is None:
             try:
-                import colorama
+                import colorama  # @UnusedImport
             except ImportError:
                 self.colorama = False
             else:
@@ -211,7 +211,7 @@ class Console(object):
         else:
             stream = self.__stdout
 
-        if isinstance(message, (list,tuple)):
+        if isinstance(message, (list, tuple)):
             message = '\n'.join(map(str, message))
         else:
             message = str(message)
@@ -287,15 +287,30 @@ class Console(object):
         return self.Print(message, verbosity=2, newlines=newlines, indent=indent)
 
 
-    def Ask(self, message):
+    def Ask(self, message, hidden_input=False):
         '''
         Ask the users for a value.
 
         :param str message: Message to print before asking for the value
+        :param bool hidden_input: If True, user input will not be shown in command line (useful for passwords)
         :return str: A value entered by the user.
         '''
         self.PrintQuiet(message + ' ', newlines=0)
-        return self.__stdin.readline().strip()
+
+        if hidden_input:
+            import getpass
+            return getpass.getpass(prompt='', stream=self.__stdin)
+        else:
+            return self.__stdin.readline().strip()
+
+
+    def AskPassword(self):
+        '''
+        Ask the users for a password. User input will not be shown in command line.
+
+        :return str: A value entered by the user.
+        '''
+        return self.Ask('Password:', hidden_input=True)
 
 
     def Progress(self, message, verbosity=DEFAULT_VERBOSITY, indent=DEFAULT_INDENT, format_='%s: '):
