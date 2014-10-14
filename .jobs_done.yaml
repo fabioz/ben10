@@ -25,7 +25,7 @@ matrix:
   - win64,windows
   - redhat64,linux
 
-label_expression: "{platform} && {name} && BOS"
+label_expression: "{platform} && {name} && team-bos"
 
 display_name: "[{branch}] {name} {dist}-{platform}"
 
