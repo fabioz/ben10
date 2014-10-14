@@ -46,7 +46,7 @@ class Test(object):
         # Create a remote branch
         clone_1 = git.cloned_remote
         git.CreateRemoteBranch(clone_1, 'master', 'remote_branch')
-        assert git.ListRemoteBranches(clone_1) == {'master', 'remote_branch'}
+        assert git.ListBranches(clone_1, remote=True) == ['master', 'remote_branch']
 
         # Create another clone of the repository
         clone_2 = embed_data['cloned_remote_2']
@@ -54,15 +54,15 @@ class Test(object):
 
         # Use second clone to delete remote branch
         git.DeleteRemoteBranch(clone_2, 'remote_branch')
-        assert git.ListRemoteBranches(clone_2) == {'master'}
+        assert git.ListBranches(clone_2, remote=True) == ['master']
 
         # First branch should still be listed as a remote in clone_1
-        assert git.ListRemoteBranches(clone_1) == {'master', 'remote_branch'}
+        assert git.ListBranches(clone_1, remote=True) == ['master', 'remote_branch']
 
         # Pruning should fix this
         pruned_branches = git.RemotePrune(clone_1)
         assert pruned_branches == {'remote_branch'}
-        assert git.ListRemoteBranches(clone_1) == {'master'}
+        assert git.ListBranches(clone_1, remote=True) == ['master']
 
 
     def testExists(self, git, embed_data):
@@ -466,19 +466,19 @@ class Test(object):
         assert git.GetWorkingDir(str(tmpdir.mkdir('not_a_git_dir'))) is None
 
 
-    def testListLocaleBranches(self, git, embed_data):
+    def testListLocalBranches(self, git, embed_data):
         cloned_complex = embed_data['cloned_complex']
         git.Clone(embed_data['complex.git'], cloned_complex)
         git.Checkout(cloned_complex, 'branch_1')
 
-        assert set(git.ListLocalBranches(cloned_complex)) == set(['master', 'branch_1'])
+        assert set(git.ListBranches(cloned_complex)) == set(['master', 'branch_1'])
 
         git.CreateLocalBranch(
             cloned_complex,
             branch_name='branch-with-hyphens'
         )
         assert (
-            set(git.ListLocalBranches(cloned_complex))
+            set(git.ListBranches(cloned_complex))
             == set(['master', 'branch_1', 'branch-with-hyphens'])
         )
 
@@ -487,7 +487,7 @@ class Test(object):
         cloned_complex = embed_data['cloned_complex']
         git.Clone(embed_data['complex.git'], cloned_complex)
 
-        assert set(git.ListRemoteBranches(cloned_complex)) == set(['master', 'branch_1'])
+        assert set(git.ListBranches(cloned_complex, remote=True)) == set(['master', 'branch_1'])
 
         git.CreateRemoteBranch(
             cloned_complex,
@@ -495,7 +495,7 @@ class Test(object):
             branch_name='branch-with-hyphens'
         )
         assert (
-            set(git.ListRemoteBranches(cloned_complex))
+            set(git.ListBranches(cloned_complex, remote=True))
             == set(['master', 'branch_1', 'branch-with-hyphens'])
         )
 
@@ -603,24 +603,24 @@ class Test(object):
 
     def testRemoteBranch(self, git):
         # Initial test
-        assert git.ListRemoteBranches(git.cloned_remote) == set(['master'])
+        assert git.ListBranches(git.cloned_remote, remote=True) == ['master']
 
         # Create new remote branch from master
         git.CreateRemoteBranch(git.cloned_remote, 'master', 'new_branch')
-        assert git.ListRemoteBranches(git.cloned_remote) == set(['master', 'new_branch'])
+        assert git.ListBranches(git.cloned_remote, remote=True) == ['master', 'new_branch']
 
         # Create new remote branch from new_branch
         git.CreateRemoteBranch(git.cloned_remote, 'new_branch', 'new_branch_2')
         assert (
-            git.ListRemoteBranches(git.cloned_remote)
-            == set(['master', 'new_branch', 'new_branch_2'])
+            git.ListBranches(git.cloned_remote, remote=True)
+            == ['master', 'new_branch', 'new_branch_2']
         )
 
         # Delete remote branch and check again
         git.DeleteRemoteBranch(git.cloned_remote, 'new_branch')
         assert (
-            git.ListRemoteBranches(git.cloned_remote)
-            == set(['master', 'new_branch_2'])
+            git.ListBranches(git.cloned_remote, remote=True)
+            == ['master', 'new_branch_2']
         )
 
 
