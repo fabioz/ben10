@@ -1089,8 +1089,7 @@ class Git(Singleton):
         :param str path:
             A path INSIDE a local repository.
 
-        :rtype: str
-        :returns:
+        :returns str:
             The working (root) directory of the local git repository.
             Returns None if the given path does not belong to a local git repository.
         '''
@@ -1117,6 +1116,10 @@ class Git(Singleton):
         :param bool remote:
             Considers the remote branches instead of the local ones.
 
+        :param str remote_name:
+            Name of the remote to check for the branch existence.
+            Only used if the parameter remote=True.
+
         :return list(str):
             The first branch in the list is the current branch.
             All other branches are sorted alphabetically.
@@ -1124,10 +1127,10 @@ class Git(Singleton):
         import re
 
         if remote:
-            all_branches = self.Execute(['branch', '-a'], repo_path)
+            all_branches = self.Execute(['branch', '-r'], repo_path)
             r_branches = set()
             for branch_name in all_branches:
-                re_search = re.search('remotes/%s/(\S+)$' % remote_name, branch_name)
+                re_search = re.search('%s/(\S+)$' % remote_name, branch_name)
                 if re_search is not None:
                     r_branches.add(re_search.groups()[0])
             return sorted(list(r_branches))
