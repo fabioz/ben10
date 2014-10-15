@@ -201,15 +201,27 @@ Repeater: '*' | '+' | '{' NUMBER [',' NUMBER] '}'
 Details: '<' Alternatives '>'
 '''
 
-def generate_grammar(filename="Grammar.txt"):
+def GenerateGrammar(filename="Grammar.txt"):
+    '''
+    We replace the function that generates the grammar to remove the dependency with external files.
+
+    This is necessary because we want to be able to use lib2to3 inside an executable.
+
+    :param filename:
+        The gramar filename.
+
+    :return PgenGrammar:
+    '''
+
     from StringIO import StringIO
     import os
+
     p = lib2to3.pgen2.pgen.ParserGenerator(
         filename,
         stream=StringIO(GRAMMAR[os.path.basename(filename)])
     )
     return p.make_grammar()
-lib2to3.pgen2.pgen.generate_grammar = generate_grammar
+lib2to3.pgen2.pgen.generate_grammar = GenerateGrammar
 
 
 
@@ -217,6 +229,13 @@ lib2to3.pgen2.pgen.generate_grammar = generate_grammar
 # GetNodeLineNumber
 #===================================================================================================
 def GetNodeLineNumber(node):
+    '''
+    Returns the given node line number.
+
+    :param lib2to3.Node node:
+
+    :return int:
+    '''
     parent = node
     while parent:
         if hasattr(parent, 'lineno'):
@@ -229,6 +248,16 @@ def GetNodeLineNumber(node):
 # GetNodePosition
 #===================================================================================================
 def GetNodePosition(node):
+    '''
+    Returns the given node position (line number and column).
+
+    NOTE: Not quite sure which is the best way of obtaining the line number, this one or
+    GetNodeLineNumber.
+
+    :param lib2to3.Node node:
+
+    :return tuple(int, int):
+    '''
     try:
         child = node[0]
     except:
@@ -238,4 +267,4 @@ def GetNodePosition(node):
             lineno = child.lineno - child.prefix.count('\n')
             return (lineno, child.column)
         child = child.children[0]
-    return 0
+    return (0, 0)

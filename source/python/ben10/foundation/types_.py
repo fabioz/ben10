@@ -198,7 +198,7 @@ def IsNumber(v):
     '''
     Checks if the given value is a number
 
-    @return bool
+    :return bool:
         True if the given value is a number, False otherwise
 
     .. note:: This function will replace it's implementation to a lighter code, but first it must

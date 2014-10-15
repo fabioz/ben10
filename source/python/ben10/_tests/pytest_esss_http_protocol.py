@@ -182,11 +182,13 @@ def testRequestsBehindProxy(embed_data):
     try:
         protocol = EsssHttpProtocol(OnProxyAddressRequest, OnProxyAuthenticationRequest)
 
+        # Testing exception with GetFileContents
         with pytest.raises(HTTPError):
-            protocol.GetFileContents('http://127.0.0.1:%s/anyfile.txt' % port,)
+            protocol.GetFileContents('http://127.0.0.1:%s/invalid_file.txt' % port,)
 
+        # Testing exception with DownloadFile
         with pytest.raises(HTTPError):
-            protocol.DownloadFile('http://127.0.0.1:%s/anyfile.txt' % port,
+            protocol.DownloadFile('http://127.0.0.1:%s/invalid_file.txt' % port,
             embed_data['testDownloadFile.txt'],)
 
         _allow_proxy_authentication = True

@@ -27,8 +27,11 @@ def SetIsFrozen(is_frozen):
     '''
     Sets the is_frozen value manually, overriding the "calculated" value.
 
-    :param bool is_frozen: The new value for is_frozen.
-    :returns bool: Returns the original value, before the given value is set.
+    :param bool is_frozen:
+        The new value for is_frozen.
+
+    :returns bool:
+        Returns the original value, before the given value is set.
     '''
     global _is_frozen
     try:
@@ -40,13 +43,17 @@ def SetIsFrozen(is_frozen):
 _is_development = not _is_frozen
 def IsDevelopment():
     '''
-    :rtype: bool
-    :returns:
-        Returns False if we are not working in a "development environment".
+    This function is used to indentify if we're in a development environment or production
+    environment.
 
-        By default, the "development environment" is understood as not in frozen mode. However, be careful
-        not think that this will always be equivalent to 'not IsFrozen()'. This could also return True in
-        frozen environment, particularly when running tests on the executable.
+    :return bool:
+        Returns True if we're in a development environment or False if we're in a production
+        environment.
+
+        By default, the "development environment" is understood as not in frozen mode. However, be
+        careful not think that this will always be equivalent to 'not IsFrozen()'. This could also
+        return True in frozen environment, particularly when running tests on the executable.
+
         ..seealso:: SetIsDevelopment to understand why.
     '''
     return _is_development
@@ -56,6 +63,9 @@ def SetIsDevelopment(is_development):
     '''
     :param bool is_development:
         The new is-development value, which is returned by ..seealso:: IsDevelopment.
+
+    :return bool:
+        The previous value of is-development property.
 
     We wanted this method for the following reason:
     Some methods we use in our codebase can make some checks/assertions that might be overly time-consuming to

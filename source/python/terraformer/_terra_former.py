@@ -3,12 +3,17 @@ from ben10.foundation.memoize import Memoize
 
 
 
+#===================================================================================================
+# FileTooBigError
+#===================================================================================================
 class FileTooBigError(RuntimeError):
     '''
     Exception raised when a big file is detected.
     We raise this exception before asking lib2to3 to handle it because if we let this to lib2to3 we
     end getting a infinite loop.
     '''
+    def __init__(self, filename, size):
+        RuntimeError.__init__(self, 'File %s too big: %d' % (filename, size))
 
 
 
@@ -42,7 +47,7 @@ class TerraFormer(object):
         file_size = len(self.__original_source)
         if file_size > self.MAX_FILE_SIZE:
             # Some big files make the Parse algorithm get stuck.
-            raise FileTooBigError('File %s too big: %d' % (filename, file_size))
+            raise FileTooBigError(filename, file_size)
 
         self.filename = filename
         self.symbols = set()
@@ -69,11 +74,27 @@ class TerraFormer(object):
     @classmethod
     @Memoize(maxsize=1000)
     def Factory(cls, filename, source=None):
+        '''
+        Creates a TerraFormer instance using a cache to speed up.
+
+        :param str filename: Python module filename.
+
+        :param str source: Optinal python module sources.
+
+        :return TerraFormer:
+        '''
         return cls(source=source, filename=filename)
 
 
     @classmethod
     def _QuotedBlock(cls, text):
+        '''
+        Auxiliary function to "quote" a multiline text.
+
+        :param str text:
+
+        :return str:
+        '''
         return ''.join(["> %s" % line for line in text.splitlines(True)])
 
 
@@ -212,6 +233,9 @@ class TerraFormer(object):
 
 
     def Save(self, refactor={}, page_width=100):
+        '''
+        Saves the filename applying the changes made by previous method calls.
+        '''
         from ben10.filesystem import CreateFile, EOL_STYLE_UNIX
 
         changed = self.ReorganizeImports(refactor=refactor, page_width=page_width)
@@ -226,6 +250,13 @@ class TerraFormer(object):
 
 
     def AddImportSymbol(self, import_symbol):
+        '''
+        Adds a import-symbol in the top of the python module.
+
+        :param str import_symbol:
+            The import-symbol to add.
+            Eg.: __futures__.with_statement
+        '''
         from ._symbol import ImportSymbol
 
         import_block = self.import_blocks[0]

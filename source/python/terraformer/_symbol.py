@@ -1,9 +1,15 @@
-from ben10.foundation.decorators import Comparable
+from ben10.foundation.decorators import Comparable, Override
 import os
 
 
-
+#===================================================================================================
+# Symbol
+#===================================================================================================
 class Symbol(object):
+    '''
+    Represents a python symbol definition.
+    This is also the base class for other kinds of symbols.
+    '''
 
     PREFIX = 'DEF'
 
@@ -68,7 +74,34 @@ class Symbol(object):
                 SymbolArgument(self, i_arg.value, i_arg)
 
 
+    def CreateCode(self, indent, page_width):
+        '''
+        Create a lib2to3 code for this symbol.
+
+        For now only import-block related symbols have this implemented, but later we'll have more
+        of these.
+
+        :param int indent:
+            The indentation of the code. This is counted as the number of spaces, so for our
+            standards this should be multiple of 4.
+
+        :param int page_width:
+            The generated code will have at most this width (in characters).
+
+        :return list(lib2to3.Node):
+        '''
+        raise NotImplementedError()
+
+
+
+#===================================================================================================
+# Scope
+#===================================================================================================
 class Scope(Symbol):
+    '''
+    Represents a python scope.
+    Symbols that define a scope derive from this class (Eg.: method, class), giving it a prefix.
+    '''
 
     def __init__(self, parent, name, code):
         Symbol.__init__(self, parent, name, code)
@@ -83,15 +116,28 @@ class Scope(Symbol):
 
 
 class SymbolArgument(Symbol):
+    '''
+    Represents a argument symbol definition.
+    '''
 
     PREFIX = 'ARG'
 
 
 class SymbolUsage(Symbol):
+    '''
+    Represents a symbol usage.
+
+    Later on we'll link each symbol-usage with the declaration it refers, either a import symbol or
+    a locally defined symbol such as a class, method or variable.
+    '''
 
     PREFIX = 'USE'
 
 
+
+#===================================================================================================
+# ImportSymbol
+#===================================================================================================
 @Comparable
 class ImportSymbol(Symbol):
     '''
@@ -222,6 +268,15 @@ class ImportSymbol(Symbol):
 
 
     def CreateNameNode(self, prefix=' '):
+        '''
+        Creates a lib2to3.Node containing the name part of the import-symbol.
+        This is REused by CreateCode implementation for this class and the "ImportFromScope."
+
+        :param str prefix:
+            The node prefix.
+
+        :return lib2to3.Node:
+        '''
         from lib2to3 import pygram
         from lib2to3.fixer_util import Name
         from lib2to3.pytree import Node
@@ -239,6 +294,7 @@ class ImportSymbol(Symbol):
             return Name(self.GetToken(), prefix=prefix)
 
 
+    @Override(Symbol.CreateCode)
     def CreateCode(self, indent, page_width):
         from lib2to3 import pygram
         from lib2to3.fixer_util import Name, Newline
@@ -258,14 +314,46 @@ class ImportSymbol(Symbol):
 
 
 
+#===================================================================================================
+# ImportFromScope
+#===================================================================================================
 @Comparable
 class ImportFromScope(Scope):
-    ''
+    '''
+    We're representing a import-from import as a scope that contains import-symbols as child
+    symbols.
+
+    This interpretation makes it easier to rename a package (alpha to bravo) that imports many
+    symbols.
+
+    Eg.:
+        from alpha import Bravo, Charlie
+        ---
+        form bravo import Bravo, Charlie
+
+    But this also makes it difficult to rename symbols and end in different packages (bravo,
+    charlie).
+
+    Eg.:
+        from alpha import Bravo, Charlie
+        ---
+        form bravo import Bravo
+        from charlie import Charlie
+    '''
 
     PREFIX = 'IMPORT-FROM'
 
 
     def Copy(self, name):
+        '''
+        Creates a copy of this instance, optionally replacing some attributes with the given ones.
+
+        :param name:
+            If not None, uses this value instead of the instance's attribute as the copy name.
+
+        :return ImportFromScope:
+        '''
+
         result = self.__class__(
             self.parent,
             name or self.name,
@@ -277,12 +365,16 @@ class ImportFromScope(Scope):
 
 
     def _cmpkey(self):
+        '''
+        Implements Comparable._cmpkey.
+        '''
         index = -100
         if self.name.startswith('_'):
             index = -101
         return index, self.name
 
 
+    @Override(Symbol.CreateCode)
     def CreateCode(self, indent, page_width):
         from lib2to3 import pygram
         from lib2to3.fixer_util import Name, Newline
@@ -359,25 +451,51 @@ class ImportFromScope(Scope):
         return result
 
 
+
+#===================================================================================================
+# ClassScope
+#===================================================================================================
 class ClassScope(Scope):
-    ''
+    '''
+    Represents a class symbol declaration, which also declares a scope.
+    '''
 
     PREFIX = 'class'
 
 
+
+#===================================================================================================
+# FunctionScope
+#===================================================================================================
 class FunctionScope(Scope):
-    ''
+    '''
+    Represents a function symbol declaration, which also declares a scope.
+    '''
 
     PREFIX = 'def'
 
 
+
+#===================================================================================================
+# ModuleScope
+#===================================================================================================
 class ModuleScope(Scope):
-    ''
+    '''
+    Represents a module declaration, which also declares a scope.
+    '''
 
     PREFIX = 'module'
 
 
+
+#===================================================================================================
+# ImportBlock
+#===================================================================================================
 class ImportBlock(Scope):
+    '''
+    A import-block is a semantic scope created here in order to group import-statements together for
+    reorganizing and refactoring algorithms.
+    '''
 
     PREFIX = 'IMPORT-BLOCK'
 
@@ -391,6 +509,16 @@ class ImportBlock(Scope):
 
 
     def Refactor(self, refactor={}):
+        '''
+        Perform the refactor for this import-block, renaming all children import-statements using
+        the given refactor dictionary.
+
+        :param dict(str,str) refactor:
+            Maps old symbols to their new values.
+            * Suffix the old symbol name with '$' if you want it in the end of the symbol.
+            * Prefix the new value with "from " to force "import-from" syntax even if the symbol
+              was originally imported as an "import-name".
+        '''
         for i_import_symbol in [i for i in self._WalkImportSymbols()]:
             new_name = refactor.get(i_import_symbol.name)
             if new_name is None:
@@ -410,44 +538,49 @@ class ImportBlock(Scope):
 
 
     def FixLocalSymbols(self, filename):
+        '''
+        Tries to rename some imports to use local symbols if they are available.
+
+        This is necessary to avoid import loops in the following conditions:
+
+        * Module importing module in the same package
+        * The package (__init__.py) imports both symbols
+
+            Ex.:
+            /alpha/
+                __init__.py
+                [
+                    from bravo import *
+                    from charlie import *
+                ]
+                bravo.py
+                [
+                    import alpha.charlie
+                ]
+                charlie.py
+
+        We solve this by:
+
+        * Imports in the above conditions must be local, not global.
+            Ex.:
+                bravo.py
+                [
+                    import charlie
+                ]
+
+        :param str filename:
+        :return:
+        '''
 
         def LocalImportRename(import_symbol, filename):
             '''
             Converts the given import-symbol into a local import.
-
-            This is necessary to avoid import loops in the following conditions:
-
-            * Module importing module in the same package
-            * The package (__init__.py) imports both symbols
-
-                Ex.:
-                /alpha/
-                    __init__.py
-                    [
-                        from bravo import *
-                        from charlie import *
-                    ]
-                    bravo.py
-                    [
-                        import alpha.charlie
-                    ]
-                    charlie.py
-
-            We solve this by:
-
-            * Imports in the above conditions must be local, not global.
-                Ex.:
-                    bravo.py
-                    [
-                        import charlie
-                    ]
 
             Terms:
                 * working: meaning the module we are working one. The import-symbol and filename given as parameters.
                 * init: refers to package (__init__.py)
                 * local: refers to the module, found in the same location the "working" module, that contains a symbol
                   used by the working symbol.
-
             '''
             from ._terra_former import TerraFormer
 
@@ -511,6 +644,11 @@ class ImportBlock(Scope):
 
 
     def _WalkImportSymbols(self):
+        '''
+        Iterator for import-symbols.
+
+        :return iter(ImportSymbol):
+        '''
         for i_child in self._children:
             if isinstance(i_child, ImportSymbol):
                 yield i_child
@@ -524,10 +662,11 @@ class ImportBlock(Scope):
 
     def Reorganize(self, page_width=100, refactor={}, filename=None):
         '''
-        Reorganize the import-statements replacing the previous code by brand new import-statements
+        Reorganize the import-statements replacing the previous code by brand new import-statements.
 
-        :param page_width:
-        :param filename:
+        :param int page_width:
+        :param dict refactor:
+        :param str filename:
         :return:
         '''
         if self._children:
@@ -575,6 +714,12 @@ class ImportBlock(Scope):
 
 
     def ObtainImportFromScope(self, name):
+        '''
+        Returns an ImportFromScope associated with the given name, creating one if necessary.
+
+        :param str name:
+        :return ImportFromScope:
+        '''
         result = ImportFromScope(None, name, None)
         try:
             index = self._children.index(result)

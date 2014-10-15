@@ -23,7 +23,7 @@ import BaseHTTPServer
 #===================================================================================================
 class PhonyHttpHandler(SimpleHTTPRequestHandler):
     '''
-    Phony HTTP handler that always respond with "Hell, <user-agent>".
+    Phony HTTP handler that always respond with "Hello, <user-agent>".
     This is used to check if we are correctly sending the user-agent to the server when
     requesting stuff from there.
     '''

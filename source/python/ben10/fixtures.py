@@ -14,24 +14,23 @@ import pytest
 # pytest_sessionstart
 #===================================================================================================
 def pytest_sessionstart(session):
-    """
+    '''
     pytest hook called before each session begins (including on each slave when running in xdist).
 
-    We use this hook in order to configure global settings that should be set for all tests
-    in our runs.
-    """
+    We use this hook in order to configure global settings that should be set for all tests in our
+    runs.
+    '''
     from ben10.foundation.is_frozen import SetIsDevelopment
     import sys
 
-    # The system does not display the Windows Error Reporting dialog
     if sys.platform.startswith('win'):
-        import ctypes
-        # From MSDN
+        # Makes the sysmte hide the Windows Error Reporting dialog.
         # http://msdn.microsoft.com/en-us/library/windows/desktop/ms680621%28v=vs.85%29.aspx
+        import ctypes
         SEM_NOGPFAULTERRORBOX = 0x0002
         ctypes.windll.kernel32.SetErrorMode(SEM_NOGPFAULTERRORBOX)
 
-    # enable development-only checks
+    # Enable development-only checks
     SetIsDevelopment(True)
 
 
@@ -39,7 +38,7 @@ def pytest_sessionstart(session):
 # pytest_runtest_protocol
 #===================================================================================================
 def pytest_runtest_protocol(item, __multicall__):
-    """
+    '''
     pytest hook that implements the full test run protocol, setup/call/teardown.
 
     - faulthandler: we enable a fault handler in the current process, which will stream crash errors
@@ -49,7 +48,7 @@ def pytest_runtest_protocol(item, __multicall__):
 
         Since this file is only useful if a a test crashes, it is removed during tear down if
         no crash occurred.
-    """
+    '''
     name = '%s.%s.txt'  % (item.module.__name__, item.name)
     invalid_chars = [os.sep, os.pathsep, ':', '<', '>', '@']
     if os.altsep:
@@ -74,12 +73,12 @@ def pytest_runtest_protocol(item, __multicall__):
 # pytest_addoption
 #===================================================================================================
 def pytest_addoption(parser):
-    """
+    '''
     Add an option to pytest to change the default directory where to write fault handler report
     files. Specially useful in the CI server.
 
     :param optparse.OptionParser parser:
-    """
+    '''
     group = parser.getgroup("debugconfig") # default pytest group for debugging/reporting
     group.addoption(
         '--fault-handler-dir',
@@ -93,10 +92,10 @@ def pytest_addoption(parser):
 # pytest_report_header
 #===================================================================================================
 def pytest_report_header(config):
-    """
+    '''
     pytest hook to add a line to the report header showing the directory where fault handler report
     files will be generated.
-    """
+    '''
     return ['fault handler directory: %s' % config.getoption('fault_handler_dir')]
 
 

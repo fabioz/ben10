@@ -382,7 +382,7 @@ class Test:
         dummy = Null()
         # context manager
         with dummy:
-            assert dummy.__name__ == 'Null'  # Name should return a st
+            assert dummy.__name__ == 'Null'  # Name should return a str
 
         # Null objects are always equal to other null object
         assert n != 1
