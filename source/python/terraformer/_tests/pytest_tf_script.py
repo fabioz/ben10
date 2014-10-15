@@ -118,7 +118,7 @@ def testFixFormat(embed_data):
 
 def testAddImportSymbol(embed_data):
     '''
-    General test for tbe "tf add-import-symbol" command.
+    General test for the "tf add-import-symbol" command.
     '''
     filename = embed_data['testFixFormat.py']
     data_dir = embed_data.GetDataDirectory()
