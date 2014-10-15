@@ -335,5 +335,8 @@ def embed_data(request):  # pylint: disable=C0103
 
 @pytest.fixture
 def platform():
+    '''
+    The current platform information in a nicely packaged Platform object.
+    '''
     from ben10.foundation.platform_ import Platform
     return Platform.GetCurrentPlatform()
