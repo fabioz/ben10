@@ -40,7 +40,7 @@ class TerraFormer(object):
         if source is None:
             # Stores the original loaded sources into __source.
             # This variable must be updated if we happen to save the file with any changes.
-            self.__original_source = GetFileContents(filename, newline='', encoding='UTF-8').decode('UTF-8')
+            self.__original_source = GetFileContents(filename, newline='', encoding='UTF-8')
         else:
             self.__original_source = source
 
