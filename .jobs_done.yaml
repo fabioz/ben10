@@ -4,7 +4,6 @@ junit_patterns:
 platform-windows:build_batch_commands:
 - |
   %AA_AASIMAR_AA_CONFIG% --dependencies-file=%WORKSPACE%/ben10/dependencies.ini --projects-dir=%WORKSPACE% --dist={dist} --platform={platform} --conf-dir=%WORKSPACE% || goto :eof
-  %AA_AASIMAR_AA% -t dist.build pytest_xdist  || goto :eof
   %AA_AASIMAR_AA% -t project.build ben10  || goto :eof
   %AA_AASIMAR_II% pak              ben10 --branch={branch}
 
@@ -12,7 +11,6 @@ platform-windows:build_batch_commands:
 platform-linux:build_shell_commands:
 - |
   $AA_AASIMAR_AA_CONFIG --dependencies-file=$WORKSPACE/ben10/dependencies.ini --projects-dir=$WORKSPACE --dist={dist} --platform={platform} --conf-dir=$WORKSPACE
-  $AA_AASIMAR_AA -t dist.build pytest_xdist
   $AA_AASIMAR_AA -t project.build ben10
 
 
@@ -26,6 +24,8 @@ matrix:
   - win32,windows
   - win64,windows
   - redhat64,linux
+
+label_expression: "{platform} && {name} && team-bos"
 
 display_name: "[{branch}] {name} {dist}-{platform}"
 

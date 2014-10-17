@@ -119,6 +119,7 @@ class Test(object):
         embed_data.AssertEqualFiles(
             'root_dir/apache_pb.gif',
             'CREATE/root_dir/apache_pb.gif',
+            binary=True
         )
 
 

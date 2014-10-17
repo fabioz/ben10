@@ -819,6 +819,12 @@ class Git(Singleton):
         :raises NotCurrentlyInAnyBranchError:
             If not on any branch.
         '''
+
+        # TODO: BEN-47: Find the correct way of handling submodules on DevSpace jobs.
+        # Returns the branch of the host repository if the given repo_path is a submodule.
+        if self._IsSubModule(repo_path):
+            repo_path = self._GetTopLevel(os.path.dirname(self._GetTopLevel(repo_path)))
+
         branches = self.Execute(['branch'], repo_path)
 
         for branch in branches:
@@ -852,7 +858,7 @@ class Git(Singleton):
         if fail_if_dirty:
             # Always look for dirty files in root directory. Since we usually have many refs in a
             # single repository, this reduces the amount of 'git log' we have to execute
-            git_root_dir = self.Execute(['rev-parse', '--show-toplevel'], path, flat_output=True)
+            git_root_dir = self._GetTopLevel(path)
 
             modified_files_in_repo = [
                 posixpath.join(git_root_dir, dirty_file)
@@ -866,7 +872,31 @@ class Git(Singleton):
         return self.Log(path, ('-n1', '--pretty=format:%H', '.'))[0]
 
 
-    def BranchExists(self, repo_path, branch_name):
+    def _IsSubModule(self, path):
+        '''
+        Returns whether the repository of the given path is a submodule.
+
+        :param str path:
+            Path within a Git repository.
+
+        :return bool:
+        '''
+        return os.path.isfile(self._GetTopLevel(path) + '/.git')
+
+
+    def _GetTopLevel(self, path):
+        '''
+        Returns the git repository top-level (root) directory.
+
+        :param str path:
+            Path within a Git repository.
+
+        :return str:
+        '''
+        return self.Execute(['rev-parse', '--show-toplevel'], path, flat_output=True)
+
+
+    def BranchExists(self, repo_path, branch_name, remote=False):
         '''
         :param str repo_path:
             Path to the repository (local)
@@ -874,11 +904,13 @@ class Git(Singleton):
         :param str branch_name:
             The branches' name
 
-        :rtype: bool
-        :returns:
+        :param bool remote:
+            Considers the remote branches instead of the local ones.
+
+        :returns bool:
             True if the branch already exists
         '''
-        return branch_name in self.ListRemoteBranches(repo_path)
+        return branch_name in self.ListBranches(repo_path, remote=remote)
 
 
     # Stash
@@ -1075,30 +1107,40 @@ class Git(Singleton):
         return None
 
 
-    def ListRemoteBranches(self, repo_path, remote_name='origin'):
+    def ListBranches(self, repo_path, remote=False, remote_name='origin'):
         '''
-        Lists branches in the given repo's origin
+        List the branches of the given repository.
 
         :param str repo_path:
             Path to the repository (local)
 
-        :param str remote_name:
-            The remote from which the branches will be listed
+        :param bool remote:
+            Considers the remote branches instead of the local ones.
 
-        :rtype: set(str)
-        :returns:
-            Contains the names of the remote branches
+        :return list(str):
+            The first branch in the list is the current branch.
+            All other branches are sorted alphabetically.
         '''
-        all_branches = self.Execute(['branch', '-a'], repo_path)
-
-        branches = set()
         import re
-        for branch_name in all_branches:
-            re_search = re.search('remotes/%s/(\S+)$' % remote_name, branch_name)
-            if re_search is not None:
-                branches.add(re_search.groups()[0])
 
-        return branches
+        if remote:
+            all_branches = self.Execute(['branch', '-a'], repo_path)
+            r_branches = set()
+            for branch_name in all_branches:
+                re_search = re.search('remotes/%s/(\S+)$' % remote_name, branch_name)
+                if re_search is not None:
+                    r_branches.add(re_search.groups()[0])
+            return sorted(list(r_branches))
+        else:
+            r_current = None
+            r_branches = []
+            for i_branch in self.Execute('branch', repo_path):
+                branch = i_branch.strip('* ')
+                if '*' in i_branch:
+                    r_current = branch
+                elif branch:
+                    r_branches.append(branch)
+            return [r_current] + sorted(r_branches)
 
 
     def Clean(self, repo_path, ignored_only=True):
@@ -1356,7 +1398,7 @@ class Git(Singleton):
             .. seealso:: BranchDoesNotExistError
         '''
         # Check if target branch already exists in remote
-        if self.BranchExists(repo_path, branch_name):
+        if self.BranchExists(repo_path, branch_name, remote=True):
             raise BranchAlreadyExistsError(branch_name)
 
         # If original_branch is None, use the current local branch
@@ -1367,7 +1409,7 @@ class Git(Singleton):
             original_branch = self.GetCurrentBranch(repo_path)
 
         # Check if original_branch exists
-        if not self.BranchExists(repo_path, original_branch):
+        if not self.BranchExists(repo_path, original_branch, remote=True):
             raise BranchDoesNotExistError(original_branch)
 
         # Push the new branch to the remote
@@ -1388,7 +1430,7 @@ class Git(Singleton):
         :raises BranchDoesNotExistError:
             .. seealso:: BranchDoesNotExistError
         '''
-        if not self.BranchExists(repo_path, branch_name):
+        if not self.BranchExists(repo_path, branch_name, remote=True):
             raise BranchDoesNotExistError(branch_name)
 
         # Delete the remote branch

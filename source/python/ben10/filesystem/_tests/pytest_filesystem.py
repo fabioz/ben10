@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+# -*- coding: UTF-8 -*-
 from ben10.filesystem import (AppendToFile, CanonicalPath, CheckIsDir, CheckIsFile, CopyDirectory,
     CopyFile, CopyFiles, CopyFilesX, CreateDirectory, CreateFile, CreateLink, CreateMD5,
     CreateTemporaryDirectory, Cwd, DRIVE_FIXED, DRIVE_NO_ROOT_DIR, DRIVE_REMOTE, DeleteDirectory,
@@ -8,7 +8,7 @@ from ben10.filesystem import (AppendToFile, CanonicalPath, CheckIsDir, CheckIsFi
     IsDir, IsFile, IsLink, ListFiles, ListMappedNetworkDrives, MD5_SKIP, MoveDirectory, MoveFile,
     NormStandardPath, NormalizePath, NotImplementedForRemotePathError, NotImplementedProtocol,
     OpenFile, ReadLink, ReplaceInFile, ServerTimeoutError, StandardizePath)
-from ben10.filesystem._filesystem import CreateTemporaryFile
+from ben10.filesystem._filesystem import CreateTemporaryFile, FindFiles
 from mock import patch
 import errno
 import logging
@@ -375,13 +375,17 @@ class Test:
         oss.close()
 
         # Use OpenFile to obtain the file contents, with binary=False and binary=True
-        iss = OpenFile(test_filename, binary=False)
-
-        expected = 'Alpha\nBravo\nCharlie\nDelta'
-        assert iss.read() == expected
+        iss = OpenFile(test_filename)
+        obtained = iss.read()
+        assert obtained == u'Alpha\nBravo\nCharlie\nDelta'
 
         iss = OpenFile(test_filename, binary=True)
-        assert iss.read() == 'Alpha\nBravo\r\nCharlie\rDelta'
+        obtained = iss.read()
+        assert obtained == u'Alpha\nBravo\r\nCharlie\rDelta'
+
+        iss = OpenFile(test_filename, newline='')
+        obtained = iss.read()
+        assert obtained == u'Alpha\nBravo\r\nCharlie\rDelta'
 
         # Emulating many urllib errors and their "nicer" versions provided by filesystem.
         class Raise():
@@ -1308,7 +1312,7 @@ class Test:
                 pass
 
             def communicate(self):
-                stdoutdata = GetFileContents(embed_data['net_use.txt'])
+                stdoutdata = GetFileContents(embed_data['net_use.txt'], encoding='cp1252')
                 return stdoutdata.replace("\n", EOL_STYLE_WINDOWS), ''
 
         monkeypatch.setattr(subprocess, 'Popen', MyPopen)
@@ -1320,6 +1324,149 @@ class Test:
         assert mapped_drives[1][0] == 'O:'
         assert mapped_drives[1][2] == False
         assert mapped_drives[2][0] == 'P:'
+
+
+    def testFindFiles(self, embed_data):
+        def PATH(p_path):
+            return os.path.normpath(p_path)
+
+        def Compare(p_obtained, p_expected):
+            obtained = set(map(PATH, p_obtained))
+            expected = set(map(PATH, p_expected))
+            assert obtained == expected
+
+        CreateDirectory(embed_data['test_find_files/A/B'])
+        CreateDirectory(embed_data['test_find_files/A/C'])
+        CreateFile(embed_data['test_find_files/testRoot.bmp'], contents='')
+        CreateFile(embed_data['test_find_files/mytestRoot.txt'], contents='')
+        CreateFile(embed_data['test_find_files/A/testA.bmp'], contents='')
+        CreateFile(embed_data['test_find_files/A/mytestA.txt'], contents='')
+        CreateFile(embed_data['test_find_files/A/B/testB.bmp'], contents='')
+        CreateFile(embed_data['test_find_files/A/B/mytestB.txt'], contents='')
+        CreateFile(embed_data['test_find_files/A/C/testC.bmp'], contents='')
+        CreateFile(embed_data['test_find_files/A/C/mytestC.txt'], contents='')
+
+        # no recursion, must return only .bmp files
+        in_filter = ['*.bmp']
+        out_filter = []
+        found_files = list(FindFiles(embed_data['test_find_files'], in_filter, out_filter, False))
+        Compare(found_files, [embed_data['test_find_files/testRoot.bmp']])
+
+        # no recursion, must return all files
+        in_filter = ['*']
+        out_filter = []
+        found_files = list(FindFiles(embed_data['test_find_files'], in_filter, out_filter, False))
+
+        assert_found_files = [
+            embed_data['test_find_files/A'],
+            embed_data['test_find_files/mytestRoot.txt'],
+            embed_data['test_find_files/testRoot.bmp'],
+        ]
+        Compare(found_files, assert_found_files)
+
+        # no recursion, return all files, except *.bmp
+        in_filter = ['*']
+        out_filter = ['*.bmp']
+        found_files = list(FindFiles(embed_data['test_find_files'], in_filter, out_filter, False))
+
+        assert_found_files = [
+            embed_data['test_find_files/A'],
+            embed_data['test_find_files/mytestRoot.txt'],
+        ]
+        Compare(found_files, assert_found_files)
+
+        # recursion, to get just directories
+        in_filter = ['*']
+        out_filter = ['*.bmp', '*.txt']
+        found_files = list(FindFiles(embed_data['test_find_files'], in_filter, out_filter))
+
+        assert_found_files = [
+            embed_data['test_find_files/A'],
+            embed_data['test_find_files/A/B'],
+            embed_data['test_find_files/A/C'],
+        ]
+        Compare(found_files, assert_found_files)
+
+        # recursion with no out_filters, must return all files
+        in_filter = ['*']
+        out_filter = []
+        found_files = list(FindFiles(embed_data['test_find_files']))
+
+        assert_found_files = [
+            embed_data['test_find_files/A'],
+            embed_data['test_find_files/mytestRoot.txt'],
+            embed_data['test_find_files/testRoot.bmp'],
+            embed_data['test_find_files/A/B'],
+            embed_data['test_find_files/A/C'],
+            embed_data['test_find_files/A/mytestA.txt'],
+            embed_data['test_find_files/A/testA.bmp'],
+            embed_data['test_find_files/A/B/mytestB.txt'],
+            embed_data['test_find_files/A/B/testB.bmp'],
+            embed_data['test_find_files/A/C/mytestC.txt'],
+            embed_data['test_find_files/A/C/testC.bmp'],
+        ]
+        assert_found_files = map(PATH, assert_found_files)
+        Compare(found_files, assert_found_files)
+
+        # recursion with no out_filters, must return all files
+        # include_root_dir is False, it will be omitted from the found files
+        in_filter = ['*']
+        out_filter = []
+        found_files = list(FindFiles(embed_data['test_find_files'], include_root_dir=False))
+
+        assert_found_files = [
+            'A',
+            'mytestRoot.txt',
+            'testRoot.bmp',
+            'A/B',
+            'A/C',
+            'A/mytestA.txt',
+            'A/testA.bmp',
+            'A/B/mytestB.txt',
+            'A/B/testB.bmp',
+            'A/C/mytestC.txt',
+            'A/C/testC.bmp',
+        ]
+        assert_found_files = map(PATH, assert_found_files)
+        Compare(found_files, assert_found_files)
+
+        # recursion must return just .txt files
+        in_filter = ['*.txt']
+        out_filter = []
+        found_files = list(FindFiles(embed_data['test_find_files/A'], in_filter, out_filter))
+
+        assert_found_files = [
+            embed_data['test_find_files/A/mytestA.txt'],
+            embed_data['test_find_files/A/B/mytestB.txt'],
+            embed_data['test_find_files/A/C/mytestC.txt'],
+        ]
+        assert_found_files = map(PATH, assert_found_files)
+        Compare(found_files, assert_found_files)
+
+        # recursion must return just .txt files
+        in_filter = ['*.txt']
+        out_filter = ['*A*']
+        found_files = list(FindFiles(embed_data['test_find_files'], in_filter, out_filter))
+
+        assert_found_files = [
+            embed_data['test_find_files/mytestRoot.txt'],
+        ]
+        assert_found_files = map(PATH, assert_found_files)
+        Compare(found_files, assert_found_files)
+
+        # recursion must ignore everyting below a directory that match the out_filter
+        in_filter = ['*']
+        out_filter = ['B', 'C']
+        found_files = list(FindFiles(embed_data['test_find_files'], in_filter, out_filter))
+
+        assert_found_files = [
+            embed_data['test_find_files/A'],
+            embed_data['test_find_files/A/mytestA.txt'],
+            embed_data['test_find_files/A/testA.bmp'],
+            embed_data['test_find_files/mytestRoot.txt'],
+            embed_data['test_find_files/testRoot.bmp'],
+        ]
+        Compare(found_files, assert_found_files)
 
 
     def assertSetEqual(self, a, b):

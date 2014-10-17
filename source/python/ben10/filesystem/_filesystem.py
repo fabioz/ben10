@@ -16,6 +16,7 @@ These functions abstract file location, most of them work for either local, ftp 
 '''
 from ben10.foundation.reraise import Reraise
 import contextlib
+import io
 import os
 import re
 import sys
@@ -499,8 +500,57 @@ def CopyFilesX(file_mapping):
 
     .. seealso:: FTP LIMITATIONS at this module's doc for performance issues information
     '''
-    from ._duplicates import ExtendedPathMask, FindFiles
+    # List files that match the mapping
+    files = []
+    for i_target_path, i_source_path_mask in file_mapping:
+        tree_recurse, flat_recurse, dirname, in_filters, out_filters = ExtendedPathMask.Split(i_source_path_mask)
 
+        _AssertIsLocal(dirname)
+
+        filenames = FindFiles(dirname, in_filters, out_filters, tree_recurse)
+        for i_source_filename in filenames:
+            if os.path.isdir(i_source_filename):
+                continue  # Do not copy dirs
+
+            i_target_filename = i_source_filename[len(dirname) + 1:]
+            if flat_recurse:
+                i_target_filename = os.path.basename(i_target_filename)
+            i_target_filename = os.path.join(i_target_path, i_target_filename)
+
+            files.append((
+                StandardizePath(i_source_filename),
+                StandardizePath(i_target_filename)
+            ))
+
+    # Copy files
+    for i_source_filename, i_target_filename in files:
+        # Create target dir if necessary
+        target_dir = os.path.dirname(i_target_filename)
+        CreateDirectory(target_dir)
+
+        CopyFile(i_source_filename, i_target_filename)
+
+    return files
+
+
+
+#===================================================================================================
+# CopyFilesX
+#===================================================================================================
+def CopyFilesX(file_mapping):
+    '''
+    Copies files into directories, according to a file mapping
+
+    :param list(tuple(unicode,unicode)) file_mapping:
+        A list of mappings between the directory in the target and the source.
+        For syntax, @see: ExtendedPathMask
+
+    :rtype: list(tuple(unicode,unicode))
+    :returns:
+        List of files copied. (source_filename, target_filename)
+
+    .. seealso:: FTP LIMITATIONS at this module's doc for performance issues information
+    '''
     # List files that match the mapping
     files = []
     for i_target_path, i_source_path_mask in file_mapping:
@@ -845,7 +895,7 @@ def MoveDirectory(source_dir, target_dir):
 #===================================================================================================
 # GetFileContents
 #===================================================================================================
-def GetFileContents(filename, binary=False, encoding=None):
+def GetFileContents(filename, binary=False, encoding=None, newline=None):
     '''
     Reads a file and returns its contents. Works for both local and remote files.
 
@@ -858,43 +908,61 @@ def GetFileContents(filename, binary=False, encoding=None):
         File's encoding. If not None, contents obtained from file will be decoded using this
         `encoding`.
 
-    :rtype: str | unicode
-    :returns:
+    :param None|''|'\n'|'\r'|'\r\n' newline:
+        Controls universal newlines.
+        See 'io.open' newline parameter documentation for more details.
+
+    :returns str|unicode:
         The file's contents.
         Returns unicode string when `encoding` is not None.
 
     .. seealso:: FTP LIMITATIONS at this module's doc for performance issues information
     '''
-    source_file = OpenFile(filename, binary=binary)
+    source_file = OpenFile(filename, encoding=encoding, binary=binary, newline=newline)
     try:
         contents = source_file.read()
     finally:
         source_file.close()
 
-    if encoding is not None:
-        contents = contents.decode(encoding)
+    if not binary and encoding is None:
+        # When binary, read() call above returns bytes already.
+        # When encoding is undefined (None) we must convert to bytes using encode.
+        contents = contents.encode('ascii')
+
     return contents
 
 
 #===================================================================================================
 # GetFileLines
 #===================================================================================================
-def GetFileLines(filename):
+def GetFileLines(filename, newline=None, encoding=None):
     '''
     Reads a file and returns its contents as a list of lines. Works for both local and remote files.
 
     :param str filename:
 
-    :rtype: list(str)
-    :returns:
+    :param None|''|'\n'|'\r'|'\r\n' newline:
+        Controls universal newlines.
+        See 'io.open' newline parameter documentation for more details.
+
+    :param str encoding:
+        File's encoding. If not None, contents obtained from file will be decoded using this
+        `encoding`.
+
+    :returns list(str):
         The file's lines
 
     .. seealso:: FTP LIMITATIONS at this module's doc for performance issues information
     '''
-    return GetFileContents(filename, binary=False).split('\n')
+    return GetFileContents(
+        filename,
+        binary=False,
+        encoding=encoding,
+        newline=newline,
+    ).split('\n')
 
 
-def OpenFile(filename, binary=False):
+def OpenFile(filename, binary=False, newline=None, encoding=None):
     '''
     Open a file and returns it.
     Consider the possibility of a remote file (HTTP, HTTPS, FTP)
@@ -904,9 +972,17 @@ def OpenFile(filename, binary=False):
 
     :param bool binary:
         If True returns the file as is, ignore any EOL conversion.
+        If set ignores univeral_newlines parameter.
 
-    :rtype: file
-    :returns:
+    :param None|''|'\n'|'\r'|'\r\n' newline:
+        Controls universal newlines.
+        See 'io.open' newline parameter documentation for more details.
+
+    :param str encoding:
+        File's encoding. If not None, contents obtained from file will be decoded using this
+        `encoding`.
+
+    :returns file:
         The open file, it must be closed by the caller
 
     @raise: FileNotFoundError
@@ -925,9 +1001,8 @@ def OpenFile(filename, binary=False):
         mode = 'r'
         if binary:
             mode += 'b'
-        else:
-            mode += 'U'
-        return file(filename, mode)
+            encoding = None
+        return io.open(filename, mode, encoding=encoding, newline=newline)
 
     # Not local
     import _filesystem_remote
@@ -1091,23 +1166,30 @@ def CreateFile(filename, contents, eol_style=EOL_STYLE_NATIVE, create_dir=True, 
 
 
 
-def ReplaceInFile(filename, old, new):
+def ReplaceInFile(filename, old, new, encoding=None):
     '''
     Replaces all occurrences of "old" by "new" in the given file.
 
-    :param str filename:
+    :param unicode filename:
         The name of the file.
-    :param str old:
+
+    :param str  old:
         The string to search for.
+
     :param str new:
         Replacement string.
+
+    :param str encoding:
+        Target file's content encoding.
+        Defaults to sys.getdefaultencoding()
+
     :return str:
         The new contents of the file.
     '''
-    content = GetFileContents(filename)
-    content = content.replace(old, new)
-    CreateFile(filename, content)
-    return content
+    contents = GetFileContents(filename, encoding=encoding)
+    contents = contents.replace(old, new)
+    CreateFile(filename, contents, encoding=encoding)
+    return contents
 
 
 
@@ -1370,7 +1452,6 @@ def GetMTime(path):
     _AssertIsLocal(path)
 
     if os.path.isdir(path):
-        from ._duplicates import FindFiles
         files = FindFiles(path)
 
         if len(files) > 0:
@@ -1604,3 +1685,161 @@ def _CallWindowsNetCommand(parameters):
     if stderrdata:
         raise OSError("Failed on call net.exe: %s" % stderrdata)
     return stdoutdata
+
+
+
+#===================================================================================================
+# ExtendedPathMask
+#===================================================================================================
+class ExtendedPathMask(object):
+    '''
+    This class is a place-holder for functions that handle the extended path mask.
+
+    Extended Path Mask
+    ------------------
+
+    The extended path mask is a file search path description used to find files based on the filename.
+    This extended path mask includes the following features:
+        - Recursive search (prefix with a "+" sign)
+        - The possibility of adding more than one filter to match files (separated by ";")
+        - The possibility of negate an mask (prefix the mask with "!").
+
+    The extended path mask has the following syntax:
+
+        [+|-]<path>/<filter>(;<filter>)*
+
+    Where:
+        + : recursive and copy-tree flag
+        - : recursive and copy-flat flag (copy files to the target directory with no tree structure)
+        <path> : a usual path, using '/' as separator
+        <filter> : A filename filter, as used in dir command:
+            Ex:
+                *.zip;*.rar
+                units.txt;*.ini
+                *.txt;!*-002.txt
+    '''
+
+
+    @classmethod
+    def Split(cls, extended_path_mask):
+        '''
+        Splits the given path into their components: recursive, dirname, in_filters and out_filters
+
+        :param str: extended_path_mask:
+            The "extended path mask" to split
+
+        :rtype: tuple(bool,bool,str,list(str),list(str))
+        :returns:
+            Returns the extended path 5 components:
+            - The tree-recurse flag
+            - The flat-recurse flag
+            - The actual path
+            - A list of masks to include
+            - A list of masks to exclude
+        '''
+        import os.path
+        r_tree_recurse = extended_path_mask[0] in '+-'
+        r_flat_recurse = extended_path_mask[0] in '-'
+
+        r_dirname, r_filters = os.path.split(extended_path_mask)
+        if r_tree_recurse:
+            r_dirname = r_dirname[1:]
+
+        filters = r_filters.split(';')
+        r_in_filters = [i for i in filters if not i.startswith('!')]
+        r_out_filters = [i[1:] for i in filters if i.startswith('!')]
+
+        return r_tree_recurse, r_flat_recurse, r_dirname, r_in_filters, r_out_filters
+
+
+
+#===================================================================================================
+# CheckForUpdate
+#===================================================================================================
+def CheckForUpdate(source, target):
+    '''
+    Checks if the given target filename should be re-generated because the source has changed.
+    :param source: the source filename.
+    :param target: the target filename.
+    :return bool:
+        True if the target is out-dated, False otherwise.
+    '''
+    return \
+        not os.path.isfile(target) or \
+        os.path.getmtime(source) > os.path.getmtime(target)
+
+
+
+#===================================================================================================
+# MatchMasks
+#===================================================================================================
+def MatchMasks(filename, filters):
+    '''
+    Verifies if a filename match with given patterns.
+
+    :param str filename: The filename to match.
+    :param list(str) filters: The patterns to search in the filename.
+    :return bool:
+        True if the filename has matched with one pattern, False otherwise.
+    '''
+    import fnmatch
+    if not isinstance(filters, (list, tuple)):
+        filters = [filters]
+
+    for i_filter in filters:
+        if fnmatch.fnmatch(filename, i_filter):
+            return True
+    return False
+
+
+
+#===================================================================================================
+# FindFiles
+#===================================================================================================
+def FindFiles(dir_, in_filters=None, out_filters=None, recursive=True, include_root_dir=True, standard_paths=False):
+    '''
+    Searches for files in a given directory that match with the given patterns.
+
+    :param str dir_: the directory root, to search the files.
+    :param list(str) in_filters: a list with patterns to match (default = all). E.g.: ['*.py']
+    :param list(str) out_filters: a list with patterns to ignore (default = none). E.g.: ['*.py']
+    :param bool recursive: if True search in subdirectories, otherwise, just in the root.
+    :param bool include_root_dir: if True, includes the directory being searched in the returned paths
+    :param bool standard_paths: if True, always uses unix path separators "/"
+    :return list(str):
+        A list of strings with the files that matched (with the full path in the filesystem).
+    '''
+    # all files
+    if in_filters is None:
+        in_filters = ['*']
+
+    if out_filters is None:
+        out_filters = []
+
+    result = []
+
+    # maintain just files that don't have a pattern that match with out_filters
+    # walk through all directories based on dir
+    for dir_root, directories, filenames in os.walk(dir_):
+
+        for i_directory in directories[:]:
+            if MatchMasks(i_directory, out_filters):
+                directories.remove(i_directory)
+
+        for filename in directories + filenames:
+            if MatchMasks(filename, in_filters) and not MatchMasks(filename, out_filters):
+                result.append(os.path.join(dir_root, filename))
+
+        if not recursive:
+            break
+
+    if not include_root_dir:
+        # Remove root dir from all paths
+        dir_prefix = len(dir_) + 1
+        result = [file[dir_prefix:] for file in result]
+
+    if standard_paths:
+        from ben10.filesystem import StandardizePath
+        result = map(StandardizePath, result)
+
+    return result

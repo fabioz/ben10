@@ -1,5 +1,6 @@
 from StringIO import StringIO
 from clikit.console import BufferedConsole, Console
+import mock
 import os
 import sys
 
@@ -58,7 +59,7 @@ class Test:
         # Printing multiple lines... as a list
         oss = StringIO()
         console = Console(stdout=oss)
-        console.Print(['one','two','three'])
+        console.Print(['one', 'two', 'three'])
         assert oss.getvalue() == 'one\ntwo\nthree\n'
 
         # Automatically resets colors when reaching the eol
@@ -86,8 +87,16 @@ class Test:
         console = Console(verbosity=2, stdout=oss)
         console.Progress('Doing...')
         assert oss.getvalue() == '''Doing...: '''
-        console.ProgressWarning('Skiped!')
-        assert oss.getvalue() == '''Doing...: Skiped!\n'''
+        console.ProgressWarning('Skipped!')
+        assert oss.getvalue() == '''Doing...: Skipped!\n'''
+
+        # Test Item
+        oss = StringIO()
+        console = Console(verbosity=2, stdout=oss)
+        console.Item('alpha')
+        console.Item('bravo')
+        console.Item('charlie')
+        assert oss.getvalue() == '''- alpha\n- bravo\n- charlie\n'''
 
         # Test Ask methods
         iss = StringIO()
@@ -95,13 +104,17 @@ class Test:
         iss.seek(0)
         console = BufferedConsole(verbosity=2, stdin=iss)
         assert console.Ask('Ask:') == 'alpha'
+        assert console.GetOutput() == 'Ask: '
 
-        oss = StringIO()
-        console = Console(verbosity=2, stdout=oss)
-        console.Item('alpha')
-        console.Item('bravo')
-        console.Item('charlie')
-        assert oss.getvalue() == '''- alpha\n- bravo\n- charlie\n'''
+        with mock.patch('getpass.getpass', autospec=True, return_value='MOCK_GETPASS') as mock_getpass:
+            iss = StringIO()
+            console = BufferedConsole(verbosity=2, stdin=iss)
+
+            # This fails in Eclipse/PyDev because getpass is poorly overwritten.
+            assert console.AskPassword() == 'MOCK_GETPASS'
+            assert console.GetOutput() == 'Password: '
+
+        mock_getpass.assert_called_once_with(prompt='', stream=iss)
 
 
     def testBufferedConsole(self):

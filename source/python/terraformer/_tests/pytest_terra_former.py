@@ -17,8 +17,7 @@ def testImportBlockZero(monkeypatch, embed_data):
         terra_former.ReorganizeImports()
 
         # Make sure that creating a TerraFormer won't make any changes to the AST
-        obtained = str(terra_former.code)
-        assert obtained == expected
+        assert terra_former.GenerateSource() == expected
 
         assert map(str, terra_former.import_blocks) == import_blocks
 
@@ -286,9 +285,9 @@ def testTerraFormer(monkeypatch, embed_data):
         '  IMPORT (25, 0) india_out',
     ]
 
-    changed, output = terra_former.ReorganizeImports()
+    changed = terra_former.ReorganizeImports()
 
-    assert output == Dedent(
+    assert terra_former.GenerateSource() == Dedent(
         '''
             from alpha import A1
             from bravo import B1, B2, B3
@@ -323,7 +322,7 @@ def testReorganizeImports(embed_data, line_tester):
     def Doit(lines):
         source = ''.join([i + '\n' for i in lines])
         terra = TerraFormer(source=source)
-        changed_, output = terra.ReorganizeImports(
+        changed_ = terra.ReorganizeImports(
             refactor={
                 'coilib50.basic.implements': 'etk11.foundation.interface',
                 'coilib50.basic.inter': 'etk11.foundation.interface',
@@ -332,10 +331,10 @@ def testReorganizeImports(embed_data, line_tester):
                 'before_refactor_bravo.Bravo': 'after_refactor.Bravo',
             }
         )
-        return output.splitlines()
+        return terra.GenerateSource().splitlines()
 
     line_tester.TestLines(
-        GetFileContents(embed_data['reorganize_imports.txt']),
+        GetFileContents(embed_data['reorganize_imports.txt'], encoding='UTF-8'),
         Doit,
     )
 

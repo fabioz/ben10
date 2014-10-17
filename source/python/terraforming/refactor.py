@@ -116,8 +116,7 @@ class TerraForming(object):
 
         try:
             terra = TerraFormer.Factory(filename)
-            changed, output = terra.ReorganizeImports(refactor=refactor)
-            CreateFile(filename, output, eol_style=EOL_STYLE_UNIX)
+            changed = terra.Save(refactor=refactor)
             return changed
         except Exception, e:
             Reraise(e, 'On TerraForming.ReorganizeImports with filename: %s' % filename)
@@ -137,7 +136,7 @@ class TerraForming(object):
 
         try:
             terra = TerraFormer.Factory(filename=filename, source=source_code)
-            changed, _output = terra.ReorganizeImports(refactor=refactor)
+            changed = terra.ReorganizeImports(refactor=refactor)
             return changed
         except Exception, e:
             Reraise(e, 'On TerraForming.CheckImports with filename: %s' % filename)
@@ -160,9 +159,9 @@ class TerraForming(object):
         '''
         try:
             input_lines = GetFileContents(filename, binary=True).split('\n')
-            lines = [i.rstrip('\r') for i in input_lines]
-            lines = self._RightTrimSpacesImpl(lines)
-            lines = self._FixTabsImpl(lines)
+            lines = [i.rstrip('\r') for i in input_lines]  # Fix eol (must come before eol-spaces)
+            lines = self._RightTrimSpacesImpl(lines)  # Fix eol-spaces
+            lines = self._FixTabsImpl(lines)  # Fix tabs
             contents = '\n'.join(lines)
             CreateFile(filename, contents, eol_style=EOL_STYLE_UNIX)
             return input_lines != lines

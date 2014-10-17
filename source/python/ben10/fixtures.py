@@ -9,6 +9,7 @@ import os
 import pytest
 
 
+
 #===================================================================================================
 # pytest_sessionstart
 #===================================================================================================
@@ -264,21 +265,30 @@ class _EmbedDataFixture(object):
         self._finalized = True
 
 
-    def AssertEqualFiles(self, filename1, filename2, fix_callback=lambda x:x):
+    def AssertEqualFiles(self, filename1, filename2, fix_callback=lambda x:x, binary=False, encoding=None):
         '''
         Compare two files contents, showing a nice diff view if the files differs.
 
         Searches for the filenames both inside and outside the data directory (in that order).
 
         :param str filename1:
+
         :param str filename2:
+
+        :param bool binary:
+            Thread both files as binary files.
+
+        :param str encoding:
+            File's encoding. If not None, contents obtained from file will be decoded using this
+            `encoding`.
+
         :param callable fix_callback:
             A callback to "fix" the contents of the obtained (first) file.
             This callback receives a list of strings (lines) and must also return a list of lines,
             changed as needed.
             The resulting lines will be used to compare with the contents of filename2.
         '''
-        from ben10.filesystem import GetFileLines
+        from ben10.filesystem import GetFileContents, GetFileLines
 
         def FindFile(filename):
             # See if this path exists in the data dir
@@ -296,15 +306,20 @@ class _EmbedDataFixture(object):
         filename1 = FindFile(filename1)
         filename2 = FindFile(filename2)
 
-        obtained = fix_callback(GetFileLines(filename1))
-        expected = GetFileLines(filename2)
+        if binary:
+            obtained = GetFileContents(filename1, binary=True)
+            expected = GetFileContents(filename2, binary=True)
+            assert obtained == expected
+        else:
+            obtained = fix_callback(GetFileLines(filename1, encoding=encoding))
+            expected = GetFileLines(filename2, encoding=encoding)
 
-        if obtained != expected:
-            import difflib
-            diff = ['*** FILENAME: ' + filename1]
-            diff += difflib.context_diff(obtained, expected)
-            diff = '\n'.join(diff)
-            raise AssertionError(diff)
+            if obtained != expected:
+                import difflib
+                diff = ['*** FILENAME: ' + filename1]
+                diff += difflib.context_diff(obtained, expected)
+                diff = '\n'.join(diff)
+                raise AssertionError(diff)
 
 
 @pytest.fixture  # pylint: disable=E1101

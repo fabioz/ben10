@@ -1,4 +1,5 @@
 from .command import Command
+from ben10.foundation.string import Dedent
 import ConfigParser
 import argparse
 import os
@@ -604,25 +605,64 @@ class App(object):
 
         :param str string:
             A multi-line string with command calls and expected results.
+            Consider the following syntax rules:
+                - Lines starting with '>' are command execution (command);
+                - Lines starting with "###" are ignored;
+                - Everything else is expected output of the previous "command";
+                - Use [retcode=X] syntax to check for non-zero return from a command.
         '''
 
-        def Execute(cmd, output):
-            _retcode, obtained = self.TestCall(cmd)
-            assert obtained.rstrip('\n') + '\n' == output.rstrip('\n') + '\n'
+        def Execute(cmd, expected_output, expected_retcode):
+            obtained_retcode, obtained = self.TestCall(cmd)
+            assert obtained.rstrip('\n') + '\n' == expected_output.rstrip('\n') + '\n'
+            assert expected_retcode == obtained_retcode, Dedent(
+                '''
+                >>> %(cmd)s
+                Command finished with return code "%(obtained_retcode)s", was expecting "%(expected_retcode)s"
+                Use ">>>my_command [retcode=X]" syntax to define the expected return code.
+                ''' % locals()
+            )
+
+        def GetExpectedReturnCode(input_line):
+            '''
+            Find the return code we expect from this command.
+
+            Expected return code must be in format '[retcode=999]'
+
+            If not specified, we assume that the expected retcode is 0
+            e.g.
+                >>>DoSomethingThatFails [retcode=1]
+                >>>DoSomethingOk [retcode=0]
+
+            :param str input_line:
+            '''
+            import re
+            pattern = '\[retcode=(\d+)\]'
+            match = re.search(pattern, input_line)
+            if match:
+                expected_retcode = int(match.groups()[0])
+            else:
+                expected_retcode = 0
+
+            return re.sub(pattern, '', input_line), expected_retcode
 
         cmd = None
-        output = ''
+        expected_output = ''
+        expected_retcode = 0
         for i_line in script.splitlines():
-            if i_line.startswith('>'):
+            if i_line.startswith('###'):
+                continue
+            elif i_line.startswith('>'):
                 if cmd is not None:
-                    Execute(cmd, output)
-                    output = ''
+                    Execute(cmd, expected_output, expected_retcode)
+                expected_output = ''
                 cmd = i_line[1:]
+                cmd, expected_retcode = GetExpectedReturnCode(cmd)
             else:
-                output += i_line + '\n'
+                expected_output += i_line + '\n'
 
         if cmd is not None:
-            Execute(cmd, output)
+            Execute(cmd, expected_output, expected_retcode)
 
 
     def TestCall(self, cmd_line, extra_apps={}):
