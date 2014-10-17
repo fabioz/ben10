@@ -23,7 +23,7 @@ def Symbols(console_, filename):
 
     :param filename: Python source code.
     '''
-    from terraformer import TerraFormer
+    from ._terra_former import TerraFormer
 
     terra = TerraFormer.Factory(filename)
     for i_import_symbol in sorted(terra.symbols, key=lambda x:(x.lineno, x.column, x.name)):
@@ -314,7 +314,7 @@ def _AddImportSymbol(filename, import_symbol):
 
     The operation is add a import-symbol to a filename.
     '''
-    from terraformer import TerraFormer
+    from ._terra_former import TerraFormer
 
     terra = TerraFormer.Factory(filename)
     terra.AddImportSymbol(import_symbol)

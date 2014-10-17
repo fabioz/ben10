@@ -1,5 +1,5 @@
-from ben10.foundation.string import Dedent
 from .command import Command
+from ben10.foundation.string import Dedent
 import ConfigParser
 import argparse
 import os
