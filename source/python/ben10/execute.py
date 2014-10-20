@@ -342,7 +342,7 @@ def Execute(
             # TODO: EDEN-245: Refactor System.Execute and derivates (git, scons, etc)
             if clean_eol:  # Read one line at the time, and remove EOLs
                 for line in iter(popen.stdout.readline, ""):
-                    line = line.rstrip('\n\r')
+                    line = line.decode('latin1').rstrip('\n\r')
                     if output_callback:
                         output_callback(line)
                     result.append(line)
