@@ -132,8 +132,8 @@ def _CreateSimpleProperty(namespace, name, property_creator, default=None):
     get, set = property_creator.MakeSetAndGet(name, default)
 
     set_name, get_name = MakeSetGetName(name)
-    get.__name__ = bytes(get_name)
-    set.__name__ = bytes(set_name)
+    get.__name__ = get_name.encode('ascii')
+    set.__name__ = set_name.encode('ascii')
     namespace[get_name] = get
     namespace[set_name] = set
     namespace[name] = Property(get, set)
