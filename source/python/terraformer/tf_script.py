@@ -1,7 +1,10 @@
 from __future__ import unicode_literals
 from ben10.filesystem import EOL_STYLE_UNIX, FindFiles, GetFileLines, IsDir, StandardizePath
+from ben10.foundation.print_detailed_traceback import PrintDetailedTraceback
+from ben10.foundation.string import Indent
 from clikit.app import App
 from functools import partial
+from io import StringIO
 import sys
 
 
@@ -298,8 +301,10 @@ def _FixFormat(filename, refactor):
         changed = terra.FixAll(filename)
         if filename.endswith(PYTHON_EXT):
             changed = terra.ReorganizeImports(filename, refactor=refactor) or changed
-    except Exception, e:
-        result = ('- %s: ERROR:\n  %s' % (filename, e), 0)
+    except Exception as e:
+        oss = StringIO()
+        PrintDetailedTraceback(stream=oss)
+        result = ('- %s: ERROR:\n  %s\n--- * ---\n%s' % (filename, e, oss.getvalue()), 0)
     else:
         if changed:
             result = ('- %s: FIXED' % filename, 1)

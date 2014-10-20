@@ -1,6 +1,4 @@
 from __future__ import unicode_literals
-from StringIO import StringIO
-import logging
 import sys
 
 
@@ -69,7 +67,7 @@ def PrintDetailedTraceback(exc_info=None, stream=None, max_levels=None, max_line
             break
     stack.reverse()
 
-    print >> stream, 'Traceback (most recent call last):'
+    stream.write('Traceback (most recent call last):\n')
 
     for frame in stack:
         params = dict(
@@ -77,14 +75,14 @@ def PrintDetailedTraceback(exc_info=None, stream=None, max_levels=None, max_line
             filename=frame.f_code.co_filename,
             lineno=frame.f_lineno,
         )
-        print >> stream, '  File "%(filename)s", line %(lineno)d, in %(name)s' % params
+        stream.write('  File "%(filename)s", line %(lineno)d, in %(name)s\n' % params)
         try:
             lines = file(frame.f_code.co_filename).readlines()
             line = lines[frame.f_lineno - 1]
         except:
             pass  # don't show the line source
         else:
-            print >> stream, '    %s' % line.strip()
+            stream.write('    %s\n' % line.strip())
 
         if not omit_locals:
             # string used to truncate string representations of objects that exceed the maximum
@@ -108,7 +106,7 @@ def PrintDetailedTraceback(exc_info=None, stream=None, max_levels=None, max_line
                         middle = int(space / 2)
                         val_repr = val_repr[:middle] + trunc_str + val_repr[-(middle + len(trunc_str)):]
 
-                print >> stream, ss + val_repr
+                stream.write(ss + val_repr + '\n')
 
     #
     # Replaced "exception" by "exception.message" because "unicode(exception)" generate an
@@ -121,4 +119,4 @@ def PrintDetailedTraceback(exc_info=None, stream=None, max_levels=None, max_line
     else:
         message = unicode(exception)  # Default behavior
 
-    print >> stream, '%s: %s' % (exc_type.__name__, message)
+    stream.write('%s: %s\n' % (exc_type.__name__, message))

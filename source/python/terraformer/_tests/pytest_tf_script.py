@@ -1,4 +1,3 @@
-from __future__ import unicode_literals
 # -*- coding: UTF-8 -*-
 from __future__ import unicode_literals
 from ben10.filesystem import CreateFile, GetFileContents

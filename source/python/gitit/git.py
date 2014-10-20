@@ -808,7 +808,7 @@ class Git(Singleton):
 
 
     @Memoize(500)
-    def GetCurrentBranch(self, repo_path):
+    def GetCurrentBranch(self, repo_path, submodule=False):
         '''
         :param repo_path:
             Path to the repository (local)
@@ -822,7 +822,7 @@ class Git(Singleton):
 
         # TODO: BEN-47: Find the correct way of handling submodules on DevSpace jobs.
         # Returns the branch of the host repository if the given repo_path is a submodule.
-        if self._IsSubModule(repo_path):
+        if submodule and self._IsSubModule(repo_path):
             repo_path = self._GetTopLevel(os.path.dirname(self._GetTopLevel(repo_path)))
 
         branches = self.Execute(['branch'], repo_path)
