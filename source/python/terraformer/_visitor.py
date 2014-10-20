@@ -106,16 +106,9 @@ class ASTVisitor(object):
         while not isinstance(code_position, Leaf) and code_position.type not in types:
             code_position = code_position.children[0]
 
-        # Line number is based on the first leaf.
-        first_leaf = self._GetFirstLeaf(tree)
-        lineno = self._GetImportBlockLineNumber(first_leaf)
-
         # Module scope.
         self._module = ModuleScope(None, 'module', tree)
         self._scope_stack.append(self._module)
-
-        # Create import-block zero, a place-holder for import-symbols additions.
-        self._CreateImportBlock(self._module, code_position, code_replace=[], lineno=lineno)
 
 
     def _CreateImportBlock(self, parent, code_position, code_replace, lineno, indent=0):
@@ -173,6 +166,22 @@ class ASTVisitor(object):
 
         :param lib2to3.Leaf leaf:
         '''
+        from lib2to3.pgen2 import token
+
+        def CreateImportBlockZero(code_position):
+            if code_position.type == token.STRING:
+                return
+
+            if code_position.type == token.NEWLINE and not code_position.prefix:
+                return
+
+            lineno = self._GetImportBlockLineNumber(code_position)
+            self._CreateImportBlock(self._module, code_position, code_replace=[], lineno=lineno)
+
+        # Create import-block zero, a place-holder for import-symbols additions.
+        if not self.import_blocks:
+            CreateImportBlockZero(leaf)
+
         # Handle import-block, connecting import-symbols.
         if self._current_import_block:
             # Append 'intermediate' tokens to the import-block or reset it.
@@ -183,7 +192,6 @@ class ASTVisitor(object):
 
         # Handle NAME tokens.
         # NOTE: Can't use DEFAULT_PATTERNS because those are only for Nodes.
-        from lib2to3.pgen2 import token
         if leaf.type in (token.NAME,):
             self.EvVisitName(leaf)
 
@@ -220,6 +228,12 @@ class ASTVisitor(object):
             The raw AST node with the import-statement.
         '''
         from ._lib2to3 import GetNodeLineNumber
+
+        if not self.import_blocks and body.prefix:
+            # Create Import-block-zero before the first import-statement IF we have a prefix, that
+            # is, a comment block or line-ends.
+            lineno = self._GetImportBlockLineNumber(body)
+            self._CreateImportBlock(self._module, body, code_replace=[], lineno=lineno)
 
         # Obtain the import-block for these statements, creating if necessary.
         first_leaf = self._GetFirstLeaf(body)

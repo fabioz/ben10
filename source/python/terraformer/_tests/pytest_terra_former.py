@@ -88,16 +88,16 @@ def testImportBlockZero(monkeypatch, embed_data):
         ''',
         ['__future__.unicode_literals'],
         '''
-        from __future__ import unicode_literals
         """
         Docs
         """
+        from __future__ import unicode_literals
 
         def Function():
             pass
         ''',
         [
-            'IMPORT-BLOCK (1, 0) import-block #0\n  IMPORT-FROM (0, 0) __future__\n    IMPORT (0, 0) __future__.unicode_literals',
+            'IMPORT-BLOCK (4, 0) import-block #0\n  IMPORT-FROM (0, 0) __future__\n    IMPORT (0, 0) __future__.unicode_literals',
         ]
     )
 
@@ -196,6 +196,24 @@ def testImportBlockZero(monkeypatch, embed_data):
         [
             'IMPORT-BLOCK (1, 0) import-block #0\n  IMPORT-FROM (0, 0) __future__\n    IMPORT (0, 0) __future__.unicode_literals',
             'IMPORT-BLOCK (1, 0) import-block #1\n  IMPORT-FROM (0, 0) coilib50\n    IMPORT (8, 0) coilib50._coilib50_cpp_module',
+        ]
+    )
+
+    TestIt(
+        '''
+
+
+        import alpha
+        ''',
+        ['__future__.unicode_literals'],
+        '''
+
+
+        from __future__ import unicode_literals
+        import alpha
+        ''',
+        [
+            'IMPORT-BLOCK (1, 0) import-block #0\n  IMPORT (3, 0) alpha\n  IMPORT-FROM (0, 0) __future__\n    IMPORT (0, 0) __future__.unicode_literals',
         ]
     )
 
