@@ -1,2 +1,3 @@
 eclipse.preferences.version=1
-encoding//source/python/ben10/filesystem/_tests/pytest_filesystem.py=utf-8
+encoding//source/python/ben10/_tests/pytest_execute.py=UTF-8
+encoding//source/python/ben10/filesystem/_tests/pytest_filesystem.py=UTF-8

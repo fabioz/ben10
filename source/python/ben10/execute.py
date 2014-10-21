@@ -174,6 +174,7 @@ def Execute(
         extra_environ=None,
         input=None,  # @ReservedAssignment
         output_callback=None,
+        output_encoding='ascii',
         return_code_callback=None,
         shell=False,
         ignore_auto_quote=False,
@@ -209,6 +210,9 @@ def Execute(
 
     :param callback(unicode) output_callback:
         A optional callback called with the process output as it is generated.
+
+    :param unicode output_encoding:
+        Encoding used to decode output from subprocess.
 
     :param callback(int) return_code_callback:
         A optional callback called with the execution return -code.
@@ -251,8 +255,25 @@ def Execute(
     :returns:
         Returns the process execution output as a list of strings.
     '''
+    import locale
+    locale_encoding = locale.getpreferredencoding()
+
     def CmdLineStr(cmd_line):
         return '    ' + '\n    '.join(cmd_line)
+
+
+    def EncodeWithLocale(value):
+        if isinstance(value, unicode):
+            return value.encode(locale_encoding)
+        if isinstance(value, list):
+            return [x.encode(locale_encoding) for x in value]
+
+    def DecodeWithLocale(value):
+        if isinstance(value, bytes):
+            return value.decode(locale_encoding)
+        if isinstance(value, list):
+            return [x.decode(locale_encoding) for x in value]
+
 
     def EnvStr(env):
         result = ''
@@ -281,9 +302,12 @@ def Execute(
             # Always use normpath for command, because Windows does not like posix slashes
             command = StandardizePath(command)
             command = os.path.normpath(command)
-            command_line = [command] + shlex.split(arguments)
+
+            # shlex cannot handle non-ascii unicode strings
+            command_line = [command] + DecodeWithLocale(shlex.split(EncodeWithLocale(arguments)))
         else:
-            command_line = shlex.split(command_line)
+            # shlex cannot handle non-ascii unicode strings
+            command_line = DecodeWithLocale(shlex.split(EncodeWithLocale(command_line)))
 
     if cwd is None:
         cwd = os.getcwd()
@@ -300,12 +324,13 @@ def Execute(
             replace_environ[i_name] = os.environ[i_name]
     environ.update(replace_environ)
 
-    # subprocess does not accept unicode strings
+    # subprocess does not accept unicode strings in the environment
     environ = {bytes(key) : bytes(value) for key, value in environ.iteritems()}
 
+    # Make sure the command line is correctly encoded. This always uses locale.getpreferredencoding()
     try:
         popen = subprocess.Popen(
-            command_line,
+            EncodeWithLocale(command_line),
             cwd=cwd,
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE if pipe_stdout else None,
@@ -315,6 +340,11 @@ def Execute(
             shell=shell,
         )
     except Exception, e:
+        if isinstance(e, OSError):
+            # Fix encoding from OSErrors. They also come in locale.getpreferredencoding()
+            # It's hard to change error messages in OSErrors, so we raise something else.
+            e = RuntimeError(unicode(str(e), encoding=locale_encoding, errors='replace'))
+
         Reraise(
             e,
             'While executing "System.Execute":\n'
@@ -324,7 +354,8 @@ def Execute(
             '    %s\n\n'
             '  command_line::\n'
             '%s\n'
-            % (EnvStr(environ), cwd, CmdLineStr(command_line)))
+            % (EnvStr(environ), cwd, CmdLineStr(command_line))
+        )
 
     try:
         result = []
@@ -342,7 +373,7 @@ def Execute(
             # TODO: EDEN-245: Refactor System.Execute and derivates (git, scons, etc)
             if clean_eol:  # Read one line at the time, and remove EOLs
                 for line in iter(popen.stdout.readline, ""):
-                    line = line.decode('latin1').rstrip('\n\r')
+                    line = line.decode(output_encoding).rstrip('\n\r')
                     if output_callback:
                         output_callback(line)
                     result.append(line)
@@ -354,6 +385,7 @@ def Execute(
                     # Check if last line was \r, if not, print what we have
                     if char != '\n' and carriage:
                         carriage = False
+                        current_line = current_line.decode(output_encoding)
                         if output_callback:
                             output_callback(current_line)
                         result.append(current_line)
@@ -365,6 +397,7 @@ def Execute(
                         carriage = True
 
                     if char == '\n':
+                        current_line = current_line.decode(output_encoding)
                         if output_callback:
                             output_callback(current_line)
                         result.append(current_line)
@@ -392,6 +425,7 @@ def Execute2(
         environ=None,
         extra_environ=None,
         output_callback=None,
+        output_encoding='ascii',
         shell=False,
         ignore_auto_quote=False,
         clean_eol=True,
@@ -420,6 +454,7 @@ def Execute2(
         environ=environ,
         extra_environ=extra_environ,
         output_callback=output_callback,
+        output_encoding=output_encoding,
         return_code_callback=CallbackReturnCode,
         shell=shell,
         ignore_auto_quote=ignore_auto_quote,

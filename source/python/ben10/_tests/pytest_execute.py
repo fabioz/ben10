@@ -1,8 +1,7 @@
+# -*- coding: UTF-8 -*-
 from __future__ import unicode_literals
 from ben10.execute import EnvironmentContextManager, Execute, ExecuteNoWait, PrintEnvironment
-from ben10.filesystem import CreateFile, OpenFile
 from ben10.foundation.string import Dedent
-from cStringIO import StringIO
 from txtout.txtout import TextOutput
 import io
 import os
@@ -31,6 +30,18 @@ class Test(object):
         obtained_output = obtained_output.lstrip('\n')
 
         assert obtained_output == expected_output
+
+
+    def testUnknownFileUnicodePath(self):
+        # This should raise an error because that file does not exist
+        with pytest.raises(RuntimeError) as e:
+            Execute('ã_míssing_file dóit')
+
+        # We were able to read the exception and print out the complete information
+        error_message = unicode(e.value)
+        assert 'environment::' in error_message
+        assert 'current working dir::' in error_message
+        assert 'command_line::\n    ã_míssing_file' in error_message
 
 
     def testExecute(self, embed_data):
