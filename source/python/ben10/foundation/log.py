@@ -1,4 +1,3 @@
-from __future__ import unicode_literals
 '''
 Examples of using logging:
 
@@ -24,8 +23,11 @@ except:
 #Show log in stderr (for anything logged).
 AddDebugStreamHandler()
 '''
-import StringIO
+from __future__ import unicode_literals
+from io import StringIO
 import logging
+
+
 
 # Levels
 DEBUG = logging.DEBUG
@@ -165,7 +167,7 @@ def StartLogging(logger=''):
     :param unicode logger:
         The logger context to be logged.
     '''
-    string_io = StringIO.StringIO()
+    string_io = StringIO()
     stream_handler = StreamHandler(string_io)
     GetLogger(logger).AddHandler(stream_handler)
     return _LogHandle(logger, stream_handler, string_io)
@@ -190,7 +192,7 @@ def _ExceptionWithDetailedTraceback(logger, msg):
         Message to display before traceback.
     '''
     from .print_detailed_traceback import PrintDetailedTraceback
-    stream = StringIO.StringIO()
+    stream = StringIO()
     PrintDetailedTraceback(stream=stream)
     logger.error(msg + '\n' + stream.getvalue())
 

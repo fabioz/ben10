@@ -14,7 +14,7 @@ class Symbol(object):
 
     PREFIX = 'DEF'
 
-    def __init__(self, parent, name, code):
+    def __init__(self, parent, name, code, code_replace=None):
         from lib2to3.pytree import Leaf, Node
         from ._lib2to3 import GetNodePosition
         from types import NoneType
@@ -23,6 +23,7 @@ class Symbol(object):
 
         assert isinstance(code, (Node, Leaf, NoneType))
         self.code = code
+        self.code_replace = code_replace
         self.lineno = 0
         self.column = 0
         if self.code:
@@ -94,6 +95,40 @@ class Symbol(object):
         raise NotImplementedError()
 
 
+    def Walk(self):
+        '''
+        Iterates over the symbols.
+
+        :return iter(Symbol):
+        '''
+        yield self
+        for i_child in self._children:
+            for j_child in i_child.Walk():
+                yield j_child
+
+
+    @classmethod
+    def _InsertCodeBeforeNode(cls, node, code):
+
+        if not node.parent:
+            raise TypeError("Can't insert before node that doesn't have a parent.")
+
+        if not isinstance(code, list):
+            code = [code]
+
+        pos = node.parent.children.index(node)
+        new_children = []
+        for i, i_child in enumerate(node.parent.children):
+            if i == pos:
+                new_children += code
+            new_children.append(i_child)
+
+        for j_node in code:
+            j_node.parent = node.parent
+        node.parent.children = new_children
+        node.parent.changed()
+
+
 
 #===================================================================================================
 # Scope
@@ -104,16 +139,16 @@ class Scope(Symbol):
     Symbols that define a scope derive from this class (Eg.: method, class), giving it a prefix.
     '''
 
-    def __init__(self, parent, name, code):
-        Symbol.__init__(self, parent, name, code)
+    def __init__(self, parent, name, code, code_replace=None):
+        Symbol.__init__(self, parent, name, code, code_replace=code_replace)
 
         self.nested = False
 
-    def AddSymbolUsage(self, symbol, code):
-        SymbolUsage(self, symbol, code)
+    def AddSymbolUsage(self, symbol, code, code_replace=None):
+        return SymbolUsage(self, symbol, code, code_replace=code_replace)
 
     def AddSymbolDefinition(self, symbol, code):
-        Symbol(self, symbol, code)
+        return Symbol(self, symbol, code)
 
 
 class SymbolArgument(Symbol):
@@ -133,6 +168,13 @@ class SymbolUsage(Symbol):
     '''
 
     PREFIX = 'USE'
+
+    def Rename(self, symbol):
+        from lib2to3.fixer_util import Name
+        node = Name(symbol, self.code.prefix)
+        self._InsertCodeBeforeNode(self.code, node)
+        for i_node in self.code_replace:
+            i_node.remove()
 
 
 
@@ -503,9 +545,7 @@ class ImportBlock(Scope):
     PYTHON_EXT = '.py'
 
     def __init__(self, parent, code, code_replace, id, lineno, indent):
-        Scope.__init__(self, parent, 'import-block #%d' % id, code)
-        # The new import-block will REPLACE this node(s).
-        self._code_replace = code_replace
+        Scope.__init__(self, parent, 'import-block #%d' % id, code, code_replace=code_replace)
         self.id = id
 
 
@@ -523,16 +563,24 @@ class ImportBlock(Scope):
         for i_import_symbol in [i for i in self._WalkImportSymbols()]:
             new_name = refactor.get(i_import_symbol.name)
             if new_name is None:
-                new_package = refactor.get(i_import_symbol.GetPackageName())
-                if new_package is not None:
-                    new_name = new_package + '.' + i_import_symbol.GetToken()
+                new_name = refactor.get(i_import_symbol.name + '$')
+                if new_name is None:
+                    new_package = refactor.get(i_import_symbol.GetPackageName())
+                    if new_package is not None:
+                        new_name = new_package + '.' + i_import_symbol.GetToken()
 
             if new_name:
+                if new_name.startswith('from '):
+                    kind = i_import_symbol.KIND_IMPORT_FROM
+                    new_name = new_name[5:]
+                else:
+                    kind = i_import_symbol.kind
+
                 self.ObtainImportSymbol(
                     new_name,
                     import_as=i_import_symbol.import_as,
                     comment=i_import_symbol.comment,
-                    kind=i_import_symbol.kind,
+                    kind=kind,
                     lineno=i_import_symbol.lineno,
                 )
                 i_import_symbol.RemoveFromParent()
@@ -688,15 +736,15 @@ class ImportBlock(Scope):
             )
 
             # Some extra fixes on new created nodes.
-            if self._code_replace:
+            if self.code_replace:
                 assert len(nodes) > 0
-                assert len(self._code_replace) > 0
+                assert len(self.code_replace) > 0
 
                 # Copies the prefix from the replaced code.
-                nodes[0].prefix = self._code_replace[0].prefix
+                nodes[0].prefix = self.code_replace[0].prefix
 
                 # Remove EOL from new nodes under certain conditions:
-                next_node = self._code_replace[-1].next_sibling
+                next_node = self.code_replace[-1].next_sibling
                 if next_node and next_node.value == ';':
                     del nodes[-1].children[-1]
 
@@ -704,13 +752,13 @@ class ImportBlock(Scope):
             self._InsertCodeBeforeNode(self.code, nodes)
 
             # Delete the code this code block replaces.
-            for i_node in self._code_replace:
+            for i_node in self.code_replace:
                 i_node.remove()
 
             self.code = nodes[0]
-            self._code_replace = nodes
+            self.code_replace = nodes
         else:
-            for i_node in self._code_replace:
+            for i_node in self.code_replace:
                 i_node.remove()
 
 
@@ -783,28 +831,6 @@ class ImportBlock(Scope):
             for i_child in node.children:
                 for j_leaf in cls._WalkLeafs(i_child):
                     yield j_leaf
-
-
-    @classmethod
-    def _InsertCodeBeforeNode(cls, node, code):
-
-        if not node.parent:
-            raise TypeError("Can't insert before node that doesn't have a parent.")
-
-        if not isinstance(code, list):
-            code = [code]
-
-        pos = node.parent.children.index(node)
-        new_children = []
-        for i, i_child in enumerate(node.parent.children):
-            if i == pos:
-                new_children += code
-            new_children.append(i_child)
-
-        for j_node in code:
-            j_node.parent = node.parent
-        node.parent.children = new_children
-        node.parent.changed()
 
 
     @classmethod

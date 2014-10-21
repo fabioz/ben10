@@ -26,6 +26,7 @@ def testDocs():
                     fix-commit          Perform the format fixes on sources files on a git repository modified files.
                     fix-is-frozen       Fix some pre-determinated set of symbols usage with the format:
                     fix-encoding        Fix python module files encoding, converting all non-ascii encoded files to UTF-8.
+                    fix-stringio        Fix StringIO usage.
 
             '''
         )

@@ -1,11 +1,10 @@
 from __future__ import unicode_literals
-from ben10.filesystem import EOL_STYLE_UNIX, FindFiles, GetFileLines, IsDir, StandardizePath
+from ben10.filesystem import EOL_STYLE_UNIX, FindFiles, IsDir, StandardizePath
 from ben10.foundation.print_detailed_traceback import PrintDetailedTraceback
-from ben10.foundation.string import Indent
 from clikit.app import App
 from functools import partial
 from io import StringIO
-import sys
+
 
 
 app = App('terraformer')
@@ -76,7 +75,7 @@ def FixFormat(console_, refactor=None, python_only=False, single_job=False, sort
     filenames = _GetFilenames(sources, extensions)
     refactor = GetRefactorDict(refactor, inverted_refactor)
     partial_fix_format = partial(_FixFormat, refactor=refactor)
-    _Map(console_, partial_fix_format, filenames, sorted, single_job)
+    _Map(console_, partial_fix_format, filenames, sorted, True)
 
 
 @app
@@ -91,7 +90,7 @@ def AddImportSymbol(console_, import_symbol, single_job=False, *sources):
     '''
     filenames = _GetFilenames(sources, [PYTHON_EXT])
     partial_add_import_symbol = partial(_AddImportSymbol, import_symbol=import_symbol)
-    _Map(console_, partial_add_import_symbol, filenames, sorted, single_job)
+    _Map(console_, partial_add_import_symbol, filenames, sorted, True)
 
 
 @app
@@ -121,7 +120,7 @@ def FixCommit(console_, source, single_job=False):
 
     filenames = GetFilenames(source)
     partial_fix_format = partial(_FixFormat, refactor={})
-    _Map(console_, partial_fix_format, filenames, sorted, single_job)
+    _Map(console_, partial_fix_format, filenames, sorted, True)
 
 
 @app
@@ -146,11 +145,12 @@ def FixIsFrozen(console_, *sources):
     from ben10.filesystem import CreateFile, EOL_STYLE_UNIX, FindFiles, GetFileContents
 
     FIND_REPLACE = [
+        ('StringIO', 'StringIO', 'from io import StringIO'),
+        ('cStringIO', 'StringIO', 'from io import StringIO'),
         ('coilib50.IsFrozen', 'IsFrozen', 'from ben10.foundation.is_frozen import IsFrozen'),
         ('coilib50.IsDevelopment', 'IsDevelopment', 'from ben10.foundation.is_frozen import IsDevelopment'),
         ('coilib50.SetIsFrozen', 'SetIsFrozen', 'from ben10.foundation.is_frozen import SetIsFrozen'),
         ('coilib50.SetIsDevelopment', 'SetIsDevelopment', 'from ben10.foundation.is_frozen import SetIsDevelopment'),
-
         ('coilib40.basic.IsInstance', 'IsInstance', 'from ben10.foundation.klass import IsInstance'),
     ]
 
@@ -265,6 +265,36 @@ def FixEncoding(console_, *sources):
                 raise
 
 
+@app
+def FixStringio(console_, *sources):
+    '''
+    Fix StringIO usage.
+
+    :param sources: List of directories or files to process.
+    '''
+    from terraformer import TerraFormer, FileTooBigError
+
+    for i_filename in _GetFilenames(sources, [PYTHON_EXT]):
+        try:
+            terra = TerraFormer(filename=i_filename)
+            changed = terra.ReorganizeImports(
+                refactor={
+                    'StringIO.StringIO': 'io.StringIO',
+                    'cStringIO.StringIO': 'io.StringIO',
+                    'cStringIO': 'from io.StringIO',
+                    'StringIO': 'from io.StringIO',
+                }
+            )
+            if changed:
+                console_.Item('%s: FIXED' % i_filename)
+                for i_symbol in terra.module.Walk():
+                    if i_symbol.PREFIX == 'USE' and i_symbol.name in ('cStringIO.StringIO', 'StringIO.StringIO'):
+                        i_symbol.Rename('StringIO')
+                terra.Save()
+        except FileTooBigError:
+            console_.Item('%s: FileTooBig (for TerraFormer)' % i_filename)
+
+
 
 def _GetFilenames(paths, extensions):
     '''
@@ -323,6 +353,7 @@ def _AddImportSymbol(filename, import_symbol):
 
     terra = TerraFormer.Factory(filename)
     terra.AddImportSymbol(import_symbol)
+    terra.ReorganizeImports()
     changed = terra.Save()
 
     if changed:

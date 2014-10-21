@@ -378,6 +378,7 @@ def testLocalImports(monkeypatch, embed_data):
     def TestIt(filename):
         full_filename = embed_data['testLocalImports/alpha/%s.py_' % filename]
         terra = TerraFormer(filename=full_filename)
+        terra.ReorganizeImports()
         terra.Save()
         embed_data.AssertEqualFiles(
             embed_data['testLocalImports/alpha/%s.py_' % filename],
@@ -398,6 +399,36 @@ def testLocalImports(monkeypatch, embed_data):
         with pytest.raises(RuntimeError):
             monkeypatch.setattr(TerraFormer, 'MAX_FILE_SIZE', 5)
             TestIt('quilo')
+
+
+
+def testRename(embed_data, line_tester):
+    from ben10.filesystem import GetFileContents
+
+    def Doit(lines):
+        source = ''.join([i + '\n' for i in lines])
+
+        terra = TerraFormer(source=source)
+        changed = terra.ReorganizeImports(
+            refactor={
+                'StringIO.StringIO': 'io.StringIO',
+                'cStringIO.StringIO': 'io.StringIO',
+                'cStringIO': 'from io.StringIO',
+                'StringIO': 'from io.StringIO',
+            }
+        )
+        if changed:
+            for i_symbol in terra.module.Walk():
+                if i_symbol.PREFIX == 'USE' and i_symbol.name in ('cStringIO.StringIO', 'StringIO.StringIO'):
+                    i_symbol.Rename('StringIO')
+
+        return terra.GenerateSource().splitlines()
+
+    line_tester.TestLines(
+        GetFileContents(embed_data['testRename.txt'], encoding='UTF-8'),
+        Doit,
+    )
+
 
 
 def testSymbolVisitor():
@@ -460,6 +491,7 @@ def testSymbolVisitor():
         '''
     )
 
+    # Compares the results with the one given by compiler.symbols.SymbolVisitor, our inspiration.
     from compiler.symbols import SymbolVisitor
     from compiler.transformer import parse
     from compiler.visitor import walk

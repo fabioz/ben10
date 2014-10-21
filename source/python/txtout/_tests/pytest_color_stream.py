@@ -1,6 +1,6 @@
 from __future__ import unicode_literals
+from io import StringIO
 from txtout.color_stream import ColorStream, UnixConsole
-import cStringIO
 
 
 
@@ -10,7 +10,7 @@ import cStringIO
 class Test:
 
     def testColorStream(self):
-        stream = cStringIO.StringIO()
+        stream = StringIO()
         color_stream = ColorStream(stream, verbose=True)
         color_stream.write('alpha')
         color_stream.SetColor('RED')
@@ -27,7 +27,7 @@ class Test:
 
     def testUnixConsole(self):
 
-        stream = cStringIO.StringIO()
+        stream = StringIO()
         con = UnixConsole(stream)
         stream.write('alpha')
         con.SetColor('RED')

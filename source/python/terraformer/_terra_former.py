@@ -60,7 +60,7 @@ class TerraFormer(object):
         from ._visitor import ASTVisitor
         visitor = ASTVisitor()
         visitor.Visit(self.code)
-        self.symbols, self.import_blocks = visitor.symbols, visitor.import_blocks
+        self.module, self.symbols, self.import_blocks = visitor._module, visitor.symbols, visitor.import_blocks
 
 
     def GenerateSource(self):
@@ -233,19 +233,26 @@ class TerraFormer(object):
         return self.__original_source != self.GenerateSource()
 
 
-    def Save(self, refactor={}, page_width=100):
+    def Save(self):
         '''
         Saves the filename applying the changes made by previous method calls.
         '''
         from ben10.filesystem import CreateFile, EOL_STYLE_UNIX
 
-        changed = self.ReorganizeImports(refactor=refactor, page_width=page_width)
+        assert self.filename is not None, "No filename set on TerraFormer."
+        assert self.__original_source is not None, "No original content set on TerraFormer."
+
+        new_source = self.GenerateSource()
+        changed = new_source != self.__original_source
 
         if changed:
-            assert self.filename is not None, "No filename set on TerraFormer."
-            assert self.__original_source is not None, "No original content set on TerraFormer."
             self.__original_source = self.GenerateSource()
-            CreateFile(self.filename, self.__original_source, eol_style=EOL_STYLE_UNIX, encoding='UTF-8')
+            CreateFile(
+                self.filename,
+                self.__original_source,
+                eol_style=EOL_STYLE_UNIX,
+                encoding='UTF-8'
+            )
 
         return changed
 

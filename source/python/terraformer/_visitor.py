@@ -186,7 +186,7 @@ class ASTVisitor(object):
         if self._current_import_block:
             # Append 'intermediate' tokens to the import-block or reset it.
             if leaf.value in (u'\n', u'\r\n'):
-                self._current_import_block._code_replace.append(leaf)
+                self._current_import_block.code_replace.append(leaf)
             else:
                 self._current_import_block = None
 
@@ -246,7 +246,7 @@ class ASTVisitor(object):
             while connection_node and connection_node.value in (u'\n'):
                 code_replace.append(connection_node)
                 connection_node = connection_node.next_sibling
-            self._current_import_block._code_replace += code_replace
+            self._current_import_block.code_replace += code_replace
         else:
             self._CreateNewImportBlock(body, prefix, indent)
 
@@ -305,7 +305,7 @@ class ASTVisitor(object):
         if self._assignment == 1:  # Assignee
             current_scope.AddSymbolDefinition(symbol, body)
         else:
-            current_scope.AddSymbolUsage(symbol, body)
+            current_scope.AddSymbolUsage(symbol, body, code_replace=nodes)
 
 
     def EvVisitAssignment(self, name, value, body):

@@ -1,4 +1,5 @@
 from __future__ import unicode_literals
+from io import StringIO
 from ._pretty_xml import WritePrettyXMLElement
 from xml.etree import ElementTree
 
@@ -41,14 +42,13 @@ class XmlFactory(object):
         '''
         Create a new element or attribute:
 
-        :param str name:
+        :param unicode name:
             A XML path including or not an attribute definition
 
-        :param str value:
+        :param unicode value:
             The value to associate with the element or attribute
 
-        :rtype: Element
-        :returns:
+        :returns Element:
             Returns the element created.
             If setting an attribute value, returns the owner element.
 
@@ -62,7 +62,7 @@ class XmlFactory(object):
             result.attrib[attr_name] = str(value)
         else:
             result = self._ObtainElement(name)
-            result.text = str(value)
+            result.text = unicode(value)
         return XmlFactory(result)
 
 
@@ -70,7 +70,7 @@ class XmlFactory(object):
         '''
         Create and returns xml element.
 
-        :param str name:
+        :param unicode name:
             A XML path including or not an attribute definition.
 
         :rtype: Element
@@ -86,7 +86,7 @@ class XmlFactory(object):
         '''
         Create and returns a xml element with the given name.
 
-        :param str name:
+        :param unicode name:
             A XML path including. Each sub-client tag separated by a slash.
             If any of the parts ends with a "+" it creates a new sub-element in that part even if
             it already exists.
@@ -132,7 +132,7 @@ class XmlFactory(object):
         '''
         Writes the XML in a file with the given filename.
 
-        :param str filename:
+        :param unicode filename:
             A filename.
         '''
         from ben10.filesystem import CreateFile
@@ -144,10 +144,8 @@ class XmlFactory(object):
         '''
         Returns the resulting XML.
 
-        :return str:
+        :return unicode:
         '''
-        import StringIO
-
-        oss = StringIO.StringIO()
+        oss = StringIO()
         self.Print(oss, xml_header=xml_header)
         return oss.getvalue()

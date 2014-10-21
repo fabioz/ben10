@@ -117,7 +117,8 @@ class TerraForming(object):
 
         try:
             terra = TerraFormer.Factory(filename)
-            changed = terra.Save(refactor=refactor)
+            terra.ReorganizeImports(refactor=refactor)
+            changed = terra.Save()
             return changed
         except Exception, e:
             Reraise(e, 'On TerraForming.ReorganizeImports with filename: %s' % filename)

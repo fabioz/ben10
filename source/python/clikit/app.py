@@ -463,6 +463,8 @@ class App(object):
         '''
         Entry point for the commands execution.
         '''
+
+
         self.plugins['console'] = ConsolePlugin(self.console)
 
         if argv is None:
