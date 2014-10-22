@@ -223,7 +223,7 @@ def CreateMD5(source_filename, target_filename=None):
         md5_contents = Md5Hex(filename=source_filename)
     else:
         # Md5Hex can't handle remote files, we open it and pray we won't run out of memory.
-        md5_contents = Md5Hex(contents=GetFileContents(source_filename))
+        md5_contents = Md5Hex(contents=GetFileContents(source_filename, binary=True))
 
     # Write MD5 hash to a file
     CreateFile(target_filename, md5_contents)
@@ -746,7 +746,7 @@ def AppendToFile(filename, contents, eol_style=EOL_STYLE_NATIVE, encoding=None, 
 
     :param unicode encoding:
         Target file's content encoding.
-        Defaults to sys.getdefaultencoding()
+        Defaults to sys.getfilesystemencoding()
 
     :param bool binary:
         If True, content is appended in binary mode. In this case, `contents` must be `bytes` and not
@@ -769,7 +769,7 @@ def AppendToFile(filename, contents, eol_style=EOL_STYLE_NATIVE, encoding=None, 
 
         # Handle encoding here, and always write in binary mode. We can't use io.open because it
         # tries to do its own line ending handling.
-        contents = contents.encode(encoding or sys.getdefaultencoding())
+        contents = contents.encode(encoding or sys.getfilesystemencoding())
 
     oss = open(filename, 'ab')
     try:
@@ -948,15 +948,13 @@ def OpenFile(filename, binary=False, newline=None, encoding=None):
         if not os.path.isfile(filename):
             from ._filesystem_exceptions import FileNotFoundError
             raise FileNotFoundError(filename)
-        mode = 'r'
-        if binary:
-            mode += 'b'
-            encoding = None
+
+        mode = 'rb' if binary else 'r'
         return io.open(filename, mode, encoding=encoding, newline=newline)
 
     # Not local
     import _filesystem_remote
-    return _filesystem_remote.OpenFile(filename_url)
+    return _filesystem_remote.OpenFile(filename_url, binary=binary, encoding=encoding)
 
 
 
@@ -1063,8 +1061,8 @@ def CreateFile(filename, contents, eol_style=EOL_STYLE_NATIVE, create_dir=True, 
         If True, also creates directories needed in filename's path
 
     :param unicode encoding:
-        Target file's content encoding.
-        Defaults to sys.getdefaultencoding()
+        Target file's content encoding. Defaults to sys.getfilesystemencoding()
+        Ignored if `binary` = True
 
     :param bool binary:
         If True, file is created in binary mode. In this case, `contents` must be `bytes` and not
@@ -1082,15 +1080,22 @@ def CreateFile(filename, contents, eol_style=EOL_STYLE_NATIVE, create_dir=True, 
 
     .. seealso:: FTP LIMITATIONS at this module's doc for performance issues information
     '''
-    assert isinstance(contents, unicode) ^ binary, 'Must always receive unicode contents, unless binary=True'
+    # Lots of checks when writing binary files
+    if binary:
+        if isinstance(contents, unicode):
+            raise TypeError('contents must be str (bytes) when binary=True')
+    else:
+        if not isinstance(contents, unicode):
+            raise TypeError('contents must be unicode when binary=False')
 
-    if not binary:
         # Replaces eol on each line by the given eol_style.
         contents = _HandleContentsEol(contents, eol_style)
 
-        # Handle encoding here, and always write in binary mode. We can't use io.open because it
-        # tries to do its own line ending handling.
-        contents = contents.encode(encoding or sys.getdefaultencoding())
+        # Encode string and pretend we are using binary to prevent 'open' from automatically
+        # changing Eols
+        encoding = encoding or sys.getfilesystemencoding()
+        contents = contents.encode(encoding)
+        binary = True
 
     # If asked, creates directory containing file
     if create_dir:
@@ -1103,14 +1108,15 @@ def CreateFile(filename, contents, eol_style=EOL_STYLE_NATIVE, create_dir=True, 
 
     # Handle local
     if _UrlIsLocal(filename_url):
+        # Always writing as binary (see handling above)
         with open(filename, 'wb') as oss:
             oss.write(contents)
 
     # Handle FTP
     elif filename_url.scheme == 'ftp':
+        # Always writing as binary (see handling above)
         from _filesystem_remote import FTPCreateFile
-        FTPCreateFile(filename_url, contents)
-
+        FTPCreateFile(filename_url, contents, binary=True)
     else:
         from ._filesystem_exceptions import NotImplementedProtocol
         raise NotImplementedProtocol(filename_url.scheme)
@@ -1552,7 +1558,7 @@ def ReadLink(path):
             None,  # data
             1024,  # readSize
         )
-        buf = buf[20::2].encode('latin1', errors='replace')
+        buf = buf[20::2].encode(sys.getfilesystemencoding(), errors='replace')
         if '\\??\\' in buf:
             return StandardizePath(buf.split('\\??\\')[0])
         else:
