@@ -1,14 +1,13 @@
 from __future__ import unicode_literals
-from ben10.foundation.reraise import Reraise, ReraiseKeyError
+from ben10.foundation.reraise import Reraise
 import pytest
 
 
 
 #===================================================================================================
-# Test
+# TestReraise
 #===================================================================================================
-class Test(object):
-
+class TestReraise(object):
     def testReraise(self):
         def foo():
             raise AttributeError('Test')
@@ -36,11 +35,16 @@ class Test(object):
         assert obtained == expected
 
 
-    def testOserror(self):
-        '''
-        Reraise converts OSError to RuntimeError
-        '''
+#===================================================================================================
+# TestReraiseSpecial
+#===================================================================================================
+class TestReraiseSpecial(object):
+    '''
+    Test reraising some special exceptions.
 
+    .. seealso:: ben10.foundation.reraise.__ReraiseSpecial
+    '''
+    def testOserror(self):
         def foo():
             raise OSError(2, 'Hellow')
 
@@ -50,25 +54,18 @@ class Test(object):
             except Exception, exception:
                 Reraise(exception, "While doing 'bar'")
 
-        expected = "\nWhile doing x:\nWhile doing 'bar'\n[Errno 2] Hellow"
-
-        try:
+        with pytest.raises(OSError) as e:
             try:
                 bar()
-            except Exception, exception:
+            except OSError, exception:
                 Reraise(exception, "While doing x:")
-        except Exception, exception:
-            obtained = unicode(exception)
-            assert type(exception) == RuntimeError
 
-        assert obtained == expected
+        obtained_msg = unicode(e.value)
+        expected_msg = "\nWhile doing x:\nWhile doing 'bar'\n[Errno 2] Hellow"
+        assert obtained_msg == expected_msg
 
 
     def testSyntaxError(self):
-        '''
-        Properly give info on syntax error
-        '''
-
         def foo():
             raise SyntaxError('InitialError')
 
@@ -78,23 +75,22 @@ class Test(object):
             except SyntaxError, exception:
                 Reraise(exception, "SecondaryError")
 
-        obtained = 'Not Obtained yet'
-        try:
+        with pytest.raises(SyntaxError) as e:
             try:
                 bar()
-            except Exception, exception:
+            except SyntaxError, exception:
                 Reraise(exception, "While doing x:")
-        except Exception, exception:
-            obtained = unicode(exception)
 
-        assert 'SecondaryError' in obtained, 'Expected "SecondaryError" to be in: ' + obtained
+        obtained = unicode(e.value)
+        expected = '\nWhile doing x:\nSecondaryError\nInitialError'
+        assert obtained == expected
 
 
-    def testReraiseKey(self):
-        with pytest.raises(ReraiseKeyError) as key_error:
+    def testReraiseKeyError(self):
+        with pytest.raises(Exception) as e:
             try:
                 raise KeyError('key')
             except KeyError as exception:
                 Reraise(exception, "Reraising")
 
-        assert unicode(key_error) == '%s:96: ReraiseKeyError:' % __file__
+        assert unicode(e.value) == "\nReraising\nu'key'"

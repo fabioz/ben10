@@ -1,43 +1,7 @@
 from __future__ import unicode_literals
 '''
-Inspired in a code obtained from http://www.thescripts.com/forum/thread46361.html
+Inspired by http://www.thescripts.com/forum/thread46361.html
 '''
-
-
-
-#===================================================================================================
-# ReraiseKeyError
-#===================================================================================================
-class ReraiseKeyError(KeyError):
-    '''
-    Replaces KeyError storing the original message. This is used to keep the EOL in the message
-    '''
-
-    def __init__(self, message):
-        KeyError.__init__(self, message)
-        self._message = message
-
-    def __str__(self):
-        return self._message
-
-
-
-#===================================================================================================
-# ReraiseSyntaxError
-#===================================================================================================
-class ReraiseSyntaxError(SyntaxError):
-    '''
-    Replaces SyntaxError storing the original message. This is used because a syntax error
-    does not use the 'message' attribute to change the message of the error.
-    '''
-
-    def __init__(self, message):
-        SyntaxError.__init__(self, message)
-        self._message = message
-
-    def __str__(self):
-        return self._message
-
 
 
 #===================================================================================================
@@ -85,13 +49,8 @@ def Reraise(exception, message, separator='\n'):
     message = '\n' + message + current_message
 
     # Handling for special case, some exceptions have different behaviors.
-    if isinstance(exception, OSError):
-        # Create a new exception, since OSError behaves differently from other exceptions
-        exception = RuntimeError(message)
-    if isinstance(exception, KeyError):
-        exception = ReraiseKeyError(message)
-    elif isinstance(exception, SyntaxError):
-        exception = ReraiseSyntaxError(message)
+    if isinstance(exception, SPECIAL_EXCEPTIONS):
+        exception = __GetReraisedException(exception, message)
     else:
         # In Python 2.5 overriding the exception "__str__" has no effect in "unicode()". Instead, we
         # must change the "args" attribute which is used to build the string representation.
@@ -102,3 +61,46 @@ def Reraise(exception, message, separator='\n'):
 
     # Reraise the exception with the EXTRA message information
     raise exception, None, sys.exc_info()[-1]
+
+
+
+#===================================================================================================
+# __GetReraisedException
+#===================================================================================================
+# These exception classes cannot have their message altered in the traditional way
+SPECIAL_EXCEPTIONS = (
+    KeyError,
+    OSError,
+    SyntaxError,
+    UnicodeDecodeError,
+    UnicodeEncodeError,
+)
+def __GetReraisedException(exception, message):
+    '''
+    Reraises 'special' exceptions by creating a new subclass with the same 'exception.args', but
+    a hardcoded '__str__'
+
+    New exception being raised is named 'Reraised' + exception.__class__.__name__
+
+    :param Exception exception:
+        .. seealso:: Reraise
+
+    :param unicode message:
+        .. seealso:: Reraise
+
+    :return Exception:
+        A new exception instance that subclasses `exception.__class__`
+    '''
+    new_exception = type(
+        # Setting class name
+        bytes('Reraised' + exception.__class__.__name__),
+
+        # Setting superclass
+        (exception.__class__,),
+
+        # Setting class dict
+        {
+            '__str__': lambda *args: message,
+        }
+    )
+    return new_exception(*exception.args)
