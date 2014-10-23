@@ -4,33 +4,6 @@ from ftputil.error import FTPIOError, FTPOSError, PermanentError
 
 
 #===================================================================================================
-# _CaptureUnicodeErrors
-#===================================================================================================
-def _CaptureUnicodeErrors(func):
-    '''
-    Wraps a function call to capture and reraise UnicodeEncodeErrors, giving them a better message.
-    '''
-    from functools import wraps
-    @wraps(func)
-    def captured(*args, **kwargs):
-
-        try:
-            return func(*args, **kwargs)
-        except UnicodeEncodeError, e:
-            # "Reraise" UnicodeEncodeError with more information
-            raise UnicodeEncodeError(
-                e.encoding,
-                e.object,
-                e.start,
-                e.end,
-                'No support for non-ascii filenames in FTP.' + \
-                '\nUnicode string was: "%s"' % e.object.encode('ascii', errors='replace'),
-            )
-    return captured
-
-
-
-#===================================================================================================
 # FTPHost
 #===================================================================================================
 def FTPHost(url):
@@ -43,8 +16,12 @@ def FTPHost(url):
 
     :rtype: ftputil.FTPHost
     '''
-    from ftputil import FTPHost as ftputil_host
     import ftplib
+    import ftputil
+
+    # Always use UTF-8 in ftputil, otherwise it makes a mess by sometimes using UTF-8, and other
+    # times latin-1
+    ftputil.tool.LOSSLESS_ENCODING = 'UTF-8'
 
     class DefaultFTP(ftplib.FTP):
         def __init__(self, host='', user='', passwd='', acct='', port=ftplib.FTP.port):
@@ -60,6 +37,14 @@ def FTPHost(url):
                 else:
                     self.login()
 
+        # ftplib does not support unicode in Python < 3
+        # This was taken from http://stackoverflow.com/a/10691041
+        def putline(self, line):
+            line = line + '\r\n'
+            if isinstance(line, unicode):
+                line = line.encode('UTF-8')
+            self.sock.sendall(line)
+
         def __enter__(self):
             return self
 
@@ -74,7 +59,7 @@ def FTPHost(url):
 
 
     from functools import partial
-    create_host = partial(ftputil_host, url.hostname, url.username, url.password, port=url.port)
+    create_host = partial(ftputil.FTPHost, url.hostname, url.username, url.password, port=url.port)
 
     try:
         # Try to create active ftp host
@@ -161,16 +146,20 @@ def DownloadUrlToFile(source_url, target_filename):
 #===================================================================================================
 # OpenFile
 #===================================================================================================
-@_CaptureUnicodeErrors
-def OpenFile(filename_url):
+def OpenFile(filename_url, binary=False, encoding=None):
     '''
     :param ParseResult filename_url:
         Target file to be opened
 
         A parsed url as returned by urlparse.urlparse
 
-    :rtype: file
-    :returns:
+    :param binary:
+        .. seealso:: ben10.filesystem.OpenFile
+
+    :param encoding:
+        .. seealso:: ben10.filesystem.OpenFile
+
+    :returns file:
         The open file
 
     @raise: FileNotFoundError
@@ -188,7 +177,7 @@ def OpenFile(filename_url):
 
     if filename_url.scheme == 'ftp':
         try:
-            return _FTPOpenFile(filename_url)
+            return _FTPOpenFile(filename_url, binary=binary, encoding=encoding)
         except FTPIOError, e:
             if e.errno == 550:
                 from _filesystem_exceptions import FileNotFoundError
@@ -227,26 +216,28 @@ def _FTPDownload(source_url, target_filename):
     '''
     Downloads a file through FTP
 
-    :param source_url:
-        .. see:: DownloadUrlToFile
-    :param target_filename:
-        .. see:: DownloadUrlToFile
+    .. see:: DownloadUrlToFile
+        for param docs
     '''
     with FTPHost(source_url) as ftp_host:
         ftp_host.download(source=source_url.path, target=target_filename)
 
 
-def _FTPOpenFile(filename_url):
+def _FTPOpenFile(filename_url, binary=False, encoding=None):
     '''
     Opens a file (FTP only) and sets things up to close ftp connection when the file is closed.
 
-    :param filename_url:
-        .. see:: OpenFile
+    .. see:: OpenFile
+        for param docs
     '''
     ftp_host = FTPHost(filename_url)
     try:
-        # Open remote file in binary mode to maintain the original encoding and end of line.
-        open_file = ftp_host.open(filename_url.path, 'rb')
+        mode = 'r'
+        if binary:
+            mode += 'b'
+            encoding = None
+
+        open_file = ftp_host.open(filename_url.path, mode, encoding=encoding)
 
         # Set it up so when open_file is closed, ftp_host closes too
         def FTPClose():
@@ -270,35 +261,38 @@ def _FTPOpenFile(filename_url):
 #===================================================================================================
 # FTPCreateFile
 #===================================================================================================
-@_CaptureUnicodeErrors
-def FTPCreateFile(url, contents):
+def FTPCreateFile(url, contents, binary=False, encoding=None):
     '''
     Creates a file in a ftp server.
 
     :param ParseResult url:
         File to be created.
-
         A parsed url as returned by urlparse.urlparse
 
-    :param text contents:
-        The file contents.
+    :param contents:
+        .. seealso:: ben10.filesystem.CreateFile
+
+    :param binary:
+        .. seealso:: ben10.filesystem.CreateFile
+
+    :param encoding:
+        .. seealso:: ben10.filesystem.CreateFile
     '''
+    mode = 'wb' if binary else 'w'
     with FTPHost(url) as ftp_host:
-        with ftp_host.open(url.path, 'w') as oss:
-            oss.write(contents.decode('latin1'))
+        with ftp_host.open(url.path, mode, encoding=encoding) as oss:
+            oss.write(contents)
 
 
 #===================================================================================================
 # FTPIsFile
 #===================================================================================================
-@_CaptureUnicodeErrors
 def FTPIsFile(url):
     '''
     :param ParseResult url:
         URL for file we want to check
 
-    :rtype: bool
-    :returns:
+    :returns bool:
         True if file exists.
     '''
     with FTPHost(url) as ftp_host:
@@ -316,7 +310,6 @@ def FTPIsFile(url):
 #===================================================================================================
 # FTPCreateDirectory
 #===================================================================================================
-@_CaptureUnicodeErrors
 def FTPCreateDirectory(url):
     '''
     :param ParseResult url:
@@ -332,7 +325,6 @@ def FTPCreateDirectory(url):
 #===================================================================================================
 # FTPMoveDirectory
 #===================================================================================================
-@_CaptureUnicodeErrors
 def FTPMoveDirectory(source_url, target_url):
     '''
     :param ParseResult url:
@@ -348,7 +340,6 @@ def FTPMoveDirectory(source_url, target_url):
 #===================================================================================================
 # FTPIsDir
 #===================================================================================================
-@_CaptureUnicodeErrors
 def FTPIsDir(url):
     '''
     List files in a url
@@ -380,7 +371,6 @@ def FTPIsDir(url):
 #===================================================================================================
 # FTPListFiles
 #===================================================================================================
-@_CaptureUnicodeErrors
 def FTPListFiles(url):
     '''
     List files in a url
