@@ -255,107 +255,15 @@ def Execute(
     :returns:
         Returns the process execution output as a list of strings.
     '''
-    import locale
-    locale_encoding = locale.getpreferredencoding()
-
-    def CmdLineStr(cmd_line):
-        return '    ' + '\n    '.join(cmd_line)
-
-
-    def EncodeWithLocale(value):
-        if isinstance(value, unicode):
-            return value.encode(locale_encoding)
-        if isinstance(value, list):
-            return [x.encode(locale_encoding) for x in value]
-
-    def DecodeWithLocale(value):
-        if isinstance(value, bytes):
-            return value.decode(locale_encoding)
-        if isinstance(value, list):
-            return [x.decode(locale_encoding) for x in value]
-
-
-    def EnvStr(env):
-        result = ''
-        for i, j in sorted(env.items()):
-            if os.sep in j:
-                j = '\n    * ' + '\n    * '.join(sorted(j.split(os.pathsep)))
-            result += '  - %s = %s\n' % (i, j)
-        return result
-
-    # We accept strings as the command_line.
-    is_string_command_line = isinstance(command_line, unicode)
-
-    # Handle string/list command_list
-    if ignore_auto_quote and not is_string_command_line:
-        # ... with ignore_auto_quote we want a string command_line... but it came as a list
-        #     NOTE: This simple join may cause problems since we can have spaces in a argument. The correct way of
-        #           doing would be something like "shlex.join" (that does not exists, by the way).
-        command_line = ' '.join(command_line)
-
-    elif not ignore_auto_quote and is_string_command_line:
-        # ... without ignore_auto_quote we want a list command_line... but it came as a string
-        if sys.platform == 'win32':
-            command, arguments = SafeSplit(command_line, ' ', 1)
-            assert command.count('"') != 1, 'Command may have spaces in it. Use list instead of string.'
-
-            # Always use normpath for command, because Windows does not like posix slashes
-            command = StandardizePath(command)
-            command = os.path.normpath(command)
-
-            # shlex cannot handle non-ascii unicode strings
-            command_line = [command] + DecodeWithLocale(shlex.split(EncodeWithLocale(arguments)))
-        else:
-            # shlex cannot handle non-ascii unicode strings
-            command_line = DecodeWithLocale(shlex.split(EncodeWithLocale(command_line)))
-
-    if cwd is None:
-        cwd = os.getcwdu()
-
-    if environ is None:
-        environ = os.environ.copy()
-
-    if extra_environ:
-        environ.update(extra_environ)
-
-    replace_environ = {}
-    for i_name, i_value in environ.iteritems():
-        if i_value is COPY_FROM_ENVIRONMENT and i_name in os.environ:
-            replace_environ[i_name] = os.environ[i_name]
-    environ.update(replace_environ)
-
-    # subprocess does not accept unicode strings in the environment
-    environ = {bytes(key) : bytes(value) for key, value in environ.iteritems()}
-
-    # Make sure the command line is correctly encoded. This always uses locale.getpreferredencoding()
-    try:
-        popen = subprocess.Popen(
-            EncodeWithLocale(command_line),
-            cwd=cwd,
-            stdin=subprocess.PIPE,
-            stdout=subprocess.PIPE if pipe_stdout else None,
-            stderr=subprocess.STDOUT,
-            env=environ,
-            bufsize=0,
-            shell=shell,
-        )
-    except Exception, e:
-        if isinstance(e, OSError):
-            # Fix encoding from OSErrors. They also come in locale.getpreferredencoding()
-            # It's hard to change error messages in OSErrors, so we raise something else.
-            e = RuntimeError(unicode(str(e), encoding=locale_encoding, errors='replace'))
-
-        Reraise(
-            e,
-            'While executing "System.Execute":\n'
-            '  environment::\n'
-            '%s\n'
-            '  current working dir::\n'
-            '    %s\n\n'
-            '  command_line::\n'
-            '%s\n'
-            % (EnvStr(environ), cwd, CmdLineStr(command_line))
-        )
+    popen = ProcessOpen(
+        command_line,
+        cwd=cwd,
+        environ=environ,
+        extra_environ=extra_environ,
+        shell=shell,
+        ignore_auto_quote=ignore_auto_quote,
+        pipe_stdout=pipe_stdout,
+    )
 
     try:
         result = []
@@ -498,3 +406,197 @@ def ExecuteNoWait(command_line, cwd=None, ignore_output=False):
                 '  command_line: %s\n'
                 '  cwd: %s\n'
                 % (command_line, cwd))
+
+
+
+#===================================================================================================
+# GetSubprocessOutput
+#===================================================================================================
+def GetSubprocessOutput(
+        command_line,
+        cwd=None,
+        environ=None,
+        extra_environ=None,
+        shell=False,
+        ignore_auto_quote=False,
+        binary=False,
+        encoding='UTF-8',
+    ):
+    popen = ProcessOpen(
+        command_line,
+        cwd=cwd,
+        environ=environ,
+        extra_environ=extra_environ,
+        shell=shell,
+        ignore_auto_quote=ignore_auto_quote,
+        pipe_stdout=True,
+    )
+    output, _stderr = popen.communicate()
+    retcode = popen.poll()
+    if not binary:
+        output = output.decode(encoding)
+    return output, retcode
+
+
+
+def ProcessOpen(
+        command_line,
+        cwd=None,
+        environ=None,
+        extra_environ=None,
+        shell=False,
+        ignore_auto_quote=False,
+        pipe_stdout=True,
+    ):
+    '''
+    Executes a shell command
+
+    :type command_line: list(unicode) or unicode
+    :param command_line:
+        List of command - line to execute, including the executable as the first element in the
+        list.
+
+    :param unicode cwd:
+        The current working directory for the execution.
+
+    :type environ: dict(unicode, unicode)
+    :param environ:
+        The environment variables available for the subprocess. This will replace the current
+        environment.
+        If a value is "COPY_FROM_ENVIRON" the value is replaced by the current environment
+        value before executing the command - line.
+        This dictionary will be modified by the Execute, so make sure that this is a copy of
+        your actual data, not the original.
+
+    :param dict(unicode:unicode) extra_environ:
+        Environment variables (name, value) to add to the execution environment.
+
+    :param bool shell:
+        From subprocess.py:
+
+        If shell is True, the specified command will be executed through the shell.
+
+        On UNIX, with shell=False (default): In this case, the Popen class uses os.execvp() to
+        execute the child program.  'command_line' should normally be a sequence.  A string will
+        be treated as a sequence with the string as the only item (the program to execute).
+
+        On UNIX, with shell=True: If 'command_line' is a string, it specifies the command string
+        to execute through the shell.  If 'command_line' is a sequence, the first item specifies
+        the command string, and any additional items will be treated as additional shell
+        arguments.
+
+    :param bool ignore_auto_quote:
+        If True, passes the entire command line to subprocess as a single string, instead of
+        a list of strings.
+
+        This is useful when we want to avoid subprocess' algorithm that tries to handle quoting
+        on its own when receiving a list of arguments.
+
+        This way, we are able to use quotes as we wish, without having them escaped by subprocess.
+
+    :param bool pipe_stdout:
+        If True, pipe stdout so that it can be returned as a string and passed to the output
+        callback. If False, stdout will be dumped directly to the console (preserving color),
+        and the callback will not be called.
+
+    :returns subprocess.Popen:
+    '''
+    import locale
+    locale_encoding = locale.getpreferredencoding()
+
+    def CmdLineStr(cmd_line):
+        return '    ' + '\n    '.join(cmd_line)
+
+    def EncodeWithLocale(value):
+        if isinstance(value, unicode):
+            return value.encode(locale_encoding)
+        if isinstance(value, list):
+            return [x.encode(locale_encoding) for x in value]
+
+    def DecodeWithLocale(value):
+        if isinstance(value, bytes):
+            return value.decode(locale_encoding)
+        if isinstance(value, list):
+            return [x.decode(locale_encoding) for x in value]
+
+    def EnvStr(env):
+        result = ''
+        for i, j in sorted(env.items()):
+            if os.sep in j:
+                j = '\n    * ' + '\n    * '.join(sorted(j.split(os.pathsep)))
+            result += '  - %s = %s\n' % (i, j)
+        return result
+
+    # We accept strings as the command_line.
+    is_string_command_line = isinstance(command_line, unicode)
+
+    # Handle string/list command_list
+    if ignore_auto_quote and not is_string_command_line:
+        # ... with ignore_auto_quote we want a string command_line... but it came as a list
+        #     NOTE: This simple join may cause problems since we can have spaces in a argument. The correct way of
+        #           doing would be something like "shlex.join" (that does not exists, by the way).
+        command_line = ' '.join(command_line)
+
+    elif not ignore_auto_quote and is_string_command_line:
+        # ... without ignore_auto_quote we want a list command_line... but it came as a string
+        if sys.platform == 'win32':
+            command, arguments = SafeSplit(command_line, ' ', 1)
+            assert command.count('"') != 1, 'Command may have spaces in it. Use list instead of string.'
+
+            # Always use normpath for command, because Windows does not like posix slashes
+            command = StandardizePath(command)
+            command = os.path.normpath(command)
+
+            # shlex cannot handle non-ascii unicode strings
+            command_line = [command] + DecodeWithLocale(shlex.split(EncodeWithLocale(arguments)))
+        else:
+            # shlex cannot handle non-ascii unicode strings
+            command_line = DecodeWithLocale(shlex.split(EncodeWithLocale(command_line)))
+
+    if cwd is None:
+        cwd = os.getcwd()
+
+    if environ is None:
+        environ = os.environ.copy()
+
+    if extra_environ:
+        environ.update(extra_environ)
+
+    replace_environ = {}
+    for i_name, i_value in environ.iteritems():
+        if i_value is COPY_FROM_ENVIRONMENT and i_name in os.environ:
+            replace_environ[i_name] = os.environ[i_name]
+    environ.update(replace_environ)
+
+    # subprocess does not accept unicode strings in the environment
+    environ = {bytes(key) : bytes(value) for key, value in environ.iteritems()}
+
+    # Make sure the command line is correctly encoded. This always uses locale.getpreferredencoding()
+    try:
+        return subprocess.Popen(
+            EncodeWithLocale(command_line),
+            cwd=cwd,
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE if pipe_stdout else None,
+            stderr=subprocess.STDOUT,
+            env=environ,
+            bufsize=0,
+            shell=shell,
+        )
+    except Exception, e:
+        if isinstance(e, OSError):
+            # Fix encoding from OSErrors. They also come in locale.getpreferredencoding()
+            # It's hard to change error messages in OSErrors, so we raise something else.
+            e = RuntimeError(unicode(str(e), encoding=locale_encoding, errors='replace'))
+
+        Reraise(
+            e,
+            'While executing "System.Execute":\n'
+            '  environment::\n'
+            '%s\n'
+            '  current working dir::\n'
+            '    %s\n\n'
+            '  command_line::\n'
+            '%s\n'
+            % (EnvStr(environ), cwd, CmdLineStr(command_line))
+        )

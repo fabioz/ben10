@@ -128,9 +128,9 @@ class TerraFormer(object):
         from lib2to3.pytree import Leaf, Node
         from lib2to3.refactor import _detect_future_features
 
-        added_newline = code and not code.endswith("\n")
+        added_newline = code and not code.endswith('\n')
         if added_newline:
-            code += "\n"
+            code += '\n'
 
         # Selects the appropriate grammar depending on the usage of "print_function" future feature.
         future_features = _detect_future_features(code)

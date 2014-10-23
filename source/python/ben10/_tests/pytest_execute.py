@@ -1,6 +1,7 @@
 # -*- coding: UTF-8 -*-
 from __future__ import unicode_literals
-from ben10.execute import EnvironmentContextManager, Execute, ExecuteNoWait, PrintEnvironment
+from ben10.execute import (EnvironmentContextManager, Execute, ExecuteNoWait,
+    GetSubprocessOutput, PrintEnvironment)
 from ben10.foundation.string import Dedent
 from txtout.txtout import TextOutput
 import io
@@ -18,6 +19,12 @@ class Test(object):
     def _AssertExecute(self, expected_output, *args, **kwargs):
         obtained_output = Execute(*args, **kwargs)
         self._AssertOutput(obtained_output, expected_output)
+
+        if 'input' in kwargs:
+            return
+        obtained_output, obtained_retcode = GetSubprocessOutput(*args, **kwargs)
+        assert obtained_retcode == 0
+        self._AssertOutput(obtained_output.splitlines(), expected_output)
 
 
     def _AssertOutput(self, obtained_output, expected_output):
