@@ -291,6 +291,7 @@ class _EmbedDataFixture(object):
         :param bool binary:
             .. seealso:: ben10.filesystem.GetFileContents
         '''
+        __tracebackhide__ = True
         from ben10.filesystem import GetFileContents, GetFileLines
 
         def FindFile(filename):
