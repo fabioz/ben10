@@ -12,9 +12,7 @@ from ben10.filesystem import (AppendToFile, CanonicalPath, CheckIsDir, CheckIsFi
 from ben10.filesystem._filesystem import CreateTemporaryFile, FindFiles
 from mock import patch
 import errno
-import logging
 import os
-import pyftpdlib
 import pytest
 import subprocess
 import sys
@@ -455,18 +453,14 @@ class Test:
             FileError('alpha.txt')
 
 
-    @pytest.mark.skipif('sys.platform != "win32"', reason='TODO: BEN-44 Fix pyftpdlib related tests in ben10.filesystem (linux)')
     @pytest.mark.serial
-    def todo_testFTPFileContents(self, monkeypatch, embed_data, ftpserver):
-        '''
-        TODO: BEN-44 Fix pyftpdlib related tests in ben10.filesystem (linux)
-        '''
-        obtained = GetFileContents(ftpserver.GetFTPUrl('file.txt'))
+    def testFTPFileContents(self, monkeypatch, embed_data, ftpserver):
+        obtained = GetFileContents(ftpserver('file.txt'))
         expected = GetFileContents(embed_data['file.txt'])
         assert obtained == expected
 
         with pytest.raises(FileNotFoundError):
-            GetFileContents(ftpserver.GetFTPUrl('missing_file.txt'))
+            GetFileContents(ftpserver('missing_file.txt'))
 
 
     def testCreateFile(self, embed_data):
@@ -511,23 +505,22 @@ class Test:
         assert GetFileContents(filename) == "alpha bravo charlie delta echo"
 
 
-    @pytest.mark.skipif('sys.platform != "win32"', reason='TODO: BEN-44 Fix pyftpdlib related tests in ben10.filesystem (linux)')
     @pytest.mark.serial
-    def testUnicodeFTP(self, embed_data, ftpserver):
+    def testFTPUnicode(self, embed_data, ftpserver):
         '''
         Test support for unicode filenames in FTP
         '''
         u_dirname = 'únicode_dir'
         CreateDirectory(embed_data[u_dirname])
-        ftp_u_dirname = ftpserver.GetFTPUrl(u_dirname)
+        ftp_u_dirname = ftpserver(u_dirname)
 
         u_filename = 'únicode_dir/filê.txt'
         CreateFile(embed_data[u_filename], 'filê', encoding='UTF-8')
-        ftp_u_filename = ftpserver.GetFTPUrl(u_filename)
+        ftp_u_filename = ftpserver(u_filename)
 
         ascii_dirname = 'ascii_directory'
         CreateDirectory(embed_data[ascii_dirname])
-        ftp_ascii_dirname = ftpserver.GetFTPUrl(ascii_dirname)  # @UnusedVariable
+        ftp_ascii_dirname = ftpserver(ascii_dirname)  # @UnusedVariable
 
         def check_unicode(value):
             if isinstance(value, list):
@@ -583,12 +576,11 @@ class Test:
             DeleteFile(single_file)
 
 
-    @pytest.mark.skipif('sys.platform != "win32"', reason='TODO: BEN-44 Fix pyftpdlib related tests in ben10.filesystem (linux)')
     @pytest.mark.serial
     def testFTPCreateFileInMissingDirectory(self, ftpserver):
         from ftputil.error import FTPIOError
 
-        target_ftp_file = ftpserver.GetFTPUrl('missing_ftp_dir/sub_dir/file.txt')
+        target_ftp_file = ftpserver('missing_ftp_dir/sub_dir/file.txt')
 
         with pytest.raises(FTPIOError):
             CreateFile(target_ftp_file, contents='contents', create_dir=False)
@@ -906,19 +898,17 @@ class Test:
         assert not IsDir(embed_data['missing_dir'])
 
 
-    @pytest.mark.skipif('sys.platform != "win32"', reason='TODO: BEN-44 Fix pyftpdlib related tests in ben10.filesystem (linux)')
     @pytest.mark.serial
     def testFTPIsDir(self, monkeypatch, embed_data, ftpserver):
-        assert IsDir(ftpserver.GetFTPUrl('.'))
-        assert not IsDir(ftpserver.GetFTPUrl('missing_dir'))
-        assert not IsDir(ftpserver.GetFTPUrl('missing_dir/missing_sub_dir'))
+        assert IsDir(ftpserver('.'))
+        assert not IsDir(ftpserver('missing_dir'))
+        assert not IsDir(ftpserver('missing_dir/missing_sub_dir'))
 
 
-    @pytest.mark.skipif('sys.platform != "win32"', reason='TODO: BEN-44 Fix pyftpdlib related tests in ben10.filesystem (linux)')
     @pytest.mark.serial
     def testFTPCopyFiles(self, monkeypatch, embed_data, ftpserver):
         source_dir = embed_data['files/source']
-        target_dir = ftpserver.GetFTPUrl('ftp_target_dir')
+        target_dir = ftpserver('ftp_target_dir')
 
         # Make sure that the target dir does not exist
         assert not os.path.isdir(target_dir)
@@ -933,11 +923,10 @@ class Test:
         assert set(ListFiles(source_dir)) == set(ListFiles(target_dir))
 
 
-    @pytest.mark.skipif('sys.platform != "win32"', reason='TODO: BEN-44 Fix pyftpdlib related tests in ben10.filesystem (linux)')
     @pytest.mark.serial
     def testFTPMoveDirectory(self, monkeypatch, embed_data, ftpserver):
-        source_dir = ftpserver.GetFTPUrl('files/source')
-        target_dir = ftpserver.GetFTPUrl('ftp_target_dir')
+        source_dir = ftpserver('files/source')
+        target_dir = ftpserver('ftp_target_dir')
 
         # Make sure that the source exists, and target does not
         assert IsDir(source_dir)
@@ -957,13 +946,12 @@ class Test:
         assert ListFiles(target_dir) == source_files
 
         # Cannot rename a directory if the target dir already exists
-        source_dir = ftpserver.GetFTPUrl('some_directory')
+        source_dir = ftpserver('some_directory')
         CreateDirectory(source_dir)
         with pytest.raises(DirectoryAlreadyExistsError):
             MoveDirectory(source_dir, target_dir)
 
 
-    @pytest.mark.skipif('sys.platform != "win32"', reason='TODO: BEN-44 Fix pyftpdlib related tests in ben10.filesystem (linux)')
     @pytest.mark.serial
     def testFTPCopyFile(self, monkeypatch, embed_data, ftpserver):
         def CopyAndCheckFiles(source_file, target_file, override=True):
@@ -976,28 +964,27 @@ class Test:
 
         # Upload file form local to FTP
         source_file = embed_data['files/source/alpha.txt']
-        target_file = ftpserver.GetFTPUrl('alpha.txt')
+        target_file = ftpserver('alpha.txt')
         CopyAndCheckFiles(source_file, target_file)
 
         # Upload file form local to FTP, testing override
         source_file = embed_data['files/source/alpha.txt']
-        target_file = ftpserver.GetFTPUrl('alpha.txt')
+        target_file = ftpserver('alpha.txt')
         with pytest.raises(FileAlreadyExistsError):
             CopyAndCheckFiles(source_file, target_file, override=False,)
 
         # Download file to local
-        source_file = ftpserver.GetFTPUrl('alpha.txt')
+        source_file = ftpserver('alpha.txt')
         target_file = embed_data['alpha_copied_from_ftp.txt']
         CopyAndCheckFiles(source_file, target_file)
 
         with pytest.raises(NotImplementedProtocol):
-            CopyFile(ftpserver.GetFTPUrl('alpha.txt'), 'ERROR://target')
+            CopyFile(ftpserver('alpha.txt'), 'ERROR://target')
 
 
-    @pytest.mark.skipif('sys.platform != "win32"', reason='TODO: BEN-44 Fix pyftpdlib related tests in ben10.filesystem (linux)')
     @pytest.mark.serial
     def testFTPCreateFile(self, monkeypatch, embed_data, ftpserver):
-        target_file = ftpserver.GetFTPUrl('ftp.txt')
+        target_file = ftpserver('ftp.txt')
         contents = 'This is a new file.'
         CreateFile(
             target_file,
@@ -1006,38 +993,35 @@ class Test:
         assert GetFileContents(target_file) == contents
 
 
-    @pytest.mark.skipif('sys.platform != "win32"', reason='TODO: BEN-44 Fix pyftpdlib related tests in ben10.filesystem (linux)')
     @pytest.mark.serial
     def testFTPIsFile(self, embed_data, ftpserver):
-        assert IsFile(ftpserver.GetFTPUrl('file.txt'))
-        assert IsFile(ftpserver.GetFTPUrl('files/source/alpha.txt'))
-        assert not IsFile(ftpserver.GetFTPUrl('doesnt_exist'))
-        assert not IsFile(ftpserver.GetFTPUrl('doesnt_exist/doesnt_exist'))
-        assert not IsFile(ftpserver.GetFTPUrl('files/doesnt_exist'))
+        assert IsFile(ftpserver('file.txt'))
+        assert IsFile(ftpserver('files/source/alpha.txt'))
+        assert not IsFile(ftpserver('doesnt_exist'))
+        assert not IsFile(ftpserver('doesnt_exist/doesnt_exist'))
+        assert not IsFile(ftpserver('files/doesnt_exist'))
 
 
-    @pytest.mark.skipif('sys.platform != "win32"', reason='TODO: BEN-44 Fix pyftpdlib related tests in ben10.filesystem (linux)')
     @pytest.mark.serial
     def testFTPListFiles(self, monkeypatch, embed_data, ftpserver):
         # List FTP files
-        assert ListFiles(ftpserver.GetFTPUrl('files/source')) == [
+        assert ListFiles(ftpserver('files/source')) == [
             'alpha.txt',
             'bravo.txt',
             'subfolder',
         ]
 
         # Try listing a directory that does not exist
-        assert ListFiles(ftpserver.GetFTPUrl('files/non-existent')) is None
+        assert ListFiles(ftpserver('files/non-existent')) is None
 
         # Check for assertion for invalid url: starts with two slashes.
         with pytest.raises(AssertionError):
-            ListFiles(ftpserver.GetFTPUrl('//files/non-existent'))
+            ListFiles(ftpserver('//files/non-existent'))
 
 
-    @pytest.mark.skipif('sys.platform != "win32"', reason='TODO: BEN-44 Fix pyftpdlib related tests in ben10.filesystem (linux)')
     @pytest.mark.serial
     def testFTPMakeDirs(self, monkeypatch, embed_data, ftpserver):
-        CreateDirectory(ftpserver.GetFTPUrl('/ftp_dir1'))
+        CreateDirectory(ftpserver('/ftp_dir1'))
         assert os.path.isdir(embed_data['ftp_dir1'])
 
 
@@ -1108,15 +1092,14 @@ class Test:
             CheckIsFile(embed_data.GetDataDirectory())  # Not a file
 
 
-    @pytest.mark.skipif('sys.platform != "win32"', reason='TODO: BEN-44 Fix pyftpdlib related tests in ben10.filesystem (linux)')
     @pytest.mark.serial
     def testFTPCheckIsFile(self, ftpserver):
         # assert not raises Exception
-        CheckIsFile(ftpserver.GetFTPUrl('file.txt'))
+        CheckIsFile(ftpserver('file.txt'))
         with pytest.raises(FileNotFoundError):
-            CheckIsFile(ftpserver.GetFTPUrl('MISSING_FILE'))
+            CheckIsFile(ftpserver('MISSING_FILE'))
         with pytest.raises(FileNotFoundError):
-            CheckIsFile(ftpserver.GetFTPUrl('.'))  # Not a file
+            CheckIsFile(ftpserver('.'))  # Not a file
 
 
     @pytest.mark.skipif(not sys.platform.startswith('win'), reason="drives are only valid in windows filesystems")
@@ -1144,17 +1127,16 @@ class Test:
             CheckIsDir(embed_data['file.txt'])  # Not a directory
 
 
-    @pytest.mark.skipif('sys.platform != "win32"', reason='TODO: BEN-44 Fix pyftpdlib related tests in ben10.filesystem (linux)')
     @pytest.mark.serial
     def testFTPCheckIsDir(self, ftpserver):
         # assert not raises Exception
-        CheckIsDir(ftpserver.GetFTPUrl('.'))
+        CheckIsDir(ftpserver('.'))
 
         with pytest.raises(DirectoryNotFoundError):
-            CheckIsDir(ftpserver.GetFTPUrl('MISSING_DIR'))
+            CheckIsDir(ftpserver('MISSING_DIR'))
 
         with pytest.raises(DirectoryNotFoundError):
-            CheckIsDir(ftpserver.GetFTPUrl('file.txt'))  # Not a directory
+            CheckIsDir(ftpserver('file.txt'))  # Not a directory
 
 
     def testGetMTime__slow(self, embed_data):
@@ -1418,111 +1400,75 @@ def ftpserver(monkeypatch, embed_data, request):
         def testAlpha(ftpserver, embed_data):
             ftpserver.Serve(embed_data.GetDataDirectory()
 
-            url = ftpserver.GetFTPUrl('filename.txt')
+            url = ftpserver('filename.txt')
     '''
-    pyftpdlib_log = logging.getLogger('pyftpdlib')
-    pyftpdlib_log.disabled = True
+    # Find a free port in localhost
+    import socket
+    s = socket.socket()
+    s.bind(('', 0))
+    host, port = s.getsockname()[:2]
+    s.close()  # Close because we want our subprocess to use this
 
-    class FtpServerFixture():
+    # Create a function to facilitate use
+    base_dir = 'ftp://dev:123@127.0.0.1:%(port)s' % locals()
+    def GetFTPUrl(filename):
+        '''
+        Returns the url to access the given filename using this ftp-server.
 
-        def __init__(self):
-            self._ftpd = None
-            self._port = None
+        :param str filename:
+            The non-absolute filename to access.
 
+        :return str:
+            The full url for the given filename.
+        '''
+        return '/'.join([base_dir, filename])
 
-        def Serve(self, directory):
-            '''
-            Starts a phony ftp-server for testing purpose.
-
-            :param unicode directory:
-                The directory to serve in the ftp-server.
-            '''
-            assert self._ftpd is None
-            self._ftpd = _PhonyFtpServer(directory)
-            self._port = self._ftpd.Start()
-
-
-        def GetFTPUrl(self, filename):
-            '''
-            Returns the url to access the given filename using this ftp-server.
-
-            :param unicode filename:
-                The non-absolute filename to access.
-
-            :return unicode:
-                The full url for the given filename.
-            '''
-            assert self._ftpd is not None, "FTPServer not serving, call ftpserver.Serve method."
-            base_dir = 'ftp://dev:123@127.0.0.1:%s' % self._port
-            return '/'.join([base_dir, filename])
-
-
-        def StopServing(self):
-            '''
-            Stops the phony ftp-server previously started with "_StartFtpServer" method.
-            '''
-            if self._ftpd is not None:
-                self._ftpd.Stop()
-                self._ftpd = None
-
-    r_ftpserver = FtpServerFixture()
 
     # We serve the current directory using the same instance of the ftpserver for all tests.
     # All URLs must be prefixed by the data-directory in order to properly access the test data.
-    r_ftpserver.Serve(embed_data.GetDataDirectory())
-    request.addfinalizer(r_ftpserver.StopServing)
-    return r_ftpserver
+    from multiprocessing.process import Process
+    directory = embed_data.GetDataDirectory()
+    process = Process(target=FTPServe, args=(directory, (host, port)))
+    process.start()
+
+    # Sleep for a while while ftp server starts
+    import time
+    time.sleep(0.5)
+
+    # Make sure we end the process when this test is over
+    request.addfinalizer(process.terminate)
+
+    return GetFTPUrl
 
 
 
-class _PhonyFtpServer(object):
+#===================================================================================================
+# FTPServe
+#===================================================================================================
+def FTPServe(basedir, addr):
     '''
-    Creates a phony ftp-server in the given port serving the given directory. Register
-    two users:
-        - anonymous
-        - dev (password: 123)
+    Start an FTP server in `basedir`, being served at `addr`
 
-    Both users map to the given directory.
+    :param unicode basedir:
+        FTP root directory
+
+    :param tuple(unicode,int) addr:
+        IP / port
     '''
+    from pyftpdlib.authorizers import DummyAuthorizer
+    from pyftpdlib.handlers import FTPHandler
+    from pyftpdlib.servers import FTPServer
+    import logging
 
-    def __init__(self, directory):
-        self._directory = directory
+    pyftpdlib_log = logging.getLogger('pyftpdlib')
+    pyftpdlib_log.disabled = True
 
+    authorizer = DummyAuthorizer()
+    authorizer.add_user('dev', '123', basedir, perm='elradfmwM')  # full perms
+    authorizer.add_anonymous(basedir)
 
-    def Start(self, port=0):
-        '''
-        :param int port:
-            The port to serve.
-            Default to zero with selects an available port (return value)
+    handler = FTPHandler
+    handler.authorizer = authorizer
+    server = FTPServer(addr, handler)
 
-        :rtype: int
-        :returns:
-            The port the ftp-server is serving
-        '''
-        from pyftpdlib.authorizers import DummyAuthorizer
-        from pyftpdlib.handlers import FTPHandler
-        from pyftpdlib.servers import FTPServer
-        from threading import Thread
-
-        authorizer = DummyAuthorizer()
-        authorizer.add_user("dev", "123", self._directory, perm="elradfmw")
-        authorizer.add_anonymous(self._directory)
-
-        handler = FTPHandler
-        handler.authorizer = authorizer
-
-        address = ("127.0.0.1", port)
-        self.ftpd = FTPServer(address, handler)
-        if port == 0:
-            _address, port = self.ftpd.getsockname()
-
-        self.thread = Thread(target=self.ftpd.serve_forever)
-        self.thread.start()
-
-        return port
-
-
-    def Stop(self):
-        self.ftpd.close_all()
-        self.thread.join()
-
+    server.serve_forever()
