@@ -1,6 +1,7 @@
 from __future__ import unicode_literals
 from ben10.foundation.reraise import Reraise
 import pytest
+from locale import getdefaultlocale
 
 
 
@@ -107,17 +108,21 @@ class TestReraiseEnvironmentErrors(object):
             '''
             An exception that isn't in unicode.
             '''
+        # Python
+        import locale
+        encoding = locale.getpreferredencoding(do_setlocale=False)
 
+        exception_message = u'Po\xe7o'
         with pytest.raises(ExceptionWithStr) as reraised_exception:
             try:
-                raise ExceptionWithStr(b'O sistema n\xe3o pode encontrar o arquivo especificado.')
+                raise ExceptionWithStr(exception_message.encode(encoding))
             except ExceptionWithStr as exception:
                 Reraise(exception, "Reraising")
 
-        import locale
-        encoding = locale.getpreferredencoding()
-        message = reraised_exception.value.message
-        assert reraised_exception.value.message == b'\nReraising\nO sistema n\xe3o pode encontrar o arquivo especificado.'.decode(encoding)
-        assert type(reraised_exception.value.message) is unicode
+        obtained_message = reraised_exception.value.message
+        expected_message = '\nReraising\n' + exception_message
+        assert obtained_message == expected_message
+        assert type(obtained_message) is unicode
+
 
 
