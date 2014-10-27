@@ -45,7 +45,7 @@ def Reraise(exception, message, separator='\n'):
         current_message = unicode(exception)
     except UnicodeDecodeError:
         import locale
-        current_message = str(exception).decode(locale.getpreferredencoding())
+        current_message = bytes(exception).decode(locale.getpreferredencoding())
 
     # Build the new message
     if not current_message.startswith(separator):
