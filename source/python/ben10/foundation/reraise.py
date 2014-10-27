@@ -41,7 +41,11 @@ def Reraise(exception, message, separator='\n'):
     import sys
 
     # Get the current message
-    current_message = unicode(exception)
+    if isinstance(exception, EnvironmentError):
+        import locale
+        current_message = str(exception).decode(locale.getpreferredencoding())
+    else:
+        current_message = unicode(exception)
 
     # Build the new message
     if not current_message.startswith(separator):

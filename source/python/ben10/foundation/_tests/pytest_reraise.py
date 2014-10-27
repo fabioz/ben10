@@ -94,3 +94,30 @@ class TestReraiseSpecial(object):
                 Reraise(exception, "Reraising")
 
         assert unicode(e.value) == "\nReraising\nu'key'"
+
+
+#===================================================================================================
+# TestReraiseEnvironmentErrors
+#===================================================================================================
+class TestReraiseEnvironmentErrors(object):
+
+    def testEncodingError(self):
+
+        class ExceptionWithStr(EnvironmentError):
+            '''
+            An exception that isn't in unicode.
+            '''
+
+        with pytest.raises(ExceptionWithStr) as reraised_exception:
+            try:
+                raise ExceptionWithStr(b'O sistema n\xe3o pode encontrar o arquivo especificado.')
+            except ExceptionWithStr as exception:
+                Reraise(exception, "Reraising")
+
+        import locale
+        encoding = locale.getpreferredencoding()
+        message = reraised_exception.value.message
+        assert reraised_exception.value.message == b'\nReraising\nO sistema n\xe3o pode encontrar o arquivo especificado.'.decode(encoding)
+        assert type(reraised_exception.value.message) is unicode
+
+
