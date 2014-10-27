@@ -1,10 +1,10 @@
-from __future__ import unicode_literals
 '''
 Collection of fixtures for pytests.
 
 .. note::
     Coverage for this file gives a lot of misses, just like calling coverage from module's main.
 '''
+from __future__ import unicode_literals
 import faulthandler
 import os
 import pytest
@@ -50,6 +50,9 @@ def pytest_runtest_protocol(item, __multicall__):
         Since this file is only useful if a a test crashes, it is removed during tear down if
         no crash occurred.
     '''
+    # skip items that are not python test items (for example: pytest)
+    if not hasattr(item, 'module'):
+        return
     name = '%s.%s.txt'  % (item.module.__name__, item.name)
     invalid_chars = [os.sep, os.pathsep, ':', '<', '>', '@']
     if os.altsep:
