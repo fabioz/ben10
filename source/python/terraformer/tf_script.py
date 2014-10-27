@@ -279,8 +279,8 @@ def FixStringio(console_, *sources):
             terra = TerraFormer(filename=i_filename)
             changed = terra.ReorganizeImports(
                 refactor={
-                    'StringIO.StringIO': 'io.StringIO',
-                    'cStringIO.StringIO': 'io.StringIO',
+                    'StringIO.StringIO': 'from io.StringIO',
+                    'cStringIO.StringIO': 'from io.StringIO',
                     'cStringIO': 'from io.StringIO',
                     'StringIO': 'from io.StringIO',
                 }
