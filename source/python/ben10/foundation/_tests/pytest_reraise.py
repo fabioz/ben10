@@ -1,7 +1,6 @@
 from __future__ import unicode_literals
 from ben10.foundation.reraise import Reraise
 import pytest
-from locale import getdefaultlocale
 
 
 
@@ -110,7 +109,7 @@ class TestReraiseEnvironmentErrors(object):
             '''
         # Python
         import locale
-        encoding = locale.getpreferredencoding(do_setlocale=False)
+        encoding = locale.getpreferredencoding()
 
         exception_message = u'Po\xe7o'
         with pytest.raises(ExceptionWithStr) as reraised_exception:
