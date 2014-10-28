@@ -372,7 +372,7 @@ def Execute(
         if popen.stdout:
             # TODO: EDEN-245: Refactor System.Execute and derivates (git, scons, etc)
             if clean_eol:  # Read one line at the time, and remove EOLs
-                for line in iter(popen.stdout.readline, ""):
+                for line in iter(popen.stdout.readline, b""):
                     line = line.decode(output_encoding).rstrip('\n\r')
                     if output_callback:
                         output_callback(line)
@@ -380,7 +380,7 @@ def Execute(
             else:  # Read one char at a time, to keep \r and \n
                 current_line = ''
                 carriage = False
-                for char in iter(lambda: popen.stdout.read(1), ""):
+                for char in iter(lambda: popen.stdout.read(1), b""):
 
                     # Check if last line was \r, if not, print what we have
                     if char != '\n' and carriage:

@@ -22,6 +22,8 @@ class Git(Singleton):
     new singleton whenever you know that changes were made to local files, as a way to invalidate
     this cache
     '''
+    # Expected output encoding from git commands
+    OUTPUT_ENCODING = 'UTF-8'
 
     # Constants for common refs
     ZERO_REVISION = '0' * 40
@@ -44,8 +46,7 @@ class Git(Singleton):
         command_line,
         repo_path=None,
         flat_output=False,
-        output_callback=None,
-        clean_eol=True,
+        **kwargs
         ):
         '''
         Executes a git command line in the given repository.
@@ -61,11 +62,8 @@ class Git(Singleton):
         :param bool flat_output:
             If True, joins the output lines with '\n' (returning a single string)
 
-        :param output_callback:
-            .. seealso:: System.Execute
-
-        :param clean_eol:
-            .. seealso:: System.Execute
+        :param kwargs:
+            .. seealso:: ben10.execute.Execute
 
         :returns list(unicode)|unicode:
             List of lines output from git command, or the complete output if parameter flat_output
@@ -79,12 +77,16 @@ class Git(Singleton):
             command_line = shlex.split(command_line)
         command_line = ['git'] + list(command_line)
 
+        clean_eol = kwargs.pop('clean_eol', True)
+        output_encoding = kwargs.pop('output_encoding', self.OUTPUT_ENCODING)
+
         from ben10.execute import Execute2
         output, retcode = Execute2(
             command_line,
             cwd=repo_path,
-            output_callback=output_callback,
-            clean_eol=clean_eol
+            clean_eol=clean_eol,
+            output_encoding=output_encoding,
+            **kwargs
         )
 
         # TODO: EDEN-245: Refactor System.Execute and derivates (git, scons, etc)
