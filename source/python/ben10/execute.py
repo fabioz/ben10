@@ -378,31 +378,31 @@ def Execute(
                         output_callback(line)
                     result.append(line)
             else:  # Read one char at a time, to keep \r and \n
-                current_line = ''
+                current_line = b''
                 carriage = False
                 for char in iter(lambda: popen.stdout.read(1), b""):
 
                     # Check if last line was \r, if not, print what we have
-                    if char != '\n' and carriage:
+                    if char != b'\n' and carriage:
                         carriage = False
                         current_line = current_line.decode(output_encoding)
                         if output_callback:
                             output_callback(current_line)
                         result.append(current_line)
-                        current_line = ''
+                        current_line = b''
 
                     current_line += char
 
-                    if char == '\r':
+                    if char == b'\r':
                         carriage = True
 
-                    if char == '\n':
+                    if char == b'\n':
                         current_line = current_line.decode(output_encoding)
                         if output_callback:
                             output_callback(current_line)
                         result.append(current_line)
                         carriage = False
-                        current_line = ''
+                        current_line = b''
 
     finally:
         if popen.stdout:
