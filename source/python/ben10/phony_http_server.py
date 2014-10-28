@@ -1,4 +1,3 @@
-from __future__ import unicode_literals
 '''
 Implements a simple HTTP server used for tests related with the HTTP.
 
@@ -9,10 +8,8 @@ Example:
         # Create a client and use the port to communicate
     finally:
         server.stop()
-
-TODO: Perform expansions as necessary. Pass to the server what to serve. For now its a constant
-value.
 '''
+from __future__ import unicode_literals
 from SimpleHTTPServer import SimpleHTTPRequestHandler
 from ben10.foundation.decorators import Override
 import BaseHTTPServer
@@ -153,11 +150,11 @@ class PhonyHTTPServer(BaseHTTPServer.HTTPServer):
         from ben10.foundation.callback import Callback
         BaseHTTPServer.HTTPServer.__init__(self, *args, **kwargs)
 
-        #@ivar log_message_callback: Callback
+        # @ivar log_message_callback: Callback
         #    Called when a log message is generated.
         self.log_message_callback = Callback()
 
-        #@ivar http_get_callback: callable(path) | None
+        # @ivar http_get_callback: callable(path) | None
         #    Called to obtain the contents of the given path (url). If not defined, HTTP GET returns
         #    the default contents, with the headers data.
         self.http_get_callback = None
