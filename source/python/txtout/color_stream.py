@@ -167,18 +167,11 @@ class SafeStreamFilter(object):
 
 
     def write(self, text):
-
-        if isinstance(text, unicode) and self.encoding is not None:
-            # FIRST, try to encode with the target encoding
-            text = text.encode(self.encoding, 'backslashreplace')
-            text = text.decode(self.encoding)
-            try:
-                self.stream.write(text)
-            except UnicodeEncodeError:
-                # SECOND, if FIRST failed, try to encode using ASCII.
-                text = text.encode('ascii', 'backslashreplace')
-                self.stream.write(text)
-        else:
+        try:
+            self.stream.write(text)
+        except UnicodeEncodeError:
+            encoding = 'ascii'
+            text = text.encode(encoding, 'backslashreplace').decode(encoding)
             self.stream.write(text)
 
 

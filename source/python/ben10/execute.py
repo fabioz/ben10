@@ -22,6 +22,11 @@ class COPY_FROM_ENVIRONMENT(object):
     '''
 
 
+# Default encoding for output_encoding and encoding parameters.
+DEFAULT_ENCODING = 'UTF-8'
+
+
+
 #===================================================================================================
 # PrintEnvironment
 #===================================================================================================
@@ -174,7 +179,7 @@ def Execute(
         extra_environ=None,
         input=None,  # @ReservedAssignment
         output_callback=None,
-        output_encoding='ascii',
+        output_encoding=None,
         return_code_callback=None,
         shell=False,
         ignore_auto_quote=False,
@@ -255,6 +260,8 @@ def Execute(
     :returns:
         Returns the process execution output as a list of strings.
     '''
+    output_encoding = output_encoding or DEFAULT_ENCODING
+
     popen = ProcessOpen(
         command_line,
         cwd=cwd,
@@ -281,7 +288,8 @@ def Execute(
             # TODO: EDEN-245: Refactor System.Execute and derivates (git, scons, etc)
             if clean_eol:  # Read one line at the time, and remove EOLs
                 for line in iter(popen.stdout.readline, b""):
-                    line = line.decode(output_encoding).rstrip('\n\r')
+                    line = line.rstrip(b'\n\r')
+                    line = line.decode(output_encoding)
                     if output_callback:
                         output_callback(line)
                     result.append(line)
@@ -333,7 +341,7 @@ def Execute2(
         environ=None,
         extra_environ=None,
         output_callback=None,
-        output_encoding='ascii',
+        output_encoding=None,
         shell=False,
         ignore_auto_quote=False,
         clean_eol=True,
@@ -351,6 +359,8 @@ def Execute2(
             [0]: List of string printed by the process
             [1]: The execution return code
     '''
+    output_encoding = output_encoding or DEFAULT_ENCODING
+
     return_code = [None]
 
     def CallbackReturnCode(ret):
@@ -420,8 +430,10 @@ def GetSubprocessOutput(
         shell=False,
         ignore_auto_quote=False,
         binary=False,
-        encoding='UTF-8',
+        encoding=None,
     ):
+    encoding = encoding or DEFAULT_ENCODING
+
     popen = ProcessOpen(
         command_line,
         cwd=cwd,

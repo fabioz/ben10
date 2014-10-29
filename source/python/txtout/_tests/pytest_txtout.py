@@ -1,6 +1,6 @@
 from __future__ import unicode_literals
 from ben10.foundation.string import Dedent
-from cStringIO import StringIO
+from io import StringIO
 from txtout.txtout import TextOutput
 import textwrap
 
@@ -27,15 +27,19 @@ class Test:
 
         output.I('Item outside context', top_margin=1)
 
-        expected_output = '''
-Simple line
-    Indented line
+        expected_output = Dedent(
+            '''
 
-Now using with!
-    - Item inside context
+                Simple line
+                    Indented line
 
-- Item outside context
-'''
+                Now using with!
+                    - Item inside context
+
+                - Item outside context
+
+            '''
+        )
         assert stream.getvalue() == expected_output
 
 
@@ -64,8 +68,8 @@ Now using with!
             ********************************************************************************
 
             '''
-        # Hard-coded 53 points to the "raise RuntimeError('This is an exception')" line in this file
-        ) % '\n'.join(textwrap.wrap(__file__ + ':53:', 80))
+        # Hard-coded 57 points to the "raise RuntimeError('This is an exception')" line in this file
+        ) % '\n'.join(textwrap.wrap(__file__ + ':57:', 80))
 
         stream = StringIO()
         oss.SetOutputStream(stream)
