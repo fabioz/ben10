@@ -87,7 +87,7 @@ def pytest_addoption(parser):
     group.addoption(
         '--fault-handler-dir',
         dest="fault_handler_dir",
-        default=os.getcwd(),
+        default=os.getcwdu(),
         metavar="dir",
         help="directory where to save crash reports (must exist)")
 

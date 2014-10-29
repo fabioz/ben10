@@ -22,7 +22,7 @@ def Pylint(params, output_filename):
         sys.stdout = sys_stdout
 
 
-old_cwd = os.getcwd()
+old_cwd = os.getcwdu()
 os.chdir(os.path.dirname(__file__))
 try:
     pytest_retcode = Pytest('--junitxml=pytest.xml --cov-report xml --cov ben10 source/python/')

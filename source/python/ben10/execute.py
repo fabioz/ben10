@@ -310,7 +310,7 @@ def Execute(
             command_line = DecodeWithLocale(shlex.split(EncodeWithLocale(command_line)))
 
     if cwd is None:
-        cwd = os.getcwd()
+        cwd = os.getcwdu()
 
     if environ is None:
         environ = os.environ.copy()

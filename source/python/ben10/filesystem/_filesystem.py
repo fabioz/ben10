@@ -88,7 +88,7 @@ def Cwd(directory):
     :param unicode directory:
         Target directory to enter
     '''
-    old_directory = os.getcwd()
+    old_directory = os.getcwdu()
     if directory is not None:
         os.chdir(directory)
     try:
