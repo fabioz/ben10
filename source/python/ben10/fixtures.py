@@ -25,7 +25,7 @@ def pytest_sessionstart(session):
     import sys
 
     if sys.platform.startswith('win'):
-        # Makes the sysmte hide the Windows Error Reporting dialog.
+        # Makes the system hide the Windows Error Reporting dialog.
         # http://msdn.microsoft.com/en-us/library/windows/desktop/ms680621%28v=vs.85%29.aspx
         import ctypes
         SEM_NOGPFAULTERRORBOX = 0x0002

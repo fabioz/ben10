@@ -77,15 +77,14 @@ class ASTVisitor(object):
         '''
         Main entry point of the ASTVisitor class.
 
+        Visits AST nodes calling specific _VisitXXX implementation based on matching patterns.
+
         :param lib2to3.Node tree:
             A lib2to3 AST tree.
-
-        :return ?:
         '''
         self.EvVisitStart(tree)
-        result = self._Visit(tree)
+        self._Visit(tree)
         self.EvVisitEnd(tree)
-        return result
 
 
     # Events ---------------------------------------------------------------------------------------
@@ -445,7 +444,10 @@ class ASTVisitor(object):
 
     def _Visit(self, tree):
         '''
-        Generic visitor for nodes that don't match any pattern.
+        Recursive implementation of Visit.
+
+        :param lib2to3.Node tree:
+            A lib2to3 AST tree.
         '''
         from lib2to3.pytree import Leaf, Node
 
@@ -496,7 +498,7 @@ class ASTVisitor(object):
 
     def _VisitFunction(self, results):
         '''
-        Visitor handler for function/methodss.
+        Visitor handler for function/method.
         Organize the parameters to call EvVisitFunction.
         '''
         self.EvVisitFuncion(
@@ -551,30 +553,66 @@ class ASTVisitor(object):
 
 
 #===================================================================================================
-# Utility Functions (undocumented)
+# Utility Functions
+# This code is inspired on pythonscope astvisitor.py:
+#   https://github.com/mkwiatkowski/pythoscope/blob/890af15a88c2fbf2197b40f5de53493b48b61d8e/pythoscope/astvisitor.py
 #===================================================================================================
 
 
 def _IsLeafOfType(leaf, *types):
+    '''
+    Check if the leaf is of one of the given types.
+
+    :param lib2to3.Leaf leaf:
+
+    :param int types:
+        Usually a token.XXX constant.
+
+    :return bool:
+    '''
     from lib2to3.pytree import Leaf
 
     return isinstance(leaf, Leaf) and leaf.type in types
 
 
 def _IsNodeOfType(node, *types):
+    '''
+    Check if the node is of one of the given types.
+
+    :param lib2to3.Node node:
+
+    :param unicode types:
+        The name of the node type.
+
+    :return bool:
+    '''
     from lib2to3.pytree import Node, type_repr
     return isinstance(node, Node) and type_repr(node.type) in types
 
 
 def _RemoveCommas(nodes):
+    '''
+    Remove comma nodes from the given list of nodes.
+
+    Used to remove commas from the function/method argument list.
+
+    :param list(lib2to3.Node) nodes:
+    :return list(list2to3.Node):
+    '''
     from lib2to3.pgen2 import token
 
-    def isnt_comma(node):
-        return not _IsLeafOfType(node, token.COMMA)
-    return filter(isnt_comma, nodes)
+    return [i for i in nodes if not _IsLeafOfType(i, token.COMMA)]
 
 
 def _RemoveDefaults(nodes):
+    '''
+    Remove default values from a list of nodes.
+
+    Used to remove the default values from the function/method argument list.
+
+    :param list(lib2to3.Node) nodes:
+    :return iter(list2to3.Node):
+    '''
     from lib2to3.pgen2 import token
 
     ignore_next = False
@@ -589,10 +627,22 @@ def _RemoveDefaults(nodes):
 
 
 def _DeriveClassName(node):
-    return str(node).strip()
+    '''
+    Clean-up a node that represents a class name.
+
+    :param lib2to3.Node node:
+    :return unicode:
+    '''
+    return unicode(node).strip()
 
 
 def _DeriveClassNames(node):
+    '''
+    Clean-up a node that represents a list of classes (derived classes).
+
+    :param lib2to3.Node node:
+    :return list(unicode):
+    '''
     if node is None:
         return []
     elif _IsNodeOfType(node, 'arglist'):
@@ -602,6 +652,12 @@ def _DeriveClassNames(node):
 
 
 def _DeriveArgument(node):
+    '''
+    Returns a node or tuple of nodes for the node.
+
+    :param lib2to3.Node node:
+    :return lib2to3.Node|tuple(lib2to3.Node):
+    '''
     from lib2to3.pgen2 import token
 
     if _IsLeafOfType(node, token.NAME):
@@ -615,24 +671,40 @@ def _DeriveArgument(node):
         )
 
 
-def _DeriveArgumentsFromTypedArgList(typedargslist):
+def _DeriveArgumentsFromTypedArgList(node):
+    '''
+    Returns a list of arguments from a node of type "typedarglist".
+
+    NOTE: I converted this method to return the Node instead of the string. With this I've lost the
+    start and double-star prefix that was added to the resulting string.
+
+    :param lib2to3.Node node:
+    :return list(lib2to3.Node):
+    '''
     from lib2to3.pgen2 import token
 
     prefix = ''
-    for node in _RemoveDefaults(_RemoveCommas(typedargslist.children)):
-        if _IsLeafOfType(node, token.STAR):
+    for i_node in _RemoveDefaults(_RemoveCommas(node.children)):
+        if _IsLeafOfType(i_node, token.STAR):
             prefix = '*'
-        elif _IsLeafOfType(node, token.DOUBLESTAR):
+        elif _IsLeafOfType(i_node, token.DOUBLESTAR):
             prefix = '**'
         elif prefix:
-            #node.prefix = prefix
-            yield _DeriveArgument(node)
+            yield _DeriveArgument(i_node)
             prefix = ''
         else:
-            yield _DeriveArgument(node)
+            yield _DeriveArgument(i_node)
 
 
 def _DeriveArguments(node):
+    '''
+    Returns a list of arguments from a node.
+
+    NOTE: I converted this method to return the Node instead of the string.
+
+    :param lib2to3.Node node:
+    :return list(lib2to3.Node):
+    '''
     if node == []:
         return []
     elif _IsNodeOfType(node, 'typedargslist'):
@@ -642,6 +714,12 @@ def _DeriveArguments(node):
 
 
 def _DeriveImportName(node):
+    '''
+    Returns the text for the given "import name" node.
+
+    :param lib2to3.Node node:
+    :return unicode:
+    '''
     from lib2to3.pgen2 import token
 
     if _IsLeafOfType(node, token.NAME, token.STAR, token.DOT):
@@ -660,6 +738,12 @@ def _DeriveImportName(node):
 
 
 def _DeriveImportNames(node):
+    '''
+    Returns the text for the given "import names" node.
+
+    :param lib2to3.Node node:
+    :return list(unicode):
+    '''
     if node is None:
         return None
     elif _IsNodeOfType(node, 'dotted_as_names', 'import_as_names'):
