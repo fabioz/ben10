@@ -1,5 +1,6 @@
 from __future__ import unicode_literals
 from ftputil.error import FTPIOError, FTPOSError, PermanentError
+from contextlib import closing
 
 
 
@@ -22,8 +23,7 @@ def FTPHost(url):
     # Always use UTF-8 in ftputil, otherwise it makes a mess by sometimes using UTF-8, and other
     # times latin-1
     ftputil.tool.LOSSLESS_ENCODING = 'UTF-8'
-
-    class DefaultFTP(ftplib.FTP):
+    class MyFTP(ftplib.FTP):
         def __init__(self, host='', user='', passwd='', acct='', port=ftplib.FTP.port):
             # Must call parent constructor without any parameter so it don't try to perform
             # the connect without the port parameter (it have the same "if host" code in there)
@@ -37,6 +37,15 @@ def FTPHost(url):
                 else:
                     self.login()
 
+
+            # Check if we can use passive transfers
+            try:
+                self.makepasv()
+                self.set_pasv(True)
+            except:
+                self.set_pasv(False)
+
+
         # ftplib does not support unicode in Python < 3
         # This was taken from http://stackoverflow.com/a/10691041
         def putline(self, line):
@@ -45,36 +54,14 @@ def FTPHost(url):
                 line = line.encode('UTF-8')
             self.sock.sendall(line)
 
-        def __enter__(self):
-            return self
-
-        def __exit__(self):
-            self.close()
-
-
-    class ActiveFTP(DefaultFTP):
-        def __init__(self, *args, **kwargs):
-            DefaultFTP.__init__(self, *args, **kwargs)
-            self.set_pasv(False)
-
-
-    from functools import partial
-    create_host = partial(ftputil.FTPHost, url.hostname, url.username, url.password, port=url.port)
-
     try:
-        # Try to create active ftp host
-        host = create_host(session_factory=ActiveFTP)
-
-        # Check if a simple operation fails in active ftp, if it does, switch to default (passive) ftp
-        try:
-            host.stat('~')
-        except Exception, e:
-            if e.errno in [425, 500]:
-                # 425 = Errno raised when trying to a server without active ftp
-                # 500 = Illegal PORT command. In this case we also want to try passive mode.
-                host = create_host(session_factory=DefaultFTP)
-
-        return host
+        return ftputil.FTPHost(
+            url.hostname,
+            url.username,
+            url.password,
+            port=url.port,
+            session_factory=MyFTP
+        )
     except FTPOSError, e:
         if e.args[0] in [11004, -3]:
             from ben10.foundation.reraise import Reraise
@@ -105,7 +92,7 @@ def FTPUploadFileToUrl(source_filename, target_url):
 
         A parsed url as returned by urlparse.urlparse
     '''
-    with FTPHost(target_url) as ftp_host:
+    with closing(FTPHost(target_url)) as ftp_host:
         ftp_host.upload(source_filename, target_url.path)
 
 
@@ -219,7 +206,7 @@ def _FTPDownload(source_url, target_filename):
     .. see:: DownloadUrlToFile
         for param docs
     '''
-    with FTPHost(source_url) as ftp_host:
+    with closing(FTPHost(source_url)) as ftp_host:
         ftp_host.download(source=source_url.path, target=target_filename)
 
 
@@ -279,7 +266,7 @@ def FTPCreateFile(url, contents, binary=False, encoding=None):
         .. seealso:: ben10.filesystem.CreateFile
     '''
     mode = 'wb' if binary else 'w'
-    with FTPHost(url) as ftp_host:
+    with closing(FTPHost(url)) as ftp_host:
         with ftp_host.open(url.path, mode, encoding=encoding) as oss:
             oss.write(contents)
 
@@ -295,7 +282,7 @@ def FTPIsFile(url):
     :returns bool:
         True if file exists.
     '''
-    with FTPHost(url) as ftp_host:
+    with closing(FTPHost(url)) as ftp_host:
         try:
             return ftp_host.path.isfile(url.path)
         except PermanentError, e:
@@ -317,7 +304,7 @@ def FTPCreateDirectory(url):
 
         A parsed url as returned by urlparse.urlparse
     '''
-    with FTPHost(url) as ftp_host:
+    with closing(FTPHost(url)) as ftp_host:
         ftp_host.makedirs(url.path)
 
 
@@ -332,7 +319,7 @@ def FTPMoveDirectory(source_url, target_url):
 
         A parsed url as returned by urlparse.urlparse
     '''
-    with FTPHost(source_url) as ftp_host:
+    with closing(FTPHost(source_url)) as ftp_host:
         ftp_host.rename(source_url.path, target_url.path)
 
 
@@ -353,7 +340,7 @@ def FTPIsDir(url):
     :returns:
         True if url is an existing dir
     '''
-    with FTPHost(url) as ftp_host:
+    with closing(FTPHost(url)) as ftp_host:
         try:
             # NOTE: Raising an error because ftputil enters a infinite loop if the path starts with
             # two slashes.
@@ -384,7 +371,7 @@ def FTPListFiles(url):
     :returns:
         List of files, or None if directory does not exist (error 550 CWD)
     '''
-    with FTPHost(url) as ftp_host:
+    with closing(FTPHost(url)) as ftp_host:
         try:
             # NOTE: Raising an error because ftputil enters a infinite loop if the path starts with
             # two slashes.
