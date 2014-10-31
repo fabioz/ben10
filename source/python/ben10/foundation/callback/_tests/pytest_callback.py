@@ -191,7 +191,7 @@ class Test(object):
 
     def testLessArgs(self):
 
-        class C:
+        class C(object):
             def foo(self, _x, _y, **_kwargs):
                 pass
 
@@ -359,7 +359,7 @@ class Test(object):
 
 
     def testCallbackReceiverDies(self):
-        class A:
+        class A(object):
             def on_foo(dummy, *args):  # @NoSelf
                 self.args = args
 
@@ -386,7 +386,7 @@ class Test(object):
 
 
     def testActionMethodDies(self):
-        class A:
+        class A(object):
             def foo(self):
                 pass
 
@@ -414,7 +414,7 @@ class Test(object):
 
 
     def testAfterRegisterMultipleAndUnregisterOnce(self):
-        class A:
+        class A(object):
             def foo(self):
                 pass
 

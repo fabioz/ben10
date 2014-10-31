@@ -239,7 +239,7 @@ class Test():
 
     def SetupTestAttributes(self):
 
-        class C:
+        class C(object):
             def f(self, y=0):
                 return self.x + y
 
