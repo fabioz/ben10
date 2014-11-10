@@ -1,4 +1,10 @@
 from __future__ import unicode_literals
+from ben10.foundation.reraise import Reraise
+import contextlib
+import io
+import os
+import re
+import sys
 '''
 This module contains a selection of file related functions that can be used anywhere.
 
@@ -15,12 +21,6 @@ These functions abstract file location, most of them work for either local, ftp 
 
     Keep in mind that this process can be slow if you perform many of such operations in sequence.
 '''
-from ben10.foundation.reraise import Reraise
-import contextlib
-import io
-import os
-import re
-import sys
 
 
 
