@@ -184,3 +184,13 @@ class Test:
         assert SafeSplit('alpha bravo', ' ', 2) == ['alpha', 'bravo', '']
         assert SafeSplit('alpha bravo charlie', ' ', 2) == ['alpha', 'bravo', 'charlie']
 
+
+    def testFormatIterable(self):
+        from ben10.foundation.string import FormatIterable
+
+        item1 = 'a'
+        item2 = 'b'
+        my_list = [item1, item2]
+
+        assert FormatIterable(my_list) == "['a', 'b']"
+
