@@ -12,7 +12,9 @@ class Ben10(EsssProject):
     NAME = 'ben10'
 
     DEPENDENCIES = [
-        'cog',
+        # Install dependencies
+        'ben10:cog',
+
         'desktop',
         'ftputil',
         'futures',
