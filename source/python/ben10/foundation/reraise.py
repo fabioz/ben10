@@ -4,6 +4,7 @@ Inspired by http://www.thescripts.com/forum/thread46361.html
 '''
 
 
+
 #===================================================================================================
 # Reraise
 #===================================================================================================
@@ -52,10 +53,10 @@ def Reraise(exception, message, separator='\n'):
         current_message = separator + current_message
     message = '\n' + message + current_message
 
-    # Handling for special case, some exceptions have different behaviors.
-    if isinstance(exception, SPECIAL_EXCEPTIONS):
-        exception = __GetReraisedException(exception, message)
-    else:
+    try:
+        # Handling for special case, some exceptions have different behaviors.
+        exception = _SPECIAL_EXCEPTION_MAP[exception.__class__](message, exception.args)
+    except KeyError:
         # In Python 2.5 overriding the exception "__str__" has no effect in "unicode()". Instead, we
         # must change the "args" attribute which is used to build the string representation.
         # Even though the documentation says "args" will be deprecated, it uses its first argument
@@ -69,42 +70,86 @@ def Reraise(exception, message, separator='\n'):
 
 
 #===================================================================================================
-# __GetReraisedException
+# SPECIAL_EXCEPTIONS
 #===================================================================================================
-# These exception classes cannot have their message altered in the traditional way
-SPECIAL_EXCEPTIONS = (
-    KeyError,
-    OSError,
-    SyntaxError,
-    UnicodeDecodeError,
-    UnicodeEncodeError,
-)
-def __GetReraisedException(exception, message):
-    '''
-    Reraises 'special' exceptions by creating a new subclass with the same 'exception.args', but
-    a hardcoded '__str__'
+# [[[cog
+# SPECIAL_EXCEPTIONS = (
+#     KeyError,
+#     OSError,
+#     SyntaxError,
+#     UnicodeDecodeError,
+#     UnicodeEncodeError,
+# )
+# from ben10.foundation.string import Dedent
+# exception_map = []
+# for exception_class in SPECIAL_EXCEPTIONS:
+#     superclass_name = exception_class.__name__
+#     exception_map.append('\n        ' + superclass_name + ' : Reraised' + superclass_name + ',')
+#     cog.out(Dedent(
+#         '''
+#         class Reraised%(superclass_name)s(%(superclass_name)s):
+#             def __init__(self, message, original_args):
+#                 %(superclass_name)s.__init__(self, *original_args)
+#                 self.message = message
+#
+#             def __str__(self):
+#                 return self.message
+#
+#
+#         '''% locals()
+#     ))
+# cog.out(Dedent(
+#     '''
+#     _SPECIAL_EXCEPTION_MAP = {%s
+#     }
+#     ''' % ''.join(exception_map)
+# ))
+# ]]]
+class ReraisedKeyError(KeyError):
+    def __init__(self, message, original_args):
+        KeyError.__init__(self, *original_args)
+        self.message = message
 
-    New exception being raised is named 'Reraised' + exception.__class__.__name__
+    def __str__(self):
+        return self.message
 
-    :param Exception exception:
-        .. seealso:: Reraise
+class ReraisedOSError(OSError):
+    def __init__(self, message, original_args):
+        OSError.__init__(self, *original_args)
+        self.message = message
 
-    :param unicode message:
-        .. seealso:: Reraise
+    def __str__(self):
+        return self.message
 
-    :return Exception:
-        A new exception instance that subclasses `exception.__class__`
-    '''
-    new_exception = type(
-        # Setting class name
-        bytes('Reraised' + exception.__class__.__name__),
+class ReraisedSyntaxError(SyntaxError):
+    def __init__(self, message, original_args):
+        SyntaxError.__init__(self, *original_args)
+        self.message = message
 
-        # Setting superclass
-        (exception.__class__,),
+    def __str__(self):
+        return self.message
 
-        # Setting class dict
-        {
-            '__str__': lambda *args: message,
-        }
-    )
-    return new_exception(*exception.args)
+class ReraisedUnicodeDecodeError(UnicodeDecodeError):
+    def __init__(self, message, original_args):
+        UnicodeDecodeError.__init__(self, *original_args)
+        self.message = message
+
+    def __str__(self):
+        return self.message
+
+class ReraisedUnicodeEncodeError(UnicodeEncodeError):
+    def __init__(self, message, original_args):
+        UnicodeEncodeError.__init__(self, *original_args)
+        self.message = message
+
+    def __str__(self):
+        return self.message
+
+_SPECIAL_EXCEPTION_MAP = {
+    KeyError : ReraisedKeyError,
+    OSError : ReraisedOSError,
+    SyntaxError : ReraisedSyntaxError,
+    UnicodeDecodeError : ReraisedUnicodeDecodeError,
+    UnicodeEncodeError : ReraisedUnicodeEncodeError,
+}
+# [[[end]]] (checksum: 3e2d0264f057a4a0d871c0eba1b5b4a4)
