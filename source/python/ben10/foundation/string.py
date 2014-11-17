@@ -3,9 +3,6 @@ from __future__ import unicode_literals
 Module for string manipulation functions
 '''
 
-from ben10.foundation.types_ import CheckType
-import locale
-
 
 
 #===================================================================================================
@@ -204,7 +201,7 @@ def ToUnicode(value, encoding=None, error_strategy='replace'):
 
     .. seealso:: bytes.decode
     '''
-    CheckType(value, bytes)
+    import locale
 
     if encoding is None:
         encoding = locale.getpreferredencoding()
@@ -212,6 +209,7 @@ def ToUnicode(value, encoding=None, error_strategy='replace'):
     try:
         return unicode(value)
     except UnicodeDecodeError:
+        value = bytes(value)
         try:
             return value.decode(encoding)
         except UnicodeDecodeError:

@@ -191,7 +191,7 @@ class Test:
 
     @patch.object(locale, 'getpreferredencoding', autospec=True, return_value='UTF-8')
     def testToUnicode(self, *args):
-        value = 'Não'.encode('cp1252')
+        value = RuntimeError('Não'.encode('cp1252'))
 
         result = ToUnicode(value)
         assert result == 'N�o'
