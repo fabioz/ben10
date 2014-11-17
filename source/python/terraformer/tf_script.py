@@ -82,7 +82,9 @@ def FixFormat(console_, refactor=None, python_only=False, single_job=False, sort
 def AddImportSymbol(console_, import_symbol, single_job=False, *sources):
     '''
     Adds an import-symbol in all files.
-    The import statement is added in the first line of the code, before comments and string docs.
+
+    The import statement is added in the first line of the code, before comments but after module
+    string docs.
 
     :param sources: Source directories or files.
     :param import_symbol: The symbol to import. Ex. "__future__.unicode_literals"
