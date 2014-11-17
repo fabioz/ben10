@@ -240,7 +240,7 @@ def FixEncoding(console_, *sources):
                 if i > 10:
                     # Only searches the first lines for encoding information.
                     break
-                r = re.match('#.*coding:[ ]*([\w\-\d]*)', i_line)
+                r = re.match('#.*coding[:=] *([\w\-\d]*)', i_line)
                 if r is not None:
                     return i, r.group(1)
         return 0, None
