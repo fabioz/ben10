@@ -1,6 +1,8 @@
 from __future__ import unicode_literals
 from ben10.filesystem import CreateFile, StandardizePath
 from ben10.fixtures import MultipleFilesNotFound, _EmbedDataFixture
+from ben10.foundation import handle_exception
+from ben10.foundation.handle_exception import IgnoringHandleException
 from ben10.foundation.is_frozen import IsFrozen, SetIsFrozen
 from ben10.foundation.string import Dedent
 import faulthandler
@@ -147,3 +149,22 @@ def testFaultHandler(i, request):
     """
     assert faulthandler.is_enabled()
     assert os.path.isfile(request.node.fault_handler_stream.name)
+
+
+def testHandledExceptions(handled_exceptions):
+    assert not handled_exceptions.GetHandledExceptions()
+
+    with IgnoringHandleException():
+        try:
+            raise RuntimeError('test')
+        except:
+            handle_exception.HandleException()
+
+    assert len(handled_exceptions.GetHandledExceptions()) == 1
+
+    with pytest.raises(AssertionError):
+        handled_exceptions.RaiseFoundExceptions()
+
+    handled_exceptions.ClearHandledExceptions()
+
+

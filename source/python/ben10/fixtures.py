@@ -5,6 +5,7 @@ Collection of fixtures for pytests.
     Coverage for this file gives a lot of misses, just like calling coverage from module's main.
 '''
 from __future__ import unicode_literals
+from ben10.foundation import handle_exception
 import faulthandler
 import os
 import pytest
@@ -36,6 +37,91 @@ def pytest_sessionstart(session):
 
 
 #===================================================================================================
+# _ShowHandledExceptionsError
+#===================================================================================================
+class _ShowHandledExceptionsError(object):
+    '''
+    Helper class to deal with handled exceptions.
+    '''
+
+    def __init__(self):
+        self._handled_exceptions = []
+
+    def _OnHandledException(self):
+        '''
+        Called when a handled exceptions was found.
+        '''
+        from StringIO import StringIO
+        import traceback
+
+        s = StringIO()
+        traceback.print_exc(file=s)
+        self._handled_exceptions.append(s.getvalue())
+
+    def __enter__(self, *args, **kwargs):
+        handle_exception.on_exception_handled.Register(self._OnHandledException)
+        return self
+
+    def __exit__(self, *args, **kwargs):
+        handle_exception.on_exception_handled.Unregister(self._OnHandledException)
+
+    def ClearHandledExceptions(self):
+        '''
+        Clears the handled exceptions
+        '''
+        del self._handled_exceptions[:]
+
+    def GetHandledExceptions(self):
+        '''
+        :return list(str):
+            Returns a list with the representation of the handled exceptions.
+        '''
+        return self._handled_exceptions
+
+    def RaiseFoundExceptions(self):
+        '''
+        Raises error for the handled exceptions found.
+        '''
+        if self._handled_exceptions:
+            raise AssertionError('\n'.join(self._handled_exceptions))
+
+
+#===================================================================================================
+# handled_exceptions
+#===================================================================================================
+@pytest.yield_fixture(scope="function", autouse=True)
+def handled_exceptions():
+    '''
+    This method will be called for all the functions automatically.
+
+    For users which expect handled exceptions, it's possible to declare the fixture and
+    say that the errors are expected and clear them later.
+
+    I.e.:
+
+    from ben10.foundation.handle_exception import IgnoringHandleException
+    from ben10.foundation import handle_exception
+
+    def testSomething(handled_exceptions):
+        with IgnoringHandleException():
+            try:
+                raise RuntimeError('test')
+            except:
+                handle_exception.HandleException()
+
+        # Check that they're there...
+        handled_exceptions = handled_exceptions.GetHandledExceptions()
+
+        # Clear them
+        handled_exceptions.ClearHandledExceptions()
+
+    '''
+    with _ShowHandledExceptionsError() as show_handled_exceptions_error:
+        yield show_handled_exceptions_error
+    show_handled_exceptions_error.RaiseFoundExceptions()
+
+
+#===================================================================================================
 # pytest_runtest_protocol
 #===================================================================================================
 def pytest_runtest_protocol(item, __multicall__):
@@ -62,6 +148,7 @@ def pytest_runtest_protocol(item, __multicall__):
     filename = os.path.join(item.config.getoption('fault_handler_dir'), name)
     item.fault_handler_stream = open(filename, 'w')
     faulthandler.enable(item.fault_handler_stream)
+
     try:
         return __multicall__.execute()
     finally:
