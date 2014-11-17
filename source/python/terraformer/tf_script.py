@@ -259,7 +259,7 @@ def FixEncoding(console_, *sources):
                 console_.Item('%s: %s (line:%s)' % (i_filename, encoding, line_no))
                 lines = GetFileContents(i_filename, encoding=encoding).split('\n')
                 del lines[line_no]
-                lines = ['# -*- coding: UTF-8 -*-'] + lines
+                lines = ['# coding: UTF-8'] + lines
                 contents = '\n'.join(lines)
                 CreateFile(i_filename, contents, encoding='UTF-8', eol_style=EOL_STYLE_UNIX)
             except:
