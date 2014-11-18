@@ -1,4 +1,4 @@
-# -*- coding: UTF-8 -*-
+# coding: UTF-8
 from __future__ import unicode_literals
 from ben10.filesystem import CreateFile, GetFileContents
 from ben10.foundation.string import Dedent
@@ -204,7 +204,7 @@ def testFixEncoding(embed_data):
             action = 'ação'
         ''',
         '''
-            # -*- coding: UTF-8 -*-
+            # coding: UTF-8
             from __future__ import with_statement
             import sys
 
@@ -223,13 +223,32 @@ def testFixEncoding(embed_data):
             action = 'ação'
         ''',
         '''
-            # -*- coding: UTF-8 -*-
+            # coding: UTF-8
             import alpha
             import bravo
 
             action = 'ação'
         ''',
         'cp1252'
+    )
+
+    # Support "coding=".
+    TestFixEncoding(
+        '''
+            # coding=UTF-8
+            import alpha
+            import bravo
+
+            action = 'ação'
+        ''',
+        '''
+            # coding: UTF-8
+            import alpha
+            import bravo
+
+            action = 'ação'
+        ''',
+        'UTF-8'
     )
 
 

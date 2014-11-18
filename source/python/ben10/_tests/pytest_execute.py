@@ -1,4 +1,4 @@
-# -*- coding: UTF-8 -*-
+# coding: UTF-8
 from __future__ import unicode_literals
 from ben10.execute import (EnvironmentContextManager, Execute, ExecuteNoWait,
     GetSubprocessOutput, PrintEnvironment)

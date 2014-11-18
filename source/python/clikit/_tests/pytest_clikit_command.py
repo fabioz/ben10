@@ -1,4 +1,5 @@
 from __future__ import unicode_literals
+from ben10.foundation.string import Dedent
 from clikit.command import Command, InvalidFixture
 from clikit.console import BufferedConsole
 import pytest
@@ -48,6 +49,8 @@ class Test:
         def Hello(console_, filename, option='yes', no_setup=False, no_default=None, *config):
             '''
             Hello function.
+
+            This is Hello.
 
             :param filename: The name of the file.
             :param no_setup: False if set
@@ -101,35 +104,69 @@ class Test:
         with pytest.raises(TypeError):
             cmd.Call({'console_' : console}, {})
 
-        assert cmd.FormatHelp() == '''Usage:
-    Hello <filename> <*config> [--option=yes],[--no-setup],[--no-default=VALUE]
+        assert cmd.description == 'Hello function.'
+        assert cmd.long_description == Dedent(
+            '''
+            Hello function.
 
-Parameters:
-    filename   The name of the file.
-    config   Configurations
+            This is Hello.
+            '''
+        )
 
-Options:
-    --option   (no description) [default: yes]
-    --no-setup   False if set
-    --no-default   Receives None
-'''
+        assert cmd.FormatHelp() == Dedent(
+            '''
+            Usage:
+                Hello <filename> <*config> [--option=yes],[--no-setup],[--no-default=VALUE]
+
+            Parameters:
+                filename   The name of the file.
+                config   Configurations
+
+            Options:
+                --option   (no description) [default: yes]
+                --no-setup   False if set
+                --no-default   Receives None
+
+            '''
+        )
+
+        assert cmd.FormatHelp() == Dedent(
+            '''
+            Usage:
+                Hello <filename> <*config> [--option=yes],[--no-setup],[--no-default=VALUE]
+
+            Parameters:
+                filename   The name of the file.
+                config   Configurations
+
+            Options:
+                --option   (no description) [default: yes]
+                --no-setup   False if set
+                --no-default   Receives None
+
+            '''
+        )
 
         import argparse
         parser = argparse.ArgumentParser('TEST')
         cmd.ConfigureArgumentParser(parser)
-        assert parser.format_help() == '''usage: TEST [-h] [--option OPTION] [--no-setup] [--no-default NO_DEFAULT]
-            filename config [config ...]
+        assert parser.format_help() == Dedent(
+            '''
+            usage: TEST [-h] [--option OPTION] [--no-setup] [--no-default NO_DEFAULT]
+                        filename config [config ...]
 
-positional arguments:
-  filename
-  config
+            positional arguments:
+              filename
+              config
 
-optional arguments:
-  -h, --help            show this help message and exit
-  --option OPTION
-  --no-setup
-  --no-default NO_DEFAULT
-'''
+            optional arguments:
+              -h, --help            show this help message and exit
+              --option OPTION
+              --no-setup
+              --no-default NO_DEFAULT
+
+            '''
+        )
 
     def testNoArgument(self):
 

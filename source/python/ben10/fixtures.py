@@ -53,7 +53,7 @@ def pytest_runtest_protocol(item, __multicall__):
     # skip items that are not python test items (for example: pytest)
     if not hasattr(item, 'module'):
         return
-    name = '%s.%s.txt'  % (item.module.__name__, item.name)
+    name = '%s.%s.txt' % (item.module.__name__, item.name)
     invalid_chars = [os.sep, os.pathsep, ':', '<', '>', '@']
     if os.altsep:
         invalid_chars.append(os.altsep)
@@ -83,7 +83,7 @@ def pytest_addoption(parser):
 
     :param optparse.OptionParser parser:
     '''
-    group = parser.getgroup("debugconfig") # default pytest group for debugging/reporting
+    group = parser.getgroup("debugconfig")  # default pytest group for debugging/reporting
     group.addoption(
         '--fault-handler-dir',
         dest="fault_handler_dir",
@@ -140,21 +140,25 @@ class _EmbedDataFixture(object):
 
         # @ivar _module_dir: unicode
         # The module name.
-        self._module_name = request.module.__name__.split('.')[-1]
-        self._function_name = request.function.__name__
+        import re
+        module_name = request.module.__name__.split('.')[-1]
+
+        # Use node_name to support pytest.mark.parametrize, and replace all non-word chars with '_'
+        # Inspired by builtin 'tmpdir' fixture
+        node_name = re.sub("[\W]", "_", request.node.name)
 
         # @ivar _source_dir: unicode
         # The source directory name.
         # The contents of this directories populates the data-directory
         # This name is create based on the module_name
-        self._source_dir = request.fspath.dirname + '/' + self._module_name
+        self._source_dir = request.fspath.dirname + '/' + module_name
 
         # @ivar _data_dir: unicode
         # The data directory name
         # This name is created based on the module_name
         # Adding the function name to enable parallel run of tests in the same module (pytest_xdist)
-        self._data_dir = self._module_name.replace('pytest_', 'data_')
-        self._data_dir += '__' + self._function_name
+        self._data_dir = module_name.replace('pytest_', 'data_')
+        self._data_dir += '__' + node_name
 
         # @ivar _created: boolean
         # Internal flag that controls whether we created the data-directory or not.
