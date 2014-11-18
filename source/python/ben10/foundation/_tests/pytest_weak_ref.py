@@ -256,7 +256,7 @@ class Test():
     def testCustomAssertEqual(self):
         with pytest.raises(AssertionError) as excinfo:
             self.CustomAssertEqual(1, 2)
-        assert unicode(excinfo.value) == '1 != 2'
+        assert unicode(excinfo.value) == '1 != 2\nassert False'
 
 
     def testRefcount(self):
