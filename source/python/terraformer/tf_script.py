@@ -82,7 +82,9 @@ def FixFormat(console_, refactor=None, python_only=False, single_job=False, sort
 def AddImportSymbol(console_, import_symbol, single_job=False, *sources):
     '''
     Adds an import-symbol in all files.
-    The import statement is added in the first line of the code, before comments and string docs.
+
+    The import statement is added in the first line of the code, before comments but after module
+    string docs.
 
     :param sources: Source directories or files.
     :param import_symbol: The symbol to import. Ex. "__future__.unicode_literals"
@@ -238,7 +240,7 @@ def FixEncoding(console_, *sources):
                 if i > 10:
                     # Only searches the first lines for encoding information.
                     break
-                r = re.match('#.*coding:[ ]*([\w\-\d]*)', i_line)
+                r = re.match('#.*coding[:=] *([\w\-\d]*)', i_line)
                 if r is not None:
                     return i, r.group(1)
         return 0, None
@@ -257,7 +259,7 @@ def FixEncoding(console_, *sources):
                 console_.Item('%s: %s (line:%s)' % (i_filename, encoding, line_no))
                 lines = GetFileContents(i_filename, encoding=encoding).split('\n')
                 del lines[line_no]
-                lines = ['# -*- coding: UTF-8 -*-'] + lines
+                lines = ['# coding: UTF-8'] + lines
                 contents = '\n'.join(lines)
                 CreateFile(i_filename, contents, encoding='UTF-8', eol_style=EOL_STYLE_UNIX)
             except:
@@ -279,8 +281,8 @@ def FixStringio(console_, *sources):
             terra = TerraFormer(filename=i_filename)
             changed = terra.ReorganizeImports(
                 refactor={
-                    'StringIO.StringIO': 'io.StringIO',
-                    'cStringIO.StringIO': 'io.StringIO',
+                    'StringIO.StringIO': 'from io.StringIO',
+                    'cStringIO.StringIO': 'from io.StringIO',
                     'cStringIO': 'from io.StringIO',
                     'StringIO': 'from io.StringIO',
                 }

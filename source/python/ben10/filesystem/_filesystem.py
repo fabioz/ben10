@@ -345,7 +345,7 @@ def _DoCopyFile(source_filename, target_filename, copy_symlink=True):
             from ._filesystem_exceptions import NotImplementedProtocol
             raise NotImplementedProtocol(target_url.scheme)
 
-    elif source_url.scheme in ['http', 'ftp']:
+    elif source_url.scheme in ['http', 'https', 'ftp']:
         if _UrlIsLocal(target_url):
             # HTTP/FTP to local
             from _filesystem_remote import DownloadUrlToFile

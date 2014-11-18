@@ -95,6 +95,7 @@ class Command:
             self.arg_type = arg_type
             self.default = default
             self.description = '(no description)'
+            self.short_description = '(no description)'
 
             # For the command line, all options with underscores are replaced by hyphens.
             # argparse handles this and replaces back to underscore when setting option values
@@ -214,8 +215,9 @@ class Command:
             self.args[trail] = self.Arg(trail, self.Arg.ARG_TYPE_TRAIL)
 
         # Meta-info from
-        description, arg_descriptions = self._ParseDocString(self.func.__doc__ or '')
+        description, long_description, arg_descriptions = self._ParseDocString(self.func.__doc__ or '')
         self.description = description or '(no description)'
+        self.long_description = long_description or '(no description)'
         for i_arg, i_description in arg_descriptions.iteritems():
             try:
                 self.args[i_arg].description = i_description
@@ -243,31 +245,46 @@ class Command:
 
     def _ParseDocString(self, docstring):
         '''
-        Parses the (function) docstring for the genral and arguments descriptions.
+        Parses the (function) docstring for the general and arguments descriptions.
 
         :param docstring: A well formed docstring of a function.
-        :rtype: tuple(unicode, list(unicode))
+        :rtype: tuple(unicode, unicode, list(unicode))
         :returns:
             Returns the function description (doc's first line) and the description of each
             argument (sphinx doc style).
         '''
-        description = None
+
+        # States:
+        # 0: Starting to process
+        # 1: Loaded short_description
+        # 2: Loaded long_description
+        state = 0
+        short_description = ''
+        long_description = []
         arg_descriptions = {}
 
         lines = docstring.split('\n')
         for i_line in lines:
             i_line = i_line.strip()
-            if not i_line:
-                continue
-            if description is None and i_line:
-                description = i_line
-                continue
+
+            if state == 0:
+                if not i_line:
+                    continue
+                short_description = i_line
+                state = 1
+
             m = self.PARAM_RE.match(i_line)
             if m:
+                state = 2
                 arg, doc = m.groups()
                 arg_descriptions[arg.strip()] = doc.strip()
+            elif state == 1:
+                long_description.append(i_line)
+                continue
 
-        return description or '', arg_descriptions
+        long_description = '\n'.join(long_description)
+        long_description = long_description.rstrip('\n')
+        return short_description, long_description, arg_descriptions
 
 
     def FormatHelp(self):

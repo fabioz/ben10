@@ -31,6 +31,19 @@ def testEmbedData(embed_data):
         == StandardizePath(os.path.abspath('data_fixtures__testEmbedData/alpha.txt'))
 
 
+@pytest.mark.parametrize(('foo',), [('a',), ('b',), ('c',)])
+def testEmbedDataParametrize(embed_data, foo):
+    '''
+    asserts that we get unique data directories when mixing embed_data with pytest.mark.parametrize
+    '''
+    if foo == 'a':
+        assert embed_data.GetDataDirectory() == 'data_fixtures__testEmbedDataParametrize_foo0_'
+    if foo == 'b':
+        assert embed_data.GetDataDirectory() == 'data_fixtures__testEmbedDataParametrize_foo1_'
+    if foo == 'c':
+        assert embed_data.GetDataDirectory() == 'data_fixtures__testEmbedDataParametrize_foo2_'
+
+
 def testEmbedDataExistingDataDir(embed_data):
     # Create the directory manually (we must not use any embed_data functions or else the
     # directory is created)

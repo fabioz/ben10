@@ -1,5 +1,5 @@
 from __future__ import unicode_literals
-from ben10.foundation.reraise import Reraise
+from ben10.foundation.reraise import Reraise, ReraisedKeyError, ReraisedOSError, ReraisedSyntaxError
 import pytest
 
 
@@ -54,7 +54,7 @@ class TestReraiseSpecial(object):
             except Exception, exception:
                 Reraise(exception, "While doing 'bar'")
 
-        with pytest.raises(OSError) as e:
+        with pytest.raises(ReraisedOSError) as e:
             try:
                 bar()
             except OSError, exception:
@@ -63,6 +63,21 @@ class TestReraiseSpecial(object):
         obtained_msg = unicode(e.value)
         expected_msg = "\nWhile doing x:\nWhile doing 'bar'\n[Errno 2] Hellow"
         assert obtained_msg == expected_msg
+
+
+    def testPickle(self):
+        '''
+        Make sure that we can Pickle reraised exceptions.
+        '''
+        try:
+            try:
+                raise OSError(2, 'Hellow')
+            except OSError as original_exception:
+                Reraise(original_exception, 'new stuff')
+        except Exception as reraised_exception:
+            import cPickle
+            pickled_exception = cPickle.loads (cPickle.dumps(reraised_exception))
+            assert str(pickled_exception) == str(reraised_exception)
 
 
     def testSyntaxError(self):
@@ -75,7 +90,7 @@ class TestReraiseSpecial(object):
             except SyntaxError, exception:
                 Reraise(exception, "SecondaryError")
 
-        with pytest.raises(SyntaxError) as e:
+        with pytest.raises(ReraisedSyntaxError) as e:
             try:
                 bar()
             except SyntaxError, exception:
@@ -87,7 +102,7 @@ class TestReraiseSpecial(object):
 
 
     def testReraiseKeyError(self):
-        with pytest.raises(Exception) as e:
+        with pytest.raises(ReraisedKeyError) as e:
             try:
                 raise KeyError('key')
             except KeyError as exception:
@@ -122,6 +137,3 @@ class TestReraiseEnvironmentErrors(object):
         expected_message = '\nReraising\n' + exception_message
         assert obtained_message == expected_message
         assert type(obtained_message) is unicode
-
-
-
