@@ -1,5 +1,9 @@
+# coding: UTF-8
 from __future__ import unicode_literals
-from ben10.foundation.string import Dedent, Indent, SafeSplit
+from ben10.foundation.string import Dedent, Indent, SafeSplit, ToUnicode
+from mock import patch
+import locale
+import pytest
 
 
 
@@ -184,3 +188,19 @@ class Test:
         assert SafeSplit('alpha bravo', ' ', 2) == ['alpha', 'bravo', '']
         assert SafeSplit('alpha bravo charlie', ' ', 2) == ['alpha', 'bravo', 'charlie']
 
+
+    @patch.object(locale, 'getpreferredencoding', autospec=True, return_value='UTF-8')
+    def testToUnicode(self, *args):
+        value = RuntimeError('Não'.encode('cp1252'))
+
+        result = ToUnicode(value)
+        assert result == 'N�o'
+
+        result = ToUnicode(value, error_strategy='ignore')
+        assert result == 'No'
+
+        with pytest.raises(UnicodeDecodeError):
+            ToUnicode(value, error_strategy='strict')
+
+        result = ToUnicode(value, 'cp1252')
+        assert result == 'Não'
