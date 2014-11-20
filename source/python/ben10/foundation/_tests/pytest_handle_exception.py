@@ -42,7 +42,7 @@ def exception_handler(request):
 #===================================================================================================
 class Test(object):
 
-    def testHandleException(self, exception_handler, capfd):
+    def testHandleException(self, exception_handler, capfd, handled_exceptions):
         try:
             raise RuntimeError()
         except:
@@ -62,9 +62,10 @@ class Test(object):
                 ''' % __file__,
             )
         )
+        handled_exceptions.ClearHandledExceptions()
 
 
-    def testIgnoreHandleException(self, exception_handler, capfd):
+    def testIgnoreHandleException(self, exception_handler, capfd, handled_exceptions):
         handle_exception.StartIgnoreHandleException()
         try:
             try:
@@ -77,3 +78,4 @@ class Test(object):
 
         obtained = capfd.readouterr()
         assert tuple(obtained) == (u'', u'')
+        handled_exceptions.ClearHandledExceptions()
