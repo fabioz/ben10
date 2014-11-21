@@ -43,7 +43,10 @@ def Reraise(exception, message, separator='\n'):
 
     # Get the current message
     try:
-        current_message = unicode(exception)
+        if hasattr(exception, 'message'):
+            current_message = unicode(exception.message)
+        else:
+            current_message = unicode(exception)
     except UnicodeDecodeError:
         import locale
         current_message = bytes(exception).decode(locale.getpreferredencoding())

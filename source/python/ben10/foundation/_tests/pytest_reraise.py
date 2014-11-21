@@ -1,3 +1,4 @@
+# coding: UTF-8
 from __future__ import unicode_literals
 from ben10.foundation.reraise import Reraise, ReraisedKeyError, ReraisedOSError, ReraisedSyntaxError
 import pytest
@@ -131,6 +132,26 @@ class TestReraiseEnvironmentErrors(object):
             try:
                 raise ExceptionWithStr(exception_message.encode(encoding))
             except ExceptionWithStr as exception:
+                Reraise(exception, "Reraising")
+
+        obtained_message = reraised_exception.value.message
+        expected_message = '\nReraising\n' + exception_message
+        assert obtained_message == expected_message
+        assert type(obtained_message) is unicode
+
+
+    def testEncodingErrorUnicodeException(self):
+
+        class ExceptionWithUnicode(EnvironmentError):
+            '''
+            An exception that is in unicode and contains non-latin-1-characters
+            '''
+
+        exception_message = u'файл'
+        with pytest.raises(ExceptionWithUnicode) as reraised_exception:
+            try:
+                raise ExceptionWithUnicode(exception_message)
+            except ExceptionWithUnicode as exception:
                 Reraise(exception, "Reraising")
 
         obtained_message = reraised_exception.value.message
