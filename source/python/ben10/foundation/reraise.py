@@ -39,16 +39,19 @@ def Reraise(exception, message, separator='\n'):
         >>> RuntimeError:
         >>> [message] original message
     '''
+    import locale
     import sys
 
     # Get the current message
     try:
-        if hasattr(exception, 'message'):
-            current_message = unicode(exception.message)
-        else:
+        try:
             current_message = unicode(exception)
+        except UnicodeEncodeError:
+            if hasattr(exception, 'message'):
+                current_message = unicode(exception.message)
+            else:
+                current_message = bytes(exception).decode(locale.getpreferredencoding())
     except UnicodeDecodeError:
-        import locale
         current_message = bytes(exception).decode(locale.getpreferredencoding())
 
     # Build the new message

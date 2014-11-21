@@ -147,7 +147,7 @@ class TestReraiseEnvironmentErrors(object):
             An exception that is in unicode and contains non-latin-1-characters
             '''
 
-        exception_message = u'файл'
+        exception_message = u'Сообщение об ошибке.'
         with pytest.raises(ExceptionWithUnicode) as reraised_exception:
             try:
                 raise ExceptionWithUnicode(exception_message)
