@@ -1,7 +1,9 @@
+# coding: UTF-8
 from __future__ import unicode_literals
-from StringIO import StringIO
 from ben10.filesystem import CreateFile
 from ben10.foundation.print_detailed_traceback import PrintDetailedTraceback
+from io import BytesIO
+import pytest
 import re
 
 
@@ -21,7 +23,7 @@ def testPrintDetailedTraceback(embed_data):
     data = map(unicode, xrange(100))
     data[3] = 3
 
-    stream = StringIO()
+    stream = BytesIO()
     try:
         Pad(data)
     except:
@@ -69,20 +71,24 @@ def testNoException():
     Should not print anything in case there's no exception info (complies with the behavoir from
     traceback.print_exception)
     '''
-    stream = StringIO()
+    stream = BytesIO()
     PrintDetailedTraceback(exc_info=(None, None, None), stream=stream)
     assert stream.getvalue() == 'None\n'
 
 
-def testPrintDetailedTracebackWithUnicode():
-
-    stream = StringIO()
+@pytest.mark.parametrize(('exception_message',), [(u'fake unicode message',), (u'Сообщение об ошибке.',)])
+def testPrintDetailedTracebackWithUnicode(exception_message):
+    '''
+    Test PrintDetailedTraceback with 'plain' unicode arguments and an unicode argument with cyrillic
+    characters
+    '''
+    stream = BytesIO()
     try:
-        raise Exception(u'fake unicode message')
+        raise Exception(exception_message)
     except:
         PrintDetailedTraceback(stream=stream)
 
-    assert 'Exception: fake unicode message' in stream.getvalue()
+    assert 'Exception: %s' % (exception_message) in stream.getvalue().decode('UTF-8')
 
 
 def testOmitLocals():
@@ -90,7 +96,7 @@ def testOmitLocals():
     Makes sure arguments and local variables are not present in traceback contents whenever
     omit locals option is enabled.
     '''
-    stream = StringIO()
+    stream = BytesIO()
     def Flawed(foo):
         arthur = 'dent'  # @UnusedVariable
         raise Exception('something')

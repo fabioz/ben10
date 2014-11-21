@@ -6,7 +6,7 @@ import sys
 #===================================================================================================
 # PrintDetailedTraceback
 #===================================================================================================
-def PrintDetailedTraceback(exc_info=None, stream=None, max_levels=None, max_line_width=120, omit_locals=False):
+def PrintDetailedTraceback(exc_info=None, stream=None, max_levels=None, max_line_width=120, omit_locals=False, encoding='UTF-8'):
     '''
     Prints a more detailed traceback than Python's original one showing, for each frame, also the
     locals at that frame and their values.
@@ -18,7 +18,8 @@ def PrintDetailedTraceback(exc_info=None, stream=None, max_levels=None, max_line
 
     :type stream: file-like object
     :param stream:
-        File like object to print the traceback to.
+        File like object to print the traceback to. Note that the traceback will be written as bytes
+        to the stream, encoded with the optional 'encoding' parameter.
 
     :param int max_levels:
         The maximum levels up in the traceback to display. If None, print all levels.
@@ -33,9 +34,20 @@ def PrintDetailedTraceback(exc_info=None, stream=None, max_levels=None, max_line
         especially interesting if an error during a function may expose sensitive data, like an user
         private information as a password. Defaults to false as most cases won't be interested in
         this feature.
+
+    :param unicode encoding:
+        The encoding to use when writing to the stream. Note that if 'stream' is None or sys.stderr,
+        the 'encoding' parameter will be ignored and the value of sys.stderr.encoding will be used
+        instead.
     '''
-    if stream is None:
+    import io
+    def _WriteToStream(message):
+        assert type(message) is unicode
+        stream.write(message.encode(encoding))
+
+    if stream is None or stream is sys.stderr:
         stream = sys.stderr
+        encoding = sys.stderr.encoding
 
     if exc_info is None:
         exc_info = sys.exc_info()
@@ -67,7 +79,7 @@ def PrintDetailedTraceback(exc_info=None, stream=None, max_levels=None, max_line
             break
     stack.reverse()
 
-    stream.write('Traceback (most recent call last):\n')
+    _WriteToStream('Traceback (most recent call last):\n')
 
     for frame in stack:
         params = dict(
@@ -75,14 +87,16 @@ def PrintDetailedTraceback(exc_info=None, stream=None, max_levels=None, max_line
             filename=frame.f_code.co_filename,
             lineno=frame.f_lineno,
         )
-        stream.write('  File "%(filename)s", line %(lineno)d, in %(name)s\n' % params)
+
+        _WriteToStream('  File "%(filename)s", line %(lineno)d, in %(name)s\n' % params)
+
         try:
-            lines = file(frame.f_code.co_filename).readlines()
+            lines = io.open(frame.f_code.co_filename).readlines()
             line = lines[frame.f_lineno - 1]
         except:
             pass  # don't show the line source
         else:
-            stream.write('    %s\n' % line.strip())
+            _WriteToStream('    %s\n' % line.strip())
 
         if not omit_locals:
             # string used to truncate string representations of objects that exceed the maximum
@@ -106,7 +120,7 @@ def PrintDetailedTraceback(exc_info=None, stream=None, max_levels=None, max_line
                         middle = int(space / 2)
                         val_repr = val_repr[:middle] + trunc_str + val_repr[-(middle + len(trunc_str)):]
 
-                stream.write(ss + val_repr + '\n')
+                _WriteToStream(ss + val_repr + '\n')
 
     #
     # Replaced "exception" by "exception.message" because "unicode(exception)" generate an
@@ -119,4 +133,5 @@ def PrintDetailedTraceback(exc_info=None, stream=None, max_levels=None, max_line
     else:
         message = unicode(exception)  # Default behavior
 
-    stream.write('%s: %s\n' % (exc_type.__name__, message))
+    _WriteToStream('%s: %s\n' % (exc_type.__name__, message))
+
