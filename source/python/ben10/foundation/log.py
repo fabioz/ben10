@@ -24,7 +24,7 @@ except:
 AddDebugStreamHandler()
 '''
 from __future__ import unicode_literals
-from io import StringIO
+from io import BytesIO, StringIO
 import logging
 
 
@@ -186,15 +186,15 @@ def _ExceptionWithDetailedTraceback(logger, msg):
     '''
     Writes the current exception as a detailed traceback into the log.
 
-    It is similar to exception, but using coilib's detailed traceback.
+    It is similar to exception, but using ben10's detailed traceback.
 
     :param unicode msg:
         Message to display before traceback.
     '''
     from .print_detailed_traceback import PrintDetailedTraceback
-    stream = StringIO()
-    PrintDetailedTraceback(stream=stream)
-    logger.error(msg + '\n' + stream.getvalue())
+    stream = BytesIO()
+    PrintDetailedTraceback(stream=stream, encoding='UTF-8')
+    logger.error(msg + '\n' + stream.getvalue().decode('UTF-8'))
 
 
 logging.Logger.ExceptionWithDetailedTraceback = _ExceptionWithDetailedTraceback
