@@ -25,6 +25,10 @@ class Git(Singleton):
     # Expected output encoding from git commands
     OUTPUT_ENCODING = 'UTF-8'
 
+    # Handle encode errors with 'replace'. We assume UTF-8 for all files, but we don't want git
+    # commands to fail because someone is using the wrong encoding.
+    OUTPUT_ENCODING_ERRORS = 'replace'
+
     # Constants for common refs
     ZERO_REVISION = '0' * 40
     REFS_HEADS = 'refs/heads/'
@@ -79,6 +83,7 @@ class Git(Singleton):
 
         clean_eol = kwargs.pop('clean_eol', True)
         output_encoding = kwargs.pop('output_encoding', self.OUTPUT_ENCODING)
+        output_encoding_errors = kwargs.pop('output_encoding_errors', self.OUTPUT_ENCODING_ERRORS)
 
         from ben10.execute import Execute2
         output, retcode = Execute2(
@@ -86,6 +91,7 @@ class Git(Singleton):
             cwd=repo_path,
             clean_eol=clean_eol,
             output_encoding=output_encoding,
+            output_encoding_errors=output_encoding_errors,
             **kwargs
         )
 
