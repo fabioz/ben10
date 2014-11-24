@@ -3,14 +3,14 @@ junit_patterns:
 
 platform-windows:build_batch_commands:
 - |
-  %AA_AASIMAR_AA_CONFIG% --dependencies-file=%WORKSPACE%/ben10/dependencies.ini --projects-dir=%WORKSPACE% --dist={dist} --platform={platform} --conf-dir=%WORKSPACE% --load-env=git || goto :eof
+  %AA_AASIMAR_AA_CONFIG% --dist-ref=origin/development --projects-dir=%WORKSPACE% --dist={dist} --platform={platform} --conf-dir=%WORKSPACE% --load-env=git || goto :eof
   %AA_AASIMAR_AA% -t project.build ben10  || goto :eof
   %AA_AASIMAR_II% pak              ben10 --branch={branch}
 
 
 platform-linux:build_shell_commands:
 - |
-  $AA_AASIMAR_AA_CONFIG --dependencies-file=$WORKSPACE/ben10/dependencies.ini --projects-dir=$WORKSPACE --dist={dist} --platform={platform} --conf-dir=$WORKSPACE --load-env=git
+  $AA_AASIMAR_AA_CONFIG  --dist-ref=origin/development --projects-dir=$WORKSPACE --dist={dist} --platform={platform} --conf-dir=$WORKSPACE --load-env=git
   $AA_AASIMAR_AA -t project.build ben10
 
 
@@ -37,3 +37,8 @@ branch_patterns:
 notify_stash:
 
 timeout: 5
+
+git:
+  shallow_clone: true
+  reference: "$AA_SYSTEM_REF_REPOS/{name}"
+

@@ -160,7 +160,6 @@ def SafeSplit(s, sep, maxsplit=None, default=''):
     return result
 
 
-
 #===================================================================================================
 # ToByteString
 #===================================================================================================
@@ -175,3 +174,43 @@ def ToByteString(arg):
     if isinstance(arg, basestring):
         return str(arg)
     return arg
+
+
+#===================================================================================================
+# ToUnicode
+#===================================================================================================
+def ToUnicode(value, encoding=None, error_strategy='replace'):
+    '''
+    Converts given ``value`` to unicode.
+
+    If given encoding fails, the value will be converted to "ascii" using the given
+    ``error_strategy``.
+
+    :param bytes value:
+        Value that should be converted to ``unicode``.
+
+    :type encoding: unicode | None
+    :param encoding:
+        The encoding that ``value`` is supposedly encoded.
+
+    :param unicode error_strategy:
+        Possible values are ``strict``, ``replace`` and ``ignore``.
+        Check :meth:`bytes.decode` for details.
+
+    :rtype: unicode
+
+    .. seealso:: bytes.decode
+    '''
+    import locale
+
+    if encoding is None:
+        encoding = locale.getpreferredencoding()
+
+    try:
+        return unicode(value)
+    except UnicodeDecodeError:
+        value = bytes(value)
+        try:
+            return value.decode(encoding)
+        except UnicodeDecodeError:
+            return value.decode('ascii', error_strategy)

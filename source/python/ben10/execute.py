@@ -1,5 +1,5 @@
 from __future__ import unicode_literals
-from ben10.filesystem import CanonicalPath, Cwd, StandardizePath
+from ben10.filesystem import CanonicalPath, StandardizePath
 from ben10.foundation.reraise import Reraise
 from ben10.foundation.string import SafeSplit
 from ben10.foundation.uname import GetExecutableDir
@@ -387,7 +387,15 @@ def Execute2(
 #===================================================================================================
 # ExecuteNoWait
 #===================================================================================================
-def ExecuteNoWait(command_line, cwd=None, ignore_output=False):
+def ExecuteNoWait(
+        command_line,
+        cwd=None,
+        ignore_output=False,
+        environ=None,
+        extra_environ=None,
+        new_console=False,
+        **kwargs
+    ):
     '''
     Execute the given command line without waiting for the process to finish its execution.
 
@@ -395,27 +403,30 @@ def ExecuteNoWait(command_line, cwd=None, ignore_output=False):
         Returns the resulting of subprocess.Popen.
         Use result.pid for process-id.
     '''
-    with Cwd(cwd):
-        try:
-            if ignore_output:
-                process = subprocess.Popen(
-                    command_line,
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.STDOUT
-                )
-            else:
-                process = subprocess.Popen(
-                    command_line
-                )
+    if cwd:
+        kwargs['cwd'] = cwd
 
-            return process
-        except Exception, e:
-            Reraise(
-                e,
-                'SystemSharedScript.ExecuteNoWait:\n'
-                '  command_line: %s\n'
-                '  cwd: %s\n'
-                % (command_line, cwd))
+    kwargs['env'] = _GetEnviron(environ, extra_environ)
+
+    if ignore_output:
+        kwargs['stdout'] = subprocess.PIPE
+        kwargs['stderr'] = subprocess.STDOUT
+
+    if new_console:
+        if sys.platform == 'win32':
+            kwargs['creationflags'] = subprocess.CREATE_NEW_CONSOLE
+        else:
+            command_line = ['xterm', '-e'] + command_line
+
+    try:
+        return subprocess.Popen(command_line, **kwargs)
+    except Exception, e:
+        Reraise(
+            e,
+            'SystemSharedScript.ExecuteNoWait:\n'
+            '  command_line: %s\n'
+            '  cwd: %s\n'
+            % (command_line, cwd))
 
 
 
@@ -568,20 +579,7 @@ def ProcessOpen(
     if cwd is None:
         cwd = os.getcwd()
 
-    if environ is None:
-        environ = os.environ.copy()
-
-    if extra_environ:
-        environ.update(extra_environ)
-
-    replace_environ = {}
-    for i_name, i_value in environ.iteritems():
-        if i_value is COPY_FROM_ENVIRONMENT and i_name in os.environ:
-            replace_environ[i_name] = os.environ[i_name]
-    environ.update(replace_environ)
-
-    # subprocess does not accept unicode strings in the environment
-    environ = {bytes(key) : bytes(value) for key, value in environ.iteritems()}
+    environ = _GetEnviron(environ, extra_environ)
 
     # Make sure the command line is correctly encoded. This always uses locale.getpreferredencoding()
     try:
@@ -612,3 +610,36 @@ def ProcessOpen(
             '%s\n'
             % (EnvStr(environ), cwd, CmdLineStr(command_line))
         )
+
+
+
+def _GetEnviron(environ=None, extra_environ=None):
+    '''
+    :param environ:
+        .. seealso:: Execute
+
+    :param extra_environ:
+        .. seealso:: Execute
+
+    :return dict(bytes, bytes):
+        Environment dict to pass to subprocess.
+
+        This combines `environ` and `extra_environ` and converts all strings to bytes (subprocess
+        does not accept unicode).
+    '''
+    if environ is None:
+        environ = os.environ.copy()
+
+    if extra_environ:
+        environ.update(extra_environ)
+
+    replace_environ = {}
+    for i_name, i_value in environ.iteritems():
+        if i_value is COPY_FROM_ENVIRONMENT and i_name in os.environ:
+            replace_environ[i_name] = os.environ[i_name]
+    environ.update(replace_environ)
+
+    # subprocess does not accept unicode strings in the environment
+    environ = {bytes(key) : bytes(value) for key, value in environ.iteritems()}
+
+    return environ

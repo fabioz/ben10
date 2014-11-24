@@ -561,8 +561,7 @@ class App(object):
                 spaces = ' ' * ((max_width - i_width) + 3)
                 self.console.PrintQuiet('%s%s%s' % (i_names, spaces, i_description), indent=1)
         else:
-            self.console.PrintQuiet(command.description)
-            self.console.PrintQuiet()
+            self.console.PrintQuiet(command.long_description, newlines=2)
             self.console.Print(command.FormatHelp())
 
 

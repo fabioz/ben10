@@ -1,12 +1,15 @@
-# -*- coding: UTF-8 -*-
+# coding: UTF-8
 from __future__ import unicode_literals
-from ben10.execute import (EnvironmentContextManager, Execute, ExecuteNoWait,
-    GetSubprocessOutput, PrintEnvironment)
+from ben10.execute import (EnvironmentContextManager, Execute, ExecuteNoWait, GetSubprocessOutput,
+    PrintEnvironment)
 from ben10.foundation.string import Dedent
 from txtout.txtout import TextOutput
 import io
+import mock
 import os
 import pytest
+import subprocess
+import sys
 import time
 
 
@@ -170,6 +173,23 @@ class Test(object):
                 raise  # Might happen if we can't find win32api
             except:
                 pass  # Ignore any other errors on the kill process.
+
+
+    @mock.patch('subprocess.Popen', autospec=True)
+    def testExecuteNoWaitNewConsole(self, mock_popen):
+        ExecuteNoWait(['my_command', '--args'], new_console=True)
+
+        if sys.platform == 'win32':
+            mock_popen.assert_called_once_with(
+                ['my_command', '--args'],
+                creationflags=subprocess.CREATE_NEW_CONSOLE,
+                env=os.environ
+            )
+        else:
+            mock_popen.assert_called_once_with(
+                ['xterm', '-e', 'my_command', '--args'],
+                env=os.environ
+            )
 
 
     def testPrintEnvironment(self, embed_data):
