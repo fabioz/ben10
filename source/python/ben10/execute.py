@@ -22,8 +22,9 @@ class COPY_FROM_ENVIRONMENT(object):
     '''
 
 
-# Default encoding for output_encoding and encoding parameters.
+# Default encoding for output_encoding and encoding parameters + error handler.
 DEFAULT_ENCODING = 'UTF-8'
+DEFAULT_ENCODING_ERRORS = 'strict'
 
 
 
@@ -180,6 +181,7 @@ def Execute(
         input=None,  # @ReservedAssignment
         output_callback=None,
         output_encoding=None,
+        output_encoding_errors=None,
         return_code_callback=None,
         shell=False,
         ignore_auto_quote=False,
@@ -218,6 +220,9 @@ def Execute(
 
     :param unicode output_encoding:
         Encoding used to decode output from subprocess.
+
+    :param unicode output_encoding_errors:
+        Error handler for output decoding (strict, ignore, replace, etc)
 
     :param callback(int) return_code_callback:
         A optional callback called with the execution return -code.
@@ -261,6 +266,7 @@ def Execute(
         Returns the process execution output as a list of strings.
     '''
     output_encoding = output_encoding or DEFAULT_ENCODING
+    output_encoding_errors = output_encoding_errors or DEFAULT_ENCODING_ERRORS
 
     popen = ProcessOpen(
         command_line,
@@ -289,7 +295,7 @@ def Execute(
             if clean_eol:  # Read one line at the time, and remove EOLs
                 for line in iter(popen.stdout.readline, b""):
                     line = line.rstrip(b'\n\r')
-                    line = line.decode(output_encoding)
+                    line = line.decode(output_encoding, errors=output_encoding_errors)
                     if output_callback:
                         output_callback(line)
                     result.append(line)
@@ -301,7 +307,7 @@ def Execute(
                     # Check if last line was \r, if not, print what we have
                     if char != b'\n' and carriage:
                         carriage = False
-                        current_line = current_line.decode(output_encoding)
+                        current_line = current_line.decode(output_encoding, errors=output_encoding_errors)
                         if output_callback:
                             output_callback(current_line)
                         result.append(current_line)
@@ -313,7 +319,7 @@ def Execute(
                         carriage = True
 
                     if char == b'\n':
-                        current_line = current_line.decode(output_encoding)
+                        current_line = current_line.decode(output_encoding, errors=output_encoding_errors)
                         if output_callback:
                             output_callback(current_line)
                         result.append(current_line)
@@ -342,6 +348,7 @@ def Execute2(
         extra_environ=None,
         output_callback=None,
         output_encoding=None,
+        output_encoding_errors=None,
         shell=False,
         ignore_auto_quote=False,
         clean_eol=True,
@@ -359,8 +366,6 @@ def Execute2(
             [0]: List of string printed by the process
             [1]: The execution return code
     '''
-    output_encoding = output_encoding or DEFAULT_ENCODING
-
     return_code = [None]
 
     def CallbackReturnCode(ret):
@@ -373,6 +378,7 @@ def Execute2(
         extra_environ=extra_environ,
         output_callback=output_callback,
         output_encoding=output_encoding,
+        output_encoding_errors=output_encoding_errors,
         return_code_callback=CallbackReturnCode,
         shell=shell,
         ignore_auto_quote=ignore_auto_quote,
@@ -442,8 +448,10 @@ def GetSubprocessOutput(
         ignore_auto_quote=False,
         binary=False,
         encoding=None,
+        encoding_errors=None,
     ):
     encoding = encoding or DEFAULT_ENCODING
+    encoding_errors = encoding_errors or DEFAULT_ENCODING_ERRORS
 
     popen = ProcessOpen(
         command_line,
@@ -457,7 +465,7 @@ def GetSubprocessOutput(
     output, _stderr = popen.communicate()
     retcode = popen.poll()
     if not binary:
-        output = output.decode(encoding)
+        output = output.decode(encoding, errors=encoding_errors)
     return output, retcode
 
 
