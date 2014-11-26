@@ -67,19 +67,31 @@ def FTPHost(url):
     )
 
     try:
-        # Try to create active ftp host
-        host = create_host(session_factory=MyFTP)
+        import sys
 
-        # Check if a simple operation fails in active ftp, if it does, switch to default (passive) ftp
-        try:
-            host.stat('~')
-        except Exception, e:
-            if e.errno in [425, 500]:
-                # 425 = Errno raised when trying to a server without active ftp
-                # 500 = Illegal PORT command. In this case we also want to try passive mode.
-                host = create_host(session_factory=MyPassiveFTP)
+        # In Windows, use Active FTP by default
+        if sys.platform == 'win32':
+            host = create_host(session_factory=MyFTP)
 
-        return host
+            # Check if a simple operation fails in active ftp, if it does, switch to passive ftp
+            try:
+                host.stat('~')
+            except Exception, e:
+                if e.errno in [425, 500]:
+                    # 425 = Errno raised when trying to a server without active ftp
+                    # 500 = Illegal PORT command. In this case we also want to try passive mode.
+                    host = create_host(session_factory=MyPassiveFTP)
+
+            return host
+
+        # In Linux, use Passive FTP by default
+        else:
+            try:
+                return create_host(session_factory=MyPassiveFTP)
+            except:
+                return create_host(session_factory=MyFTP)
+
+
     except FTPOSError, e:
         if e.args[0] in [11004, -3]:
             from ben10.foundation.reraise import Reraise
