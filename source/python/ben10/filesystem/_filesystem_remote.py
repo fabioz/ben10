@@ -1,6 +1,6 @@
 from __future__ import unicode_literals
-from ftputil.error import FTPIOError, FTPOSError, PermanentError
 from contextlib import closing
+from ftputil.error import FTPIOError, FTPOSError, PermanentError
 
 
 
@@ -37,13 +37,8 @@ def FTPHost(url):
                 else:
                     self.login()
 
-
-            # Check if we can use passive transfers
-            try:
-                self.makepasv()
-                self.set_pasv(True)
-            except:
-                self.set_pasv(False)
+            # Use active FTP by default
+            self.set_pasv(False)
 
 
         # ftplib does not support unicode in Python < 3
@@ -54,14 +49,37 @@ def FTPHost(url):
                 line = line.encode('UTF-8')
             self.sock.sendall(line)
 
+
+    class MyPassiveFTP(MyFTP):
+        def __init__(self, *args, **kwargs):
+            MyFTP.__init__(self, *args, **kwargs)
+            self.makepasv()
+            self.set_pasv(True)
+
+
+    from functools import partial
+    create_host = partial(
+        ftputil.FTPHost,
+        url.hostname,
+        url.username,
+        url.password,
+        port=url.port
+    )
+
     try:
-        return ftputil.FTPHost(
-            url.hostname,
-            url.username,
-            url.password,
-            port=url.port,
-            session_factory=MyFTP
-        )
+        # Try to create active ftp host
+        host = create_host(session_factory=MyFTP)
+
+        # Check if a simple operation fails in active ftp, if it does, switch to default (passive) ftp
+        try:
+            host.stat('~')
+        except Exception, e:
+            if e.errno in [425, 500]:
+                # 425 = Errno raised when trying to a server without active ftp
+                # 500 = Illegal PORT command. In this case we also want to try passive mode.
+                host = create_host(session_factory=MyPassiveFTP)
+
+        return host
     except FTPOSError, e:
         if e.args[0] in [11004, -3]:
             from ben10.foundation.reraise import Reraise
