@@ -89,6 +89,8 @@ def FTPHost(url):
             try:
                 return create_host(session_factory=MyPassiveFTP)
             except:
+                # If we cant use Passive FTP, fallback to Active (this can happen if the server does
+                # not accept PASV command).
                 return create_host(session_factory=MyFTP)
 
 
