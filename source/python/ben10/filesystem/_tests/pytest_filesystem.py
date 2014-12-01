@@ -4,12 +4,13 @@ from ben10.filesystem import (AppendToFile, CanonicalPath, CheckIsDir, CheckIsFi
     CopyFile, CopyFiles, CopyFilesX, CreateDirectory, CreateFile, CreateLink, CreateMD5,
     CreateTemporaryDirectory, Cwd, DRIVE_FIXED, DRIVE_NO_ROOT_DIR, DRIVE_REMOTE, DeleteDirectory,
     DeleteFile, DeleteLink, DirectoryAlreadyExistsError, DirectoryNotFoundError, EOL_STYLE_MAC,
-    EOL_STYLE_NONE, EOL_STYLE_UNIX, EOL_STYLE_WINDOWS, FileAlreadyExistsError, FileError,
-    FileNotFoundError, FileOnlyActionError, GetDriveType, GetFileContents, GetFileLines, GetMTime,
-    IsDir, IsFile, IsLink, ListFiles, ListMappedNetworkDrives, MD5_SKIP, MoveDirectory, MoveFile,
-    NormStandardPath, NormalizePath, NotImplementedForRemotePathError, NotImplementedProtocol,
-    OpenFile, ReadLink, ReplaceInFile, ServerTimeoutError, StandardizePath)
+    EOL_STYLE_NONE, EOL_STYLE_UNIX, EOL_STYLE_WINDOWS, ExpandUser, FileAlreadyExistsError,
+    FileError, FileNotFoundError, FileOnlyActionError, GetDriveType, GetFileContents, GetFileLines,
+    GetMTime, IsDir, IsFile, IsLink, ListFiles, ListMappedNetworkDrives, MD5_SKIP, MoveDirectory,
+    MoveFile, NormStandardPath, NormalizePath, NotImplementedForRemotePathError,
+    NotImplementedProtocol, OpenFile, ReadLink, ReplaceInFile, ServerTimeoutError, StandardizePath)
 from ben10.filesystem._filesystem import CreateTemporaryFile, FindFiles
+from ben10.foundation.pushpop import PushPopItem
 from mock import patch
 import errno
 import os
@@ -1381,6 +1382,22 @@ class Test:
             embed_data['test_find_files/testRoot.bmp'],
         ]
         Compare(found_files, assert_found_files)
+
+
+
+    @pytest.mark.parametrize(('env_var',), [('ascii',), ('nót-ãscii',), ('кодирование',)])
+    def testExpandUser(self, env_var):
+        fse = sys.getfilesystemencoding()
+        encoded_env_var = env_var.encode(fse)
+
+        # Check if `env_var` can be represented with this system's encoding.
+        # This check can fail when trying to encode russian characters in a non-russian windows
+        if encoded_env_var.decode(fse) != env_var:
+            return
+
+        with PushPopItem(os.environ, 'HOME', encoded_env_var):
+            assert ExpandUser('~/dir') == env_var + '/dir'
+
 
 
     def assertSetEqual(self, a, b):
