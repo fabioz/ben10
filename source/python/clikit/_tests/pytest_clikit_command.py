@@ -153,7 +153,7 @@ class Test:
         assert parser.format_help() == Dedent(
             '''
             usage: TEST [-h] [--option OPTION] [--no-setup] [--no-default NO_DEFAULT]
-                        filename config [config ...]
+                        filename [config [config ...]]
 
             positional arguments:
               filename

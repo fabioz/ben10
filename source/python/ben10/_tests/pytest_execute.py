@@ -20,14 +20,18 @@ import time
 class Test(object):
 
     def _AssertExecute(self, expected_output, *args, **kwargs):
+
+        if 'input' not in kwargs:
+            # Testing GetSubprocessOutput before Execute to try to pin-point a flaky error on
+            # testExecuteAndEnviron. I'm trying to reproduce the error and check if it only happens
+            # with Execute or if it also happens with GetSubprocessOutput and its usage of
+            # subprocess's "communicate" method.
+            obtained_output, obtained_retcode = GetSubprocessOutput(*args, **kwargs)
+            assert obtained_retcode == 0
+            self._AssertOutput(obtained_output.splitlines(), expected_output)
+
         obtained_output = Execute(*args, **kwargs)
         self._AssertOutput(obtained_output, expected_output)
-
-        if 'input' in kwargs:
-            return
-        obtained_output, obtained_retcode = GetSubprocessOutput(*args, **kwargs)
-        assert obtained_retcode == 0
-        self._AssertOutput(obtained_output.splitlines(), expected_output)
 
 
     def _AssertOutput(self, obtained_output, expected_output):
@@ -126,6 +130,16 @@ class Test(object):
 
 
     def testExecuteAndEnviron(self, embed_data):
+        '''
+        This test sometimes fails on Windows 7 64bits with an extra environment variable:
+
+            __COMPAT_LAYER: DisableUserCallbackException
+
+        This environment variable is added by the system to indicate to the process that it is
+        registered as a AppCompatFlags as explained in this article:
+
+            http://stackoverflow.com/questions/5600735/how-do-i-fix-win7-app-compatibility-shim-with-disableusercallbackexception
+        '''
         self._AssertExecute(
             Dedent(
                 '''
