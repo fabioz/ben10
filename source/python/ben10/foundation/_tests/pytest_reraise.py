@@ -49,6 +49,7 @@ class ExceptionTestConfiguration():
 
 
     def GetExpectedTracebackMessage(self, actual_exception):
+        # Getting the type of the "actual exception" because its type might be different than self.exception_type
         reraised_exception_name = type(actual_exception).__name__
         exception_message = self.GetExpectedExceptionMessage()
 
