@@ -39,13 +39,10 @@ def Reraise(exception, message, separator='\n'):
         >>> RuntimeError:
         >>> [message] original message
     '''
+    from ben10.foundation.exceptions import ExceptionToUnicode
     import sys
 
-    # IMPORTANT: This should be the first thing to be done in this method or else we might risk losing the frame and
-    # corruping the Traceback
-    frame = sys.exc_info()[-1]
-
-    from ben10.foundation.exceptions import ExceptionToUnicode
+    # IMPORTANT: Do NOT use try/except mechanisms in this method or the sys.exc_info()[-1] will be invalid
 
     if hasattr(exception, 'reraised_message'):
         current_message = exception.reraised_message
@@ -73,7 +70,7 @@ def Reraise(exception, message, separator='\n'):
     exception.reraised_message = message
 
     # Reraise the exception with the EXTRA message information
-    raise exception, None, frame
+    raise exception, None, sys.exc_info()[-1]
 
 
 
