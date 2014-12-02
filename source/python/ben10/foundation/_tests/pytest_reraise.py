@@ -52,10 +52,6 @@ parametrized_exceptions = pytest.mark.parametrize('exception_type, string_statem
     'SyntaxError - bytes message',
 ])
 
-# parametrized_exceptions = pytest.mark.parametrize('exception_type, string_statement, expected_inner_exception_message', [
-#     (IOError, "raise IOError('исключение')", "исключение"),
-# ])
-
 
 @parametrized_exceptions
 def testReraiseKeepsTraceback(exception_type, string_statement, expected_inner_exception_message):
@@ -109,8 +105,7 @@ def testReraiseAddsMessagesCorrectly(exception_type, string_statement, expected_
     with pytest.raises(exception_type) as e:
         foobar()
 
-    assert e.value.message == "\nWhile doing y:\nWhile doing x:\nWhile doing 'bar'\n" + expected_inner_exception_message
-    assert type(e.value.message) == unicode
+    assert ExceptionToUnicode(e.value) == "\nWhile doing y:\nWhile doing x:\nWhile doing 'bar'\n" + expected_inner_exception_message
 
 
 @parametrized_exceptions
