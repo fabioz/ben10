@@ -86,8 +86,8 @@ parametrized_exceptions = pytest.mark.parametrize('exception_configuration', [
 
     # exceptions in which the message is a 'bytes' but is encoded in UTF-8
     ExceptionTestConfiguration(OSError, "raise OSError(2, b'£ message')", '[Errno 2] Â£ message'),
+    ExceptionTestConfiguration(IOError, "raise IOError(b'£ message')", 'Â£ message', expected_traceback_message='IOError: <unprintable IOError object>\n'),
     ExceptionTestConfiguration(Exception, "raise Exception(b'£ message')", 'Â£ message'),
-    ExceptionTestConfiguration(SyntaxError, "raise SyntaxError(b'£ message')", 'Â£ message'),
 
 ], ids=[
     'ValueError',
@@ -104,8 +104,8 @@ parametrized_exceptions = pytest.mark.parametrize('exception_configuration', [
     'IOError - unicode message',
 
     'OSError - bytes message',
+    'IOError - bytes message',
     'Exception - bytes message',
-    'SyntaxError - bytes message',
 ])
 
 
