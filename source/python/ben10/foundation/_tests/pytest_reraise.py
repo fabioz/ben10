@@ -13,6 +13,9 @@ def ExecutePythonCode(code):
     exec compile(code, '<string>', 'exec')
 
 
+#===================================================================================================
+# ExceptionTestConfiguration
+#===================================================================================================
 class ExceptionTestConfiguration():
     def __init__(self, exception_type, string_statement, expected_inner_exception_message='', expected_traceback_message=None):
         self.exception_type = exception_type
