@@ -780,9 +780,9 @@ class TextOutput(AbstractTextOutput):
 
         except Exception, e:
             print '*' * 80
-            print 'Major failure: Error while handling and exception'
+            print 'Major failure: Error while handling an exception'
             print '-' * 80
-            print unicode(e)
+            print e
             print '*' * 80
             raise
 
