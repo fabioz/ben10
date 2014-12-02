@@ -170,7 +170,8 @@ class ConfPlugin():
             '''
             Returns the full configuration file expanding users (~) and names (%(name)s).
             '''
-            return os.path.expanduser(self.conf_filename % {'name' : self.__name})
+            from ben10.filesystem import ExpandUser
+            return ExpandUser(self.conf_filename % {'name' : self.__name})
 
 
         def CreateConf():

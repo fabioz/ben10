@@ -1,6 +1,7 @@
 # coding=utf-8
 from __future__ import unicode_literals
-from ben10.foundation.reraise import ExceptionToUnicode, Reraise
+from ben10.foundation.exceptions import ExceptionToUnicode
+from ben10.foundation.reraise import Reraise
 import pytest
 
 

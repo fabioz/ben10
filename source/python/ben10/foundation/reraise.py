@@ -5,14 +5,6 @@ Inspired by http://www.thescripts.com/forum/thread46361.html
 
 
 
-def ExceptionToUnicode(exception):
-    import locale
-    try:
-        return unicode(exception)
-    except (UnicodeDecodeError, UnicodeEncodeError):
-        return bytes(exception).decode(locale.getpreferredencoding(), errors='replace')
-
-
 #===================================================================================================
 # Reraise
 #===================================================================================================
@@ -47,6 +39,7 @@ def Reraise(exception, message, separator='\n'):
         >>> RuntimeError:
         >>> [message] original message
     '''
+    from ben10.foundation.exceptions import ExceptionToUnicode
     import sys
 
     frame = sys.exc_info()[-1]
@@ -54,11 +47,7 @@ def Reraise(exception, message, separator='\n'):
     if hasattr(exception, 'reraised_message'):
         current_message = exception.reraised_message
     else:
-        try:
-            current_message = ExceptionToUnicode(exception)
-        except UnicodeEncodeError:
-            # Let's hope that the exception has a 'message' attribute
-            current_message = exception.message
+        current_message = ExceptionToUnicode(exception)
 
     # Build the new message
     if not current_message.startswith(separator):
