@@ -16,6 +16,7 @@ class Ben10BuildCommand(BuildCommand):
         self.Clean()
         self.RunTests(
             jobs=self.shared_script['hudson_test_jobs'],
+            use_cache=not self.opts.no_cache,
             xml=True,
             verbose=4
         )
