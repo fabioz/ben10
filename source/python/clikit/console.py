@@ -257,7 +257,8 @@ class Console(object):
         # Support for colors on Windows
         assert isinstance(indent, int)
         assert isinstance(newlines, int)
-        text = '    ' * indent + out + ('\n' * newlines)
+        from ben10.foundation.string import Indent
+        text = Indent(out, indent=indent) + ('\n' * newlines)
         if self.color and self.colorama:
             from colorama import AnsiToWin32
             AnsiToWin32(stream).write(text)
