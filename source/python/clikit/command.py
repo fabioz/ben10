@@ -133,7 +133,7 @@ class Command:
                 return
 
             if self.arg_type == self.ARG_TYPE_TRAIL:
-                parser.add_argument(self.argparse_name, nargs='+')
+                parser.add_argument(self.argparse_name, nargs='*')
                 return
 
             if self.arg_type == self.ARG_TYPE_OPTION:
