@@ -1,4 +1,7 @@
+# coding: UTF-8
 from __future__ import unicode_literals
+from ben10.execute import Execute2
+from ben10.filesystem import CanonicalPath
 from ben10.foundation import is_frozen
 from ben10.foundation.platform_ import Platform
 from ben10.foundation.pushpop import PushPop
@@ -45,6 +48,12 @@ class Test():
                 assert home_dir == '%(HOME)s' % os.environ
 
 
+    def testGetUserHomeDirNonAscii(self, embed_data):
+        output, _ = Execute2(['python', embed_data.GetDataFilename('ação/script.py'), 'home'])
+        home_dir = ''.join(output).strip()
+        assert CanonicalPath(home_dir) == CanonicalPath(embed_data.GetDataFilename('ação'))
+
+
     def testGetApplicationDir(self):
         was_frozen = is_frozen.SetIsFrozen(False)
         try:
@@ -59,6 +68,12 @@ class Test():
             assert application_dir == os.path.dirname(os.path.dirname(sys.executable))
         finally:
             is_frozen.SetIsFrozen(was_frozen)
+
+
+    def testGetApplicationDirNonAscii(self, embed_data):
+        output, _ = Execute2(['python', embed_data.GetDataFilename('ação/script.py'), 'app'])
+        obtained = ''.join(output).strip()
+        assert CanonicalPath(obtained) == CanonicalPath(embed_data.GetDataFilename('ação'))
 
 
     def testGetExecutableDir(self):
