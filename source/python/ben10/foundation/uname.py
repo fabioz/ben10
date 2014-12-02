@@ -58,7 +58,7 @@ def GetApplicationDir():
     '''
     if IsFrozen():
         result = os.path.dirname(sys.executable)
-        result = os.path.normpath(os.path.join(result, '..'))
+        result = os.path.normpath(os.path.join(result, b'..'))
     else:
         result = sys.path[0]
 
