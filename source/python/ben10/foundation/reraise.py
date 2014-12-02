@@ -39,20 +39,11 @@ def Reraise(exception, message, separator='\n'):
         >>> RuntimeError:
         >>> [message] original message
     '''
-    import locale
+    from ben10.foundation.exceptions import ExceptionToUnicode
     import sys
 
     # Get the current message
-    try:
-        try:
-            current_message = unicode(exception)
-        except UnicodeEncodeError:
-            if hasattr(exception, 'message'):
-                current_message = unicode(exception.message)
-            else:
-                current_message = bytes(exception).decode(locale.getpreferredencoding())
-    except UnicodeDecodeError:
-        current_message = bytes(exception).decode(locale.getpreferredencoding())
+    current_message = ExceptionToUnicode(exception)
 
     # Build the new message
     if not current_message.startswith(separator):
