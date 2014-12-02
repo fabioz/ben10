@@ -1,5 +1,7 @@
+# coding: UTF-8
 from __future__ import unicode_literals
 from StringIO import StringIO
+from ben10.execute import Execute2
 from ben10.filesystem import CreateFile
 from ben10.foundation.print_detailed_traceback import PrintDetailedTraceback
 import re
@@ -60,8 +62,13 @@ def testPrintDetailedTraceback(embed_data):
     embed_data.AssertEqualFiles(
         obtained_filename,
         'traceback.expected.txt',
-        fix_callback = FixIt
+        fix_callback=FixIt
     )
+
+
+def testPrintDetailedTracebackNotAsciiPath(embed_data):
+    output, _ = Execute2(['python', embed_data.GetDataFilename('ação/script.py'), 'home'])
+    assert ''.join(output).strip().endswith('COMPLETE')
 
 
 def testNoException():

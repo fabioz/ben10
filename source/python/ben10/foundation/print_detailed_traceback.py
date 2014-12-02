@@ -1,4 +1,5 @@
 from __future__ import unicode_literals
+import locale
 import sys
 
 
@@ -71,8 +72,8 @@ def PrintDetailedTraceback(exc_info=None, stream=None, max_levels=None, max_line
 
     for frame in stack:
         params = dict(
-            name=frame.f_code.co_name,
-            filename=frame.f_code.co_filename,
+            name=frame.f_code.co_name.decode(locale.getpreferredencoding()),
+            filename=frame.f_code.co_filename.decode(locale.getpreferredencoding()),
             lineno=frame.f_lineno,
         )
         stream.write('  File "%(filename)s", line %(lineno)d, in %(name)s\n' % params)
