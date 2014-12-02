@@ -76,7 +76,7 @@ if sys.platform == 'win32':
 else:
     test_configurations_with_bytes_messages = [
         ExceptionTestConfiguration(OSError, "raise OSError(2, b'£ message')", '[Errno 2] £ message'),
-        ExceptionTestConfiguration(IOError, "raise IOError(b'£ message')", 'Â£ message', expected_traceback_message='IOError: <unprintable IOError object>\n'),
+        ExceptionTestConfiguration(IOError, "raise IOError(b'£ message')", '£ message', expected_traceback_message='IOError: <unprintable IOError object>\n'),
         ExceptionTestConfiguration(Exception, "raise Exception(b'£ message')", '£ message'),
     ]
 
