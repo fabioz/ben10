@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 from ben10.foundation.exceptions import ExceptionToUnicode
 from ben10.foundation.reraise import Reraise
 import pytest
+import sys
 
 
 
@@ -65,6 +66,20 @@ class ExceptionTestConfiguration():
         return exception_message
 
 
+# exceptions in which the message is a 'bytes' but is encoded in UTF-8
+if sys.platform == 'win32':
+    test_configurations_with_bytes_messages = [
+        ExceptionTestConfiguration(OSError, "raise OSError(2, b'£ message')", '[Errno 2] Â£ message'),
+        ExceptionTestConfiguration(IOError, "raise IOError(b'£ message')", 'Â£ message', expected_traceback_message='IOError: <unprintable IOError object>\n'),
+        ExceptionTestConfiguration(Exception, "raise Exception(b'£ message')", 'Â£ message'),
+    ]
+else:
+    test_configurations_with_bytes_messages = [
+        ExceptionTestConfiguration(OSError, "raise OSError(2, b'£ message')", '[Errno 2] £ message'),
+        ExceptionTestConfiguration(IOError, "raise IOError(b'£ message')", 'Â£ message', expected_traceback_message='IOError: <unprintable IOError object>\n'),
+        ExceptionTestConfiguration(Exception, "raise Exception(b'£ message')", '£ message'),
+    ]
+
 parametrized_exceptions = pytest.mark.parametrize('exception_configuration', [
     ExceptionTestConfiguration(ValueError, "raise ValueError('message')", 'message'),
     ExceptionTestConfiguration(KeyError, "raise KeyError('message')", "u'message'"),
@@ -88,13 +103,8 @@ parametrized_exceptions = pytest.mark.parametrize('exception_configuration', [
     ExceptionTestConfiguration(OSError, "raise OSError(1)", '1'),
     ExceptionTestConfiguration(OSError, "raise OSError(2, '£ message')", '[Errno 2] £ message'),
     ExceptionTestConfiguration(IOError, "raise IOError('исключение')", "исключение", expected_traceback_message='IOError: <unprintable IOError object>\n'),
-
-    # exceptions in which the message is a 'bytes' but is encoded in UTF-8
-    ExceptionTestConfiguration(OSError, "raise OSError(2, b'£ message')", '[Errno 2] Â£ message'),
-    ExceptionTestConfiguration(IOError, "raise IOError(b'£ message')", 'Â£ message', expected_traceback_message='IOError: <unprintable IOError object>\n'),
-    ExceptionTestConfiguration(Exception, "raise Exception(b'£ message')", 'Â£ message'),
-
-], ids=[
+] + test_configurations_with_bytes_messages
+, ids=[
     'ValueError',
     'KeyError',
     'OSError',
