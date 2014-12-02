@@ -1,139 +1,126 @@
+# coding=utf-8
 from __future__ import unicode_literals
-from ben10.foundation.reraise import Reraise, ReraisedKeyError, ReraisedOSError, ReraisedSyntaxError
+from ben10.foundation.reraise import Reraise
 import pytest
 
 
 
 #===================================================================================================
-# TestReraise
+# ExecutePythonCode
 #===================================================================================================
-class TestReraise(object):
-    def testReraise(self):
-        def foo():
-            raise AttributeError('Test')
+def ExecutePythonCode(code):
+    exec compile(code, '<string>', 'exec')
 
-        def bar():
-            try:
-                foo()
-            except Exception, exception:
-                Reraise(exception, "While doing 'bar'")
 
-        expected = "\nWhile doing y:\nWhile doing x:\nWhile doing 'bar'\nTest"
 
+parametrized_exceptions = pytest.mark.parametrize('exception_type, string_statement, expected_inner_exception_message', [
+    (ValueError, "raise ValueError('message')", 'message'),
+    (KeyError, "raise KeyError('message')", "u'message'"),
+    (OSError, "raise OSError(2, 'message')", '[Errno 2] message'),
+    (SyntaxError, "raise SyntaxError('message')", 'message'),
+    (UnicodeDecodeError, "u'£'.encode('utf-8').decode('ascii')", "'ascii' codec can't decode byte 0xc2 in position 0: ordinal not in range(128)"),
+    (UnicodeEncodeError, "u'£'.encode('ascii')", "'ascii' codec can't encode character u'\\xa3' in position 0: ordinal not in range(128)"),
+    (AttributeError, "raise AttributeError('message')", 'message'),
+
+    (OSError, "raise OSError()", ''),
+    (OSError, "raise OSError(1)", '1'),
+    (OSError, "raise OSError(2, '£ message')", '[Errno 2] £ message'),
+
+    # exceptions in which the message is a 'bytes' but is encoded in UTF-8
+    (OSError, "raise OSError(2, b'£ message')", '[Errno 2] Â£ message'),
+    (Exception, "raise Exception(b'£ message')", 'Â£ message'),
+    (SyntaxError, "raise SyntaxError(b'£ message')", 'Â£ message'),
+], ids=[
+    'ValueError',
+    'KeyError',
+    'OSError',
+    'SyntaxError',
+    'UnicodeDecodeError',
+    'UnicodeEncodeError',
+    'AttributeError',
+
+    'OSError - empty',
+    'OSError - ErrorNo, empty message',
+    'OSError - ErrorNo, unicode message',
+
+    'OSError - bytes message',
+    'Exception - bytes message',
+    'SyntaxError - bytes message',
+])
+
+
+@parametrized_exceptions
+def testReraiseKeepsTraceback(exception_type, string_statement, expected_inner_exception_message):
+    def RaiseError():
+        ExecutePythonCode(string_statement)
+        pytest.fail('Should not reach here')
+
+    def RaiseErrorByReraising():
         try:
-            try:
-                try:
-                    bar()
-                except Exception, exception:
-                    Reraise(exception, "While doing x:")
-            except Exception, exception:
-                Reraise(exception, "While doing y:")
+            RaiseError()
+        except exception_type, inner_exception:
+            Reraise(inner_exception, 'Reraise message')
+        except Exception, e:
+            pytest.fail('got wrong type: %s. Exception: %s' % (type(e), e))
+
+    with pytest.raises(exception_type) as e:
+        RaiseErrorByReraising()
+
+    # Reraise() should not appear in the traceback
+    crash_entry = e.traceback.getcrashentry()
+    for traceback_entry in e.traceback:
+        if traceback_entry == crash_entry:
+            assert traceback_entry.path == '<string>'
+        else:
+            assert traceback_entry.path.basename == 'pytest_reraise.py'
+
+    assert crash_entry.locals['code'] == string_statement
+
+
+@parametrized_exceptions
+def testReraiseAddsMessagesCorrectly(exception_type, string_statement, expected_inner_exception_message):
+    def foo():
+        ExecutePythonCode(string_statement)
+        pytest.fail('Should not reach here')
+
+    def bar():
+        try:
+            foo()
         except Exception, exception:
-            obtained = unicode(exception)
-            assert type(exception) == AttributeError
+            Reraise(exception, "While doing 'bar'")
 
-        assert obtained == expected
-
-
-#===================================================================================================
-# TestReraiseSpecial
-#===================================================================================================
-class TestReraiseSpecial(object):
-    '''
-    Test reraising some special exceptions.
-
-    .. seealso:: ben10.foundation.reraise.__ReraiseSpecial
-    '''
-    def testOserror(self):
-        def foo():
-            raise OSError(2, 'Hellow')
-
-        def bar():
-            try:
-                foo()
-            except Exception, exception:
-                Reraise(exception, "While doing 'bar'")
-
-        with pytest.raises(ReraisedOSError) as e:
-            try:
-                bar()
-            except OSError, exception:
-                Reraise(exception, "While doing x:")
-
-        obtained_msg = unicode(e.value)
-        expected_msg = "\nWhile doing x:\nWhile doing 'bar'\n[Errno 2] Hellow"
-        assert obtained_msg == expected_msg
-
-
-    def testPickle(self):
-        '''
-        Make sure that we can Pickle reraised exceptions.
-        '''
+    def foobar():
         try:
             try:
-                raise OSError(2, 'Hellow')
-            except OSError as original_exception:
-                Reraise(original_exception, 'new stuff')
-        except Exception as reraised_exception:
-            import cPickle
-            pickled_exception = cPickle.loads (cPickle.dumps(reraised_exception))
-            assert str(pickled_exception) == str(reraised_exception)
-
-
-    def testSyntaxError(self):
-        def foo():
-            raise SyntaxError('InitialError')
-
-        def bar():
-            try:
-                foo()
-            except SyntaxError, exception:
-                Reraise(exception, "SecondaryError")
-
-        with pytest.raises(ReraisedSyntaxError) as e:
-            try:
                 bar()
-            except SyntaxError, exception:
+            except Exception, exception:
                 Reraise(exception, "While doing x:")
+        except Exception, exception:
+            Reraise(exception, "While doing y:")
 
-        obtained = unicode(e.value)
-        expected = '\nWhile doing x:\nSecondaryError\nInitialError'
-        assert obtained == expected
+    with pytest.raises(exception_type) as e:
+        foobar()
 
-
-    def testReraiseKeyError(self):
-        with pytest.raises(ReraisedKeyError) as e:
-            try:
-                raise KeyError('key')
-            except KeyError as exception:
-                Reraise(exception, "Reraising")
-
-        assert unicode(e.value) == "\nReraising\nu'key'"
+    assert e.value.message == "\nWhile doing y:\nWhile doing x:\nWhile doing 'bar'\n" + expected_inner_exception_message
+    assert type(e.value.message) == unicode
 
 
-#===================================================================================================
-# TestReraiseEnvironmentErrors
-#===================================================================================================
-class TestReraiseEnvironmentErrors(object):
-
-    def testEncodingError(self):
-
-        class ExceptionWithStr(EnvironmentError):
-            '''
-            An exception that isn't in unicode.
-            '''
-        # Python
-        import locale
-        encoding = locale.getpreferredencoding()
-
-        exception_message = u'Po\xe7o'
-        with pytest.raises(ExceptionWithStr) as reraised_exception:
-            try:
-                raise ExceptionWithStr(exception_message.encode(encoding))
-            except ExceptionWithStr as exception:
-                Reraise(exception, "Reraising")
-
-        obtained_message = reraised_exception.value.message
-        expected_message = '\nReraising\n' + exception_message
-        assert obtained_message == expected_message
-        assert type(obtained_message) is unicode
+@parametrized_exceptions
+def testPickle(exception_type, string_statement, expected_inner_exception_message):
+    '''
+    Make sure that we can Pickle reraised exceptions.
+    '''
+    try:
+        try:
+            ExecutePythonCode(string_statement)
+            pytest.fail('Should not reach here')
+        except exception_type as original_exception:
+            Reraise(original_exception, 'new stuff')
+    except Exception as reraised_exception:
+        import cPickle
+        dumped_exception = cPickle.dumps(reraised_exception)
+        pickled_exception = cPickle.loads(dumped_exception)
+        try:
+            assert unicode(pickled_exception) == unicode(reraised_exception)
+        except (UnicodeEncodeError, UnicodeDecodeError):
+            assert str(pickled_exception) == str(reraised_exception)
