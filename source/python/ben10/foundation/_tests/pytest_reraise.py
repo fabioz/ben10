@@ -65,6 +65,7 @@ parametrized_exceptions = pytest.mark.parametrize('exception_configuration', [
     ExceptionTestConfiguration(ValueError, "raise ValueError('message')", 'message'),
     ExceptionTestConfiguration(KeyError, "raise KeyError('message')", "u'message'"),
     ExceptionTestConfiguration(OSError, "raise OSError(2, 'message')", '[Errno 2] message'),
+    ExceptionTestConfiguration(IOError, "raise IOError('message')", 'message'),
     ExceptionTestConfiguration(
         SyntaxError,
         "in valid syntax",
@@ -93,6 +94,7 @@ parametrized_exceptions = pytest.mark.parametrize('exception_configuration', [
     'ValueError',
     'KeyError',
     'OSError',
+    'IOError',
     'SyntaxError',
     'UnicodeDecodeError',
     'UnicodeEncodeError',
