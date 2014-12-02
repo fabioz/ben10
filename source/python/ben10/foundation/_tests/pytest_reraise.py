@@ -4,7 +4,6 @@ from ben10.foundation.exceptions import ExceptionToUnicode
 from ben10.foundation.reraise import Reraise
 import locale
 import pytest
-import sys
 
 
 
@@ -132,13 +131,22 @@ def testReraiseKeepsTraceback(exception_configuration):
         exception_configuration.RaiseExceptionUsingReraise()
 
     # Reraise() should not appear in the traceback
+    traceback_filenames = []
     for traceback_entry in e.traceback:
         try:
-            assert traceback_entry.path.basename == 'pytest_reraise.py'
+            traceback_filenames.append(traceback_entry.path.basename)
         except AttributeError:
-            assert traceback_entry.path == '<string>'
+            # traceback_entry.path will be a string when the code was run using "exec compile('code')".
+            # However this does not hold true if 'code' contains a SyntaxError, which in that case 'traceback_entry.path'
+            # will be a LocalPath
+            traceback_filenames.append(traceback_entry.path)
 
     crash_entry = e.traceback.getcrashentry()
+    if isinstance(crash_entry.path, basestring):
+        assert traceback_filenames == [b'pytest_reraise.py'] * (len(traceback_filenames) - 1) + [b'<string>']
+    else:
+        assert traceback_filenames == [b'pytest_reraise.py'] * len(traceback_filenames)
+
     assert crash_entry.locals['code'] == exception_configuration.string_statement
 
 
