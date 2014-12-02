@@ -58,12 +58,12 @@ def Reraise(exception, message, separator='\n'):
         # Handling for special case, some exceptions have different behaviors.
         exception = _SPECIAL_EXCEPTION_MAP[exception.__class__](*exception.args)
 
-    else:
+    elif exception.__class__ not in _SPECIAL_EXCEPTION_MAP.values():
         # In Python 2.5 overriding the exception "__str__" has no effect in "unicode()". Instead, we
         # must change the "args" attribute which is used to build the string representation.
         # Even though the documentation says "args" will be deprecated, it uses its first argument
         # in unicode() implementation and not "message".
-        exception.args = (exception.message,)
+        exception.args = (message,)
 
     exception.message = message
     # keep the already decoded message in the object in case this exception is reraised again
