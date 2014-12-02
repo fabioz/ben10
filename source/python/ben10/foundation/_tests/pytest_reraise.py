@@ -13,25 +13,70 @@ def ExecutePythonCode(code):
     exec compile(code, '<string>', 'exec')
 
 
+class ExceptionTestConfiguration():
+    def __init__(self, exception_type, string_statement, expected_inner_exception_message='', expected_traceback_message=None):
+        self.exception_type = exception_type
+        self.string_statement = string_statement
+        self.expected_inner_exception_message = expected_inner_exception_message
+        self.expected_traceback_message = expected_traceback_message
 
-parametrized_exceptions = pytest.mark.parametrize('exception_type, string_statement, expected_inner_exception_message', [
-    (ValueError, "raise ValueError('message')", 'message'),
-    (KeyError, "raise KeyError('message')", "u'message'"),
-    (OSError, "raise OSError(2, 'message')", '[Errno 2] message'),
-    (SyntaxError, "raise SyntaxError('message')", 'message'),
-    (UnicodeDecodeError, "u'£'.encode('utf-8').decode('ascii')", "'ascii' codec can't decode byte 0xc2 in position 0: ordinal not in range(128)"),
-    (UnicodeEncodeError, "u'£'.encode('ascii')", "'ascii' codec can't encode character u'\\xa3' in position 0: ordinal not in range(128)"),
-    (AttributeError, "raise AttributeError('message')", 'message'),
 
-    (OSError, "raise OSError()", ''),
-    (OSError, "raise OSError(1)", '1'),
-    (OSError, "raise OSError(2, '£ message')", '[Errno 2] £ message'),
-    (IOError, "raise IOError('исключение')", "исключение"),
+    def RaiseExceptionUsingReraise(self):
+        def RaiseException():
+            ExecutePythonCode(self.string_statement)
+            pytest.fail('Should not reach here')
+
+        def ReraiseException():
+            try:
+                RaiseException()
+            except self.exception_type, exception:
+                Reraise(exception, "While doing 'bar'")
+
+        try:
+            try:
+                ReraiseException()
+            except self.exception_type, e1:
+                Reraise(e1, "While doing x:")
+        except self.exception_type, e2:
+            Reraise(e2, "While doing y:")
+
+
+    def GetExpectedExceptionMessage(self):
+        return "\nWhile doing y:\nWhile doing x:\nWhile doing 'bar'\n" + self.expected_inner_exception_message
+
+
+    def GetExpectedTracebackMessage(self, actual_exception):
+        reraised_exception_name = type(actual_exception).__name__
+        exception_message = self.GetExpectedExceptionMessage()
+        if self.expected_traceback_message is not None:
+            exception_message = self.expected_traceback_message
+
+        # HACK [muenz]: the 'traceback' module does this, so in order to be able to compare strings we need this workaround
+        # notice that if the exception "leaks" the Python console handles the unicode symbols properly
+        exception_message = exception_message.encode('ascii', 'backslashreplace')
+
+        return reraised_exception_name + ": " + exception_message + "\n"
+
+
+parametrized_exceptions = pytest.mark.parametrize('exception_configuration', [
+    ExceptionTestConfiguration(ValueError, "raise ValueError('message')", 'message'),
+    ExceptionTestConfiguration(KeyError, "raise KeyError('message')", "u'message'"),
+    ExceptionTestConfiguration(OSError, "raise OSError(2, 'message')", '[Errno 2] message'),
+    # ExceptionTestConfiguration(SyntaxError, "in valid syntax", 'invalid syntax'),
+    ExceptionTestConfiguration(SyntaxError, "raise SyntaxError('invalid syntax')", 'invalid syntax'),
+    ExceptionTestConfiguration(UnicodeDecodeError, "u'£'.encode('utf-8').decode('ascii')", "'ascii' codec can't decode byte 0xc2 in position 0: ordinal not in range(128)"),
+    ExceptionTestConfiguration(UnicodeEncodeError, "u'£'.encode('ascii')", "'ascii' codec can't encode character u'\\xa3' in position 0: ordinal not in range(128)"),
+    ExceptionTestConfiguration(AttributeError, "raise AttributeError('message')", 'message'),
+
+    ExceptionTestConfiguration(OSError, "raise OSError()"),
+    ExceptionTestConfiguration(OSError, "raise OSError(1)", '1'),
+    ExceptionTestConfiguration(OSError, "raise OSError(2, '£ message')", '[Errno 2] £ message'),
+    ExceptionTestConfiguration(IOError, "raise IOError('исключение')", "исключение", expected_traceback_message='<unprintable IOError object>'),
 
     # exceptions in which the message is a 'bytes' but is encoded in UTF-8
-    (OSError, "raise OSError(2, b'£ message')", '[Errno 2] Â£ message'),
-    (Exception, "raise Exception(b'£ message')", 'Â£ message'),
-    (SyntaxError, "raise SyntaxError(b'£ message')", 'Â£ message'),
+    ExceptionTestConfiguration(OSError, "raise OSError(2, b'£ message')", '[Errno 2] Â£ message'),
+    ExceptionTestConfiguration(Exception, "raise Exception(b'£ message')", 'Â£ message'),
+    ExceptionTestConfiguration(SyntaxError, "raise SyntaxError(b'£ message')", 'Â£ message'),
 
 ], ids=[
     'ValueError',
@@ -54,21 +99,9 @@ parametrized_exceptions = pytest.mark.parametrize('exception_type, string_statem
 
 
 @parametrized_exceptions
-def testReraiseKeepsTraceback(exception_type, string_statement, expected_inner_exception_message):
-    def RaiseError():
-        ExecutePythonCode(string_statement)
-        pytest.fail('Should not reach here')
-
-    def RaiseErrorByReraising():
-        try:
-            RaiseError()
-        except exception_type, inner_exception:
-            Reraise(inner_exception, 'Reraise message')
-        except Exception, e:
-            pytest.fail('got wrong type: %s. Exception: %s' % (type(e), e))
-
-    with pytest.raises(exception_type) as e:
-        RaiseErrorByReraising()
+def testReraiseKeepsTraceback(exception_configuration):
+    with pytest.raises(exception_configuration.exception_type) as e:
+        exception_configuration.RaiseExceptionUsingReraise()
 
     # Reraise() should not appear in the traceback
     crash_entry = e.traceback.getcrashentry()
@@ -78,47 +111,29 @@ def testReraiseKeepsTraceback(exception_type, string_statement, expected_inner_e
         else:
             assert traceback_entry.path.basename == 'pytest_reraise.py'
 
-    assert crash_entry.locals['code'] == string_statement
+    assert crash_entry.locals['code'] == exception_configuration.string_statement
 
 
 @parametrized_exceptions
-def testReraiseAddsMessagesCorrectly(exception_type, string_statement, expected_inner_exception_message):
-    def foo():
-        ExecutePythonCode(string_statement)
-        pytest.fail('Should not reach here')
+def testReraiseAddsMessagesCorrectly(exception_configuration):
+    with pytest.raises(exception_configuration.exception_type) as e:
+        exception_configuration.RaiseExceptionUsingReraise()
 
-    def bar():
-        try:
-            foo()
-        except Exception, exception:
-            Reraise(exception, "While doing 'bar'")
+    assert isinstance(e.value, exception_configuration.exception_type)
+    assert ExceptionToUnicode(e.value) == exception_configuration.GetExpectedExceptionMessage()
 
-    def foobar():
-        try:
-            try:
-                bar()
-            except Exception, exception:
-                Reraise(exception, "While doing x:")
-        except Exception, exception:
-            Reraise(exception, "While doing y:")
+    import traceback
+    traceback_message = traceback.format_exception_only(type(e.value), e.value)
+    assert len(traceback_message) == 1
+    traceback_message = traceback_message[0]
 
-    with pytest.raises(exception_type) as e:
-        foobar()
-
-    assert ExceptionToUnicode(e.value) == "\nWhile doing y:\nWhile doing x:\nWhile doing 'bar'\n" + expected_inner_exception_message
+    assert traceback_message == exception_configuration.GetExpectedTracebackMessage(e.value)
 
 
 @parametrized_exceptions
-def testPickle(exception_type, string_statement, expected_inner_exception_message):
-    '''
-    Make sure that we can Pickle reraised exceptions.
-    '''
+def testPickle(exception_configuration):
     try:
-        try:
-            ExecutePythonCode(string_statement)
-            pytest.fail('Should not reach here')
-        except exception_type as original_exception:
-            Reraise(original_exception, 'new stuff')
+        exception_configuration.RaiseExceptionUsingReraise()
     except Exception as reraised_exception:
         import cPickle
         dumped_exception = cPickle.dumps(reraised_exception)
