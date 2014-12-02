@@ -48,22 +48,33 @@ class ExceptionTestConfiguration():
     def GetExpectedTracebackMessage(self, actual_exception):
         reraised_exception_name = type(actual_exception).__name__
         exception_message = self.GetExpectedExceptionMessage()
+
         if self.expected_traceback_message is not None:
             exception_message = self.expected_traceback_message
+        else:
+            exception_message = reraised_exception_name + ": " + exception_message + "\n"
 
         # HACK [muenz]: the 'traceback' module does this, so in order to be able to compare strings we need this workaround
         # notice that if the exception "leaks" the Python console handles the unicode symbols properly
         exception_message = exception_message.encode('ascii', 'backslashreplace')
 
-        return reraised_exception_name + ": " + exception_message + "\n"
+        return exception_message
 
 
 parametrized_exceptions = pytest.mark.parametrize('exception_configuration', [
     ExceptionTestConfiguration(ValueError, "raise ValueError('message')", 'message'),
     ExceptionTestConfiguration(KeyError, "raise KeyError('message')", "u'message'"),
     ExceptionTestConfiguration(OSError, "raise OSError(2, 'message')", '[Errno 2] message'),
-    # ExceptionTestConfiguration(SyntaxError, "in valid syntax", 'invalid syntax'),
-    ExceptionTestConfiguration(SyntaxError, "raise SyntaxError('invalid syntax')", 'invalid syntax'),
+    ExceptionTestConfiguration(
+        SyntaxError,
+        "in valid syntax",
+        expected_inner_exception_message='invalid syntax (<string>, line 1)',
+        expected_traceback_message=('  File "<string>", line 1\n'
+                                    '    in valid syntax\n'
+                                    '     ^\n'
+                                    'ReraisedSyntaxError: invalid syntax\n'
+                                    )
+    ),
     ExceptionTestConfiguration(UnicodeDecodeError, "u'£'.encode('utf-8').decode('ascii')", "'ascii' codec can't decode byte 0xc2 in position 0: ordinal not in range(128)"),
     ExceptionTestConfiguration(UnicodeEncodeError, "u'£'.encode('ascii')", "'ascii' codec can't encode character u'\\xa3' in position 0: ordinal not in range(128)"),
     ExceptionTestConfiguration(AttributeError, "raise AttributeError('message')", 'message'),
@@ -71,7 +82,7 @@ parametrized_exceptions = pytest.mark.parametrize('exception_configuration', [
     ExceptionTestConfiguration(OSError, "raise OSError()"),
     ExceptionTestConfiguration(OSError, "raise OSError(1)", '1'),
     ExceptionTestConfiguration(OSError, "raise OSError(2, '£ message')", '[Errno 2] £ message'),
-    ExceptionTestConfiguration(IOError, "raise IOError('исключение')", "исключение", expected_traceback_message='<unprintable IOError object>'),
+    ExceptionTestConfiguration(IOError, "raise IOError('исключение')", "исключение", expected_traceback_message='IOError: <unprintable IOError object>\n'),
 
     # exceptions in which the message is a 'bytes' but is encoded in UTF-8
     ExceptionTestConfiguration(OSError, "raise OSError(2, b'£ message')", '[Errno 2] Â£ message'),
@@ -104,13 +115,13 @@ def testReraiseKeepsTraceback(exception_configuration):
         exception_configuration.RaiseExceptionUsingReraise()
 
     # Reraise() should not appear in the traceback
-    crash_entry = e.traceback.getcrashentry()
     for traceback_entry in e.traceback:
-        if traceback_entry == crash_entry:
-            assert traceback_entry.path == '<string>'
-        else:
+        try:
             assert traceback_entry.path.basename == 'pytest_reraise.py'
+        except AttributeError:
+            assert traceback_entry.path == '<string>'
 
+    crash_entry = e.traceback.getcrashentry()
     assert crash_entry.locals['code'] == exception_configuration.string_statement
 
 
@@ -124,8 +135,7 @@ def testReraiseAddsMessagesCorrectly(exception_configuration):
 
     import traceback
     traceback_message = traceback.format_exception_only(type(e.value), e.value)
-    assert len(traceback_message) == 1
-    traceback_message = traceback_message[0]
+    traceback_message = ''.join(traceback_message)
 
     assert traceback_message == exception_configuration.GetExpectedTracebackMessage(e.value)
 
