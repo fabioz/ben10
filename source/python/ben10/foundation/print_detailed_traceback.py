@@ -45,7 +45,7 @@ def PrintDetailedTraceback(exc_info=None, stream=None, max_levels=None, max_line
 
     def _WriteToStream(message):
         assert type(message) is unicode
-        stream.write(message.encode(encoding))
+        stream.write(message.encode(encoding, errors='replace'))
 
     if stream is None or stream is sys.stderr:
         stream = sys.stderr

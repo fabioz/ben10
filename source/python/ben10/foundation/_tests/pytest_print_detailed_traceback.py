@@ -91,6 +91,28 @@ def testPrintDetailedTracebackWithUnicode(exception_message):
     assert 'Exception: %s' % (exception_message) in stream.getvalue().decode('UTF-8')
 
 
+@pytest.mark.parametrize(('exception_message',), [(u'fake unicode message',), (u'Сообщение об ошибке.',)])
+def testPrintDetailedTracebackToStderr(exception_message):
+    '''
+    Test PrintDetailedTraceback with 'plain' unicode arguments and an unicode argument with cyrillic
+    characters, written directly to PrintDetailedTraceback's default stream, sys.stderr.
+    '''
+    import sys
+
+    # Since we want to check the values written, create a 'fake_stderr' that is simple a BytesIO
+    # with the same expected encoding as sys.std_err's encoding.
+    std_err_encoding = sys.stderr.encoding
+    fake_stderr = BytesIO()
+    try:
+        raise Exception(exception_message)
+    except:
+        PrintDetailedTraceback(stream=fake_stderr, encoding=std_err_encoding)
+
+    written_traceback = fake_stderr.getvalue()
+    encoded_message = exception_message.encode(std_err_encoding, errors='replace')
+    assert 'Exception: %s' % encoded_message in written_traceback
+
+
 def testOmitLocals():
     '''
     Makes sure arguments and local variables are not present in traceback contents whenever
