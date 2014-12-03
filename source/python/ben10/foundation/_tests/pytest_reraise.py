@@ -4,6 +4,7 @@ from ben10.foundation.exceptions import ExceptionToUnicode
 from ben10.foundation.reraise import Reraise
 import locale
 import pytest
+import traceback
 
 
 
@@ -61,7 +62,7 @@ class ExceptionTestConfiguration():
 
         # HACK [muenz]: the 'traceback' module does this, so in order to be able to compare strings we need this workaround
         # notice that if the exception "leaks" the Python console handles the unicode symbols properly
-        exception_message = exception_message.encode('ascii', 'backslashreplace')
+        exception_message = traceback._some_str(exception_message)
 
         return exception_message
 
@@ -158,7 +159,6 @@ def testReraiseAddsMessagesCorrectly(exception_configuration):
     assert isinstance(e.value, exception_configuration.exception_type)
     assert ExceptionToUnicode(e.value) == exception_configuration.GetExpectedExceptionMessage()
 
-    import traceback
     traceback_message = traceback.format_exception_only(type(e.value), e.value)
     traceback_message = ''.join(traceback_message)
 
