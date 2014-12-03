@@ -63,6 +63,7 @@ class ExceptionTestConfiguration():
         # HACK [muenz]: the 'traceback' module does this, so in order to be able to compare strings we need this workaround
         # notice that if the exception "leaks" the Python console handles the unicode symbols properly
         exception_message = traceback._some_str(exception_message)
+        assert type(exception_message) == bytes
 
         return exception_message
 
