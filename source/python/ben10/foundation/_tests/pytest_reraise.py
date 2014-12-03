@@ -2,6 +2,7 @@
 from __future__ import unicode_literals
 from ben10.foundation.exceptions import ExceptionToUnicode
 from ben10.foundation.reraise import Reraise
+import locale
 import pytest
 import sys
 
@@ -67,7 +68,7 @@ class ExceptionTestConfiguration():
 
 
 # exceptions in which the message is a 'bytes' but is encoded in UTF-8
-if sys.platform == 'win32':
+if locale.getpreferredencoding() != 'UTF-8':
     test_configurations_with_bytes_messages = [
         ExceptionTestConfiguration(OSError, "raise OSError(2, b'£ message')", '[Errno 2] Â£ message'),
         ExceptionTestConfiguration(IOError, "raise IOError(b'£ message')", 'Â£ message', expected_traceback_message='IOError: <unprintable IOError object>\n'),
