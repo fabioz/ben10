@@ -370,8 +370,9 @@ class UnicodeSamples(object):
     LATIN_1 = 'joão-poço'
     FULL_LATIN_1 = b''.join(chr(i) for i in xrange(1, 255 + 1)).decode('latin-1')
     FULL_UNICODE = '€πώðęăшкл տել მტკ सक 傷ทำ 森 ☃'
-    UNICODE_PREFERRED_LOCALE = FULL_UNICODE.encode(locale.getpreferredencoding(), 'replace').decode(
-        locale.getpreferredencoding()).replace('?', '-')
+    UNICODE_PREFERRED_LOCALE = (LATIN_1 + FULL_UNICODE).encode(
+        locale.getpreferredencoding(), 'replace').decode(locale.getpreferredencoding()).replace(
+            '?', '-')
 
 
 
