@@ -76,7 +76,7 @@ except:
     PrintDetailedTraceback(stream=io.StringIO())
     print 'COMPLETE'
 '''
-    script_name = embed_data.GetDataFilename('%s/script.py_' % unicode_samples.LATIN_1)
+    script_name = embed_data.GetDataFilename('%s/script.py_' % unicode_samples.UNICODE_PREFERRED_LOCALE)
     obtained = script_runner.ExecuteScript(script_name, SCRIPT)
     assert obtained == 'COMPLETE'
 
