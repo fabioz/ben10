@@ -240,3 +240,23 @@ class Test(object):
             assert 'testEnvironmentContextManager' in os.environ
 
         assert 'testEnvironmentContextManager' not in os.environ
+
+
+    def testIfAPythonProgramReceivesUnicodeArgv(self, embed_data):
+        '''
+        A spawned python process should be able to access the arguments as unicode.
+        '''
+        python_script = embed_data['unicode_argv_test.py']
+        input_file = embed_data['input_file_latin1_ação.txt']
+
+        output = Execute(
+            [
+                'python.exe',
+                python_script,
+                input_file,
+            ]
+        )
+
+        assert len(output) == 1
+        assert output == ['OK']
+
