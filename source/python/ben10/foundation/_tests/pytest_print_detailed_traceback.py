@@ -2,7 +2,7 @@
 from __future__ import unicode_literals
 from ben10.filesystem import CreateFile
 from ben10.foundation.print_detailed_traceback import PrintDetailedTraceback
-from io import BytesIO
+from io import BytesIO, StringIO
 import pytest
 import re
 
@@ -23,7 +23,7 @@ def testPrintDetailedTraceback(embed_data):
     data = map(unicode, xrange(100))
     data[3] = 3
 
-    stream = BytesIO()
+    stream = StringIO()
     try:
         Pad(data)
     except:
@@ -71,7 +71,12 @@ def testNoException():
     Should not print anything in case there's no exception info (complies with the behavoir from
     traceback.print_exception)
     '''
-    stream = BytesIO()
+    from StringIO import StringIO as OldStringIO
+
+    # "Old", non-io StringIO: doesn't perform typechecks when writing. Since when there's no
+    # exception the code falls back to traceback.print_exception, the stream must be able to
+    # accept bytes.
+    stream = OldStringIO()
     PrintDetailedTraceback(exc_info=(None, None, None), stream=stream)
     assert stream.getvalue() == 'None\n'
 
@@ -82,13 +87,14 @@ def testPrintDetailedTracebackWithUnicode(exception_message):
     Test PrintDetailedTraceback with 'plain' unicode arguments and an unicode argument with cyrillic
     characters
     '''
-    stream = BytesIO()
+
+    stream = StringIO()
     try:
         raise Exception(exception_message)
     except:
         PrintDetailedTraceback(stream=stream)
 
-    assert 'Exception: %s' % (exception_message) in stream.getvalue().decode('UTF-8')
+    assert 'Exception: %s' % (exception_message) in stream.getvalue()
 
 
 @pytest.mark.parametrize(('exception_message',), [(u'fake unicode message',), (u'Сообщение об ошибке.',)])
@@ -101,16 +107,16 @@ def testPrintDetailedTracebackToFakeStderr(exception_message):
 
     # Since we want to check the values written, create a 'fake_stderr' that is simple a BytesIO
     # with the same expected encoding as sys.std_err's encoding.
-    std_err_encoding = sys.stderr.encoding
-    fake_stderr = BytesIO()
+    sys.stderr = fake_stderr = BytesIO()
+    sys.stderr.encoding = 'ascii'
     try:
         raise Exception(exception_message)
     except:
-        PrintDetailedTraceback(stream=fake_stderr, encoding=std_err_encoding)
+        PrintDetailedTraceback(stream=fake_stderr)
 
     written_traceback = fake_stderr.getvalue()
-    encoded_message = exception_message.encode(std_err_encoding, errors='replace')
-    assert 'Exception: %s' % encoded_message in written_traceback
+    encoded_message = exception_message.encode(sys.stderr.encoding, errors='replace')
+    assert b'Exception: %s' % encoded_message in written_traceback
 
 
 @pytest.mark.parametrize(('exception_message',), [(u'fake unicode message',), (u'Сообщение об ошибке.',)])
@@ -130,7 +136,7 @@ def testOmitLocals():
     Makes sure arguments and local variables are not present in traceback contents whenever
     omit locals option is enabled.
     '''
-    stream = BytesIO()
+    stream = StringIO()
     def Flawed(foo):
         arthur = 'dent'  # @UnusedVariable
         raise Exception('something')

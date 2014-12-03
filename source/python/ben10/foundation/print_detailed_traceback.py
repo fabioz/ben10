@@ -6,7 +6,7 @@ import sys
 #===================================================================================================
 # PrintDetailedTraceback
 #===================================================================================================
-def PrintDetailedTraceback(exc_info=None, stream=None, max_levels=None, max_line_width=120, omit_locals=False, encoding='UTF-8'):
+def PrintDetailedTraceback(exc_info=None, stream=None, max_levels=None, max_line_width=120, omit_locals=False):
     '''
     Prints a more detailed traceback than Python's original one showing, for each frame, also the
     locals at that frame and their values.
@@ -18,8 +18,9 @@ def PrintDetailedTraceback(exc_info=None, stream=None, max_levels=None, max_line
 
     :type stream: file-like object
     :param stream:
-        File like object to print the traceback to. Note that the traceback will be written as bytes
-        to the stream, encoded with the optional 'encoding' parameter.
+        File like object to print the traceback to. Note that the traceback will be written directly
+        as unicode to the stream, unless the stream is either sys.stderr or sys.stdout. If no stream
+        is passed, sys.stderr is used.
 
     :param int max_levels:
         The maximum levels up in the traceback to display. If None, print all levels.
@@ -34,22 +35,25 @@ def PrintDetailedTraceback(exc_info=None, stream=None, max_levels=None, max_line
         especially interesting if an error during a function may expose sensitive data, like an user
         private information as a password. Defaults to false as most cases won't be interested in
         this feature.
-
-    :param unicode encoding:
-        The encoding to use when writing to the stream. Note that if 'stream' is None or sys.stderr,
-        the 'encoding' parameter will be ignored and the value of sys.stderr.encoding will be used
-        instead.
     '''
     from ben10.foundation.exceptions import ExceptionToUnicode
     import io
 
-    def _WriteToStream(message):
+    # For sys.stderr and sys.stdout, we should encode the unicode objects before writing.
+    def _WriteToEncodedStream(message):
         assert type(message) is unicode
-        stream.write(message.encode(encoding, errors='replace'))
+        stream.write(message.encode(stream.encoding, errors='replace'))
 
-    if stream is None or stream is sys.stderr:
+    def _WriteToUnicodeStream(message):
+        assert type(message) is unicode
+        stream.write(message)
+
+    if stream is None:
         stream = sys.stderr
-        encoding = sys.stderr.encoding
+
+    _WriteToStream = _WriteToUnicodeStream
+    if stream in (sys.stderr, sys.stdout):
+        _WriteToStream = _WriteToEncodedStream
 
     if exc_info is None:
         exc_info = sys.exc_info()

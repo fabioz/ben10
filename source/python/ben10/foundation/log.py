@@ -24,7 +24,7 @@ except:
 AddDebugStreamHandler()
 '''
 from __future__ import unicode_literals
-from io import BytesIO, StringIO
+from io import StringIO
 import logging
 
 
@@ -192,9 +192,9 @@ def _ExceptionWithDetailedTraceback(logger, msg):
         Message to display before traceback.
     '''
     from .print_detailed_traceback import PrintDetailedTraceback
-    stream = BytesIO()
-    PrintDetailedTraceback(stream=stream, encoding='UTF-8')
-    logger.error(msg + '\n' + stream.getvalue().decode('UTF-8'))
+    stream = StringIO()
+    PrintDetailedTraceback(stream=stream)
+    logger.error(msg + '\n' + stream.getvalue())
 
 
 logging.Logger.ExceptionWithDetailedTraceback = _ExceptionWithDetailedTraceback
