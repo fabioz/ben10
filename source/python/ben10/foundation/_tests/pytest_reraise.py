@@ -16,6 +16,21 @@ def ExecutePythonCode(code):
 
 
 #===================================================================================================
+# MessageAttributeIsBytesException
+#===================================================================================================
+class MessageAttributeIsBytesException(Exception):
+    '''
+    Simulating having a message attribute of the bytes type
+
+    :ivar bytes message:
+    '''
+    def __init__(self):
+        self.message = b'My ascii message'
+
+    def __str__(self):
+        return bytes('исключение')
+
+#===================================================================================================
 # ExceptionTestConfiguration
 #===================================================================================================
 class ExceptionTestConfiguration():
@@ -105,6 +120,7 @@ parametrized_exceptions = pytest.mark.parametrize('exception_configuration', [
     ExceptionTestConfiguration(OSError, "raise OSError(1)", '1'),
     ExceptionTestConfiguration(OSError, "raise OSError(2, '£ message')", '[Errno 2] £ message'),
     ExceptionTestConfiguration(IOError, "raise IOError('исключение')", "исключение", expected_traceback_message='IOError: <unprintable IOError object>\n'),
+    pytest.mark.xfail(raises=AssertionError, reason="ExceptionToUnicode() assumes that the 'message' attribute is 'unicode'")(ExceptionTestConfiguration(MessageAttributeIsBytesException, 'raise MessageAttributeIsBytesException()', '')),
 ] + test_configurations_with_bytes_messages
 , ids=[
     'ValueError',
@@ -120,6 +136,7 @@ parametrized_exceptions = pytest.mark.parametrize('exception_configuration', [
     'OSError - ErrorNo, empty message',
     'OSError - ErrorNo, unicode message',
     'IOError - unicode message',
+    'MessageAttributeIsBytesException',
 
     'OSError - bytes message',
     'IOError - bytes message',
@@ -170,7 +187,7 @@ def testReraiseAddsMessagesCorrectly(exception_configuration):
 def testPickle(exception_configuration):
     try:
         exception_configuration.RaiseExceptionUsingReraise()
-    except Exception as reraised_exception:
+    except exception_configuration.exception_type as reraised_exception:
         import cPickle
         dumped_exception = cPickle.dumps(reraised_exception)
         pickled_exception = cPickle.loads(dumped_exception)
