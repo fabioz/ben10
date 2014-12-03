@@ -66,9 +66,19 @@ def testPrintDetailedTraceback(embed_data):
     )
 
 
-def testPrintDetailedTracebackNotAsciiPath(embed_data):
-    output, _ = Execute2(['python', embed_data.GetDataFilename('ação/script.py'), 'home'])
-    assert ''.join(output).strip().endswith('COMPLETE')
+def testPrintDetailedTracebackNotAsciiPath(embed_data, unicode_samples, script_runner):
+    SCRIPT = r'''# coding: UTF-8
+from ben10.foundation.print_detailed_traceback import PrintDetailedTraceback
+import io
+try:
+    assert False
+except:
+    PrintDetailedTraceback(stream=io.StringIO())
+    print 'COMPLETE'
+'''
+    script_name = embed_data.GetDataFilename('%s/script.py_' % unicode_samples.LATIN_1)
+    obtained = script_runner.ExecuteScript(script_name, SCRIPT)
+    assert obtained == 'COMPLETE'
 
 
 def testNoException():

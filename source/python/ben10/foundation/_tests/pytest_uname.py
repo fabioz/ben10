@@ -1,7 +1,7 @@
 # coding: UTF-8
 from __future__ import unicode_literals
 from ben10.execute import Execute2
-from ben10.filesystem import CanonicalPath
+from ben10.filesystem import CanonicalPath, CreateDirectory
 from ben10.foundation import is_frozen
 from ben10.foundation.platform_ import Platform
 from ben10.foundation.pushpop import PushPop
@@ -37,7 +37,7 @@ class Test():
 
 
     def testGetUserHomeDir(self):
-        with PushPop(os, 'environ', dict(HOMEDRIVE='C:/',HOMEPATH='Users/ama',HOME='/home/users/ama')):
+        with PushPop(os, 'environ', dict(HOMEDRIVE='C:/', HOMEPATH='Users/ama', HOME='/home/users/ama')):
             with PushPop(sys, 'platform', 'win32'):
                 home_dir = GetUserHomeDir()
                 assert isinstance(home_dir, unicode)
@@ -48,10 +48,39 @@ class Test():
                 assert home_dir == '%(HOME)s' % os.environ
 
 
-    def testGetUserHomeDirNonAscii(self, embed_data):
-        output, _ = Execute2(['python', embed_data.GetDataFilename('ação/script.py'), 'home'])
-        home_dir = ''.join(output).strip()
-        assert CanonicalPath(home_dir) == CanonicalPath(embed_data.GetDataFilename('ação'))
+    _SCRIPT = r'''# coding: UTF-8
+from ben10.foundation.uname import GetApplicationDir, GetUserHomeDir
+import sys
+
+option = sys.argv[1]
+if option == 'app':
+    dir_name = GetApplicationDir()
+
+elif option == 'home':
+    app_dir = GetApplicationDir()
+
+    import locale
+    import os
+    if sys.platform == 'win32':
+        drive, path = os.path.splitdrive(app_dir)
+        os.environ['HOMEDRIVE'] = drive.encode(locale.getpreferredencoding())
+
+        os.environ['HOMEPATH'] = path.encode(locale.getpreferredencoding())
+
+    else:
+        os.environ['HOME'] = app_dir.encode(locale.getpreferredencoding())
+
+    dir_name = GetUserHomeDir()
+
+print dir_name.encode('utf-8')
+'''
+
+
+    def testGetUserHomeDirNonAscii(self, embed_data, unicode_samples, script_runner):
+        dir_name = embed_data.GetDataFilename(unicode_samples.LATIN_1)
+        home_dir = script_runner.ExecuteScript(
+            os.path.join(dir_name, 'script.py_'), self._SCRIPT, 'home')
+        assert CanonicalPath(home_dir) == CanonicalPath(dir_name)
 
 
     def testGetApplicationDir(self):
@@ -70,10 +99,10 @@ class Test():
             is_frozen.SetIsFrozen(was_frozen)
 
 
-    def testGetApplicationDirNonAscii(self, embed_data):
-        output, _ = Execute2(['python', embed_data.GetDataFilename('ação/script.py'), 'app'])
-        obtained = ''.join(output).strip()
-        assert CanonicalPath(obtained) == CanonicalPath(embed_data.GetDataFilename('ação'))
+    def testGetApplicationDirNonAscii(self, embed_data, unicode_samples, script_runner):
+        dir_name = embed_data.GetDataFilename(unicode_samples.LATIN_1)
+        obtained = script_runner.ExecuteScript(os.path.join(dir_name, 'script.py_'), self._SCRIPT, 'app')
+        assert CanonicalPath(obtained) == CanonicalPath(dir_name)
 
 
     def testGetExecutableDir(self):

@@ -1,3 +1,4 @@
+# coding: UTF-8
 '''
 Collection of fixtures for pytests.
 
@@ -5,6 +6,8 @@ Collection of fixtures for pytests.
     Coverage for this file gives a lot of misses, just like calling coverage from module's main.
 '''
 from __future__ import unicode_literals
+from ben10.execute import Execute2
+from ben10.filesystem import CreateDirectory
 import faulthandler
 import os
 import pytest
@@ -352,3 +355,61 @@ def platform():
     '''
     from ben10.foundation.platform_ import Platform
     return Platform.GetCurrentPlatform()
+
+
+#===================================================================================================
+# UnicodeSamples
+#===================================================================================================
+class UnicodeSamples(object):
+    """
+    Sample strings that are valid in different encodings, can be used in tests to ensure
+    compliance with different encoding sets.
+    """
+    PURE_ASCII = 'your-usual-ascii-string'
+    LATIN_1 = 'joão-poço'
+    FULL_LATIN_1 = b''.join(chr(i) for i in xrange(1, 255 + 1)).decode('latin-1')
+    FULL_UNICODE = '€πώðęăшкл տել მტკ सक 傷ทำ 森 ☃'
+
+
+
+@pytest.fixture
+def unicode_samples():
+    '''
+    Sample strings that are valid in different encodings, can be used in tests to ensure
+    compliance with different encoding sets.
+    '''
+    return UnicodeSamples()
+
+
+
+#===================================================================================================
+# _ScriptRunner
+#===================================================================================================
+class _ScriptRunner(object):
+    '''
+    Saves script and runs it, capturing output. Does not remove the script file.
+    '''
+
+    def ExecuteScript(self, filename, contents, *args):
+        '''
+        Saves script and runs it, capturing output. Does not remove the script file.
+
+        :returns unicode:
+            Script output.
+        '''
+        dir_name = os.path.dirname(filename)
+        CreateDirectory(dir_name)
+        script_name = os.path.join(dir_name, 'script.py_')
+        with open(script_name, 'w') as f:
+            f.write(contents)
+
+        output, _ = Execute2(['python', script_name] + list(args))
+        return ''.join(output).strip()
+
+
+@pytest.fixture
+def script_runner():
+    '''
+    Saves script and runs it, capturing output. Does not remove the script file.
+    '''
+    return _ScriptRunner()
