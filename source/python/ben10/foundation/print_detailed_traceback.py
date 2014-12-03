@@ -40,7 +40,9 @@ def PrintDetailedTraceback(exc_info=None, stream=None, max_levels=None, max_line
         the 'encoding' parameter will be ignored and the value of sys.stderr.encoding will be used
         instead.
     '''
+    from ben10.foundation.exceptions import ExceptionToUnicode
     import io
+
     def _WriteToStream(message):
         assert type(message) is unicode
         stream.write(message.encode(encoding))
@@ -122,16 +124,7 @@ def PrintDetailedTraceback(exc_info=None, stream=None, max_levels=None, max_line
 
                 _WriteToStream(ss + val_repr + '\n')
 
-    #
-    # Replaced "exception" by "exception.message" because "unicode(exception)" generate an
-    # UnicodeEncodeError when the exception is encoding using unicode (utf-8).
-    # That problem occurred with Apache + Django translation.
-    #
-    if hasattr(exception, 'message'):
-        message = exception.message
-
-    else:
-        message = unicode(exception)  # Default behavior
+    message = ExceptionToUnicode(exception)
 
     _WriteToStream('%s: %s\n' % (exc_type.__name__, message))
 
