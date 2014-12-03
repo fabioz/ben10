@@ -95,7 +95,7 @@ def PrintDetailedTraceback(exc_info=None, stream=None, max_levels=None, max_line
                 # representation of the value at the stack, because raising an exception here
                 # would shadow the original exception
                 try:
-                    val_repr = repr(value)
+                    val_repr = repr(value).decode(locale.getpreferredencoding())
                 except:
                     val_repr = '<ERROR WHILE PRINTING VALUE>'
                 else:
