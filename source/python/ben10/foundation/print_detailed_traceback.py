@@ -70,10 +70,11 @@ def PrintDetailedTraceback(exc_info=None, stream=None, max_levels=None, max_line
 
     stream.write('Traceback (most recent call last):\n')
 
+    encoding = locale.getpreferredencoding()
     for frame in stack:
         params = dict(
-            name=frame.f_code.co_name.decode(locale.getpreferredencoding()),
-            filename=frame.f_code.co_filename.decode(locale.getpreferredencoding()),
+            name=frame.f_code.co_name.decode(encoding),
+            filename=frame.f_code.co_filename.decode(encoding),
             lineno=frame.f_lineno,
         )
         stream.write('  File "%(filename)s", line %(lineno)d, in %(name)s\n' % params)
@@ -95,7 +96,7 @@ def PrintDetailedTraceback(exc_info=None, stream=None, max_levels=None, max_line
                 # representation of the value at the stack, because raising an exception here
                 # would shadow the original exception
                 try:
-                    val_repr = repr(value).decode(locale.getpreferredencoding())
+                    val_repr = repr(value).decode(encoding)
                 except:
                     val_repr = '<ERROR WHILE PRINTING VALUE>'
                 else:
