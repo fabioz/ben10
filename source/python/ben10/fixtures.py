@@ -115,9 +115,28 @@ def handled_exceptions():
         # Clear them
         handled_exceptions.ClearHandledExceptions()
 
+    Note that test-cases can still deal with this API without using a fixture by importing handled_exceptions
+    and using it as an object.
+
+    I.e.:
+
+    from ben10.fixtures import handled_exceptions
+    handled_exceptions.GetHandledExceptions()
+    handled_exceptions.ClearHandledExceptions()
     '''
-    with _ShowHandledExceptionsError() as show_handled_exceptions_error:
-        yield show_handled_exceptions_error
+    try:
+        with _ShowHandledExceptionsError() as show_handled_exceptions_error:
+            handled_exceptions.ClearHandledExceptions = \
+                show_handled_exceptions_error.ClearHandledExceptions
+
+            handled_exceptions.GetHandledExceptions = \
+                show_handled_exceptions_error.GetHandledExceptions
+
+            yield show_handled_exceptions_error
+    finally:
+        handled_exceptions.ClearHandledExceptions = None
+        handled_exceptions.GetHandledExceptions = None
+
     show_handled_exceptions_error.RaiseFoundExceptions()
 
 
