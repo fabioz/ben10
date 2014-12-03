@@ -1,6 +1,5 @@
 from __future__ import unicode_literals
 import pytest
-import sys
 
 
 
@@ -22,7 +21,7 @@ class Test:
             assert key in reg
 
             value = reg[key]
-            assert value['CurrentVersion'] == u'6.1'
+            assert value['SoftwareType'] == 'System'
 
             assert invalid_key not in reg
             assert reg.has_key(invalid_key) == False
