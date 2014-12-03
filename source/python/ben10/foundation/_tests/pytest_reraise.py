@@ -20,7 +20,7 @@ def ExecutePythonCode(code):
 #===================================================================================================
 class MessageAttributeIsBytesException(Exception):
     '''
-    Simulating having a message attribute of the bytes type
+    Simulate a 'message' attribute with the bytes type
 
     :ivar bytes message:
     '''
