@@ -92,10 +92,10 @@ def testPrintDetailedTracebackWithUnicode(exception_message):
 
 
 @pytest.mark.parametrize(('exception_message',), [(u'fake unicode message',), (u'Сообщение об ошибке.',)])
-def testPrintDetailedTracebackToStderr(exception_message):
+def testPrintDetailedTracebackToFakeStderr(exception_message):
     '''
     Test PrintDetailedTraceback with 'plain' unicode arguments and an unicode argument with cyrillic
-    characters, written directly to PrintDetailedTraceback's default stream, sys.stderr.
+    characters, written to a buffer similar to PrintDetailedTraceback()'s default stream, sys.std_err
     '''
     import sys
 
@@ -111,6 +111,18 @@ def testPrintDetailedTracebackToStderr(exception_message):
     written_traceback = fake_stderr.getvalue()
     encoded_message = exception_message.encode(std_err_encoding, errors='replace')
     assert 'Exception: %s' % encoded_message in written_traceback
+
+
+@pytest.mark.parametrize(('exception_message',), [(u'fake unicode message',), (u'Сообщение об ошибке.',)])
+def testPrintDetailedTracebackToRealStderr(exception_message):
+    '''
+    The same as above, but writing to the real stderr. Just a smoke test to verify that no errors
+    occur.
+    '''
+    try:
+        raise Exception(exception_message)
+    except:
+        PrintDetailedTraceback()
 
 
 def testOmitLocals():
