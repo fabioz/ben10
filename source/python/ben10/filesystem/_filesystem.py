@@ -1799,3 +1799,20 @@ def FindFiles(dir_, in_filters=None, out_filters=None, recursive=True, include_r
         result = map(StandardizePath, result)
 
     return result
+
+
+
+#===================================================================================================
+# ExpandUser
+#===================================================================================================
+def ExpandUser(path):
+    '''
+    os.path.expanduser wrapper, necessary because it cannot handle unicode strings properly.
+
+    This is not necessary in Python 3.
+
+    :param path:
+        .. seealso:: os.path.expanduser
+    '''
+    encoding = sys.getfilesystemencoding()
+    return os.path.expanduser(path.encode(encoding)).decode(encoding)

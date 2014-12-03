@@ -36,6 +36,28 @@ class Test:
         console.PrintError('Alpha.PrintError')  # For now, stdout and stoerr are the same!
         assert oss.getvalue() == '''Alpha.q\nAlpha.PrintError\n'''
 
+        # Testing use of indent
+        oss = StringIO()
+        console = Console(verbosity=1, stdout=oss)
+        console.Print('Alpha.n\nAlpha.n2')
+        assert oss.getvalue() == '''Alpha.n\nAlpha.n2\n'''
+
+        oss = StringIO()
+        console = Console(verbosity=1, stdout=oss)
+        console.Print('Alpha.n\nAlpha.n2', indent=1)
+        assert oss.getvalue() == '''    Alpha.n\n    Alpha.n2\n'''
+
+        # Behavior should be the same as Indent function
+        from ben10.foundation.string import Indent
+        assert Indent('''Alpha.n\nAlpha.n2\n''') == oss.getvalue()
+
+        oss = StringIO()
+        console = Console(verbosity=1, stdout=oss)
+        console.Print('Alpha.n\n    Alpha.n2', indent=1)
+        assert oss.getvalue() == '''    Alpha.n\n        Alpha.n2\n'''
+        assert Indent('''Alpha.n\n    Alpha.n2\n''') == oss.getvalue()
+
+
         # Test color control
         console = Console(color=None)
 
