@@ -35,7 +35,7 @@ builtins.builtin_open = open
 if current_process().name == 'MainProcess':
     if sys.platform == 'win32':
         from ben10.unicode_argv import GetWindowsUnicodeArgv
-        sys.argv = GetWindowsUnicodeArgv()
+        sys.argvu = GetWindowsUnicodeArgv()
     else:
         from ben10.unicode_argv import GetLinuxUnicodeArgv
-        sys.argv = GetLinuxUnicodeArgv()
+        sys.argvu = GetLinuxUnicodeArgv()
