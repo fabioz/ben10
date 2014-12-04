@@ -366,15 +366,29 @@ class UnicodeSamples(object):
     Sample strings that are valid in different encodings, can be used in tests to ensure
     compliance with different encoding sets.
 
+    :cvar PURE_ASCII:
+        Only chars valid in ascii.
+
+    :cvar LATIN_1:
+        Only chars valid in latin-1.
+
+    :cvar FULL_LATIN_1:
+        All valid latin-1 characters.
+
+    :cvar UNICODE:
+        Sample of unicode chars from several languages.
+
+    :cvar UNICODE_PREFERRED_LOCALE:
+        Sample of unicode chars that are valid in the encoding of the current locale.
+
     Sources:
     - http://pages.ucsd.edu/~dkjordan/chin/unitestuni.html
     """
-    PURE_ASCII = 'your-usual-ascii-string'
-    LATIN_1 = 'joão-poço'
-    FULL_LATIN_1 = b''.join(chr(i) for i in xrange(1, 255 + 1)).decode('latin-1')
-    FULL_UNICODE = 'ĂÀǖǘǚǜŬĵΜῆνιν ἄειδε θεὰ Πηληϊάδεω ἈχιλῆοςЯ не говорю по-русски' \
-        'אני לא לומד עברית我们刚才从图书馆来了。我們剛才從圖書館來了。𦮙€πώðęăшкл տել მტკ सक 傷ทำ 森 ☃'
-    UNICODE_PREFERRED_LOCALE = (LATIN_1 + FULL_UNICODE).encode(
+    PURE_ASCII = 'action'
+    LATIN_1 = 'ação'
+    FULL_LATIN_1 = b''.join(chr(i + 1) for i in xrange(255)).decode('latin-1')
+    UNICODE = '動_ĂǜĵΜῆἄθΠηωχς пкת我。館來了。𦮙ώęăлտլმტკ सक 傷ทำ 森 ☃'
+    UNICODE_PREFERRED_LOCALE = (LATIN_1 + UNICODE).encode(
         locale.getpreferredencoding(), 'replace').decode(locale.getpreferredencoding()).replace(
             '?', '-')
 
@@ -383,8 +397,7 @@ class UnicodeSamples(object):
 @pytest.fixture
 def unicode_samples():
     '''
-    Sample strings that are valid in different encodings, can be used in tests to ensure
-    compliance with different encoding sets.
+    Component that contains samples from various character sets decoded as unicode.
     '''
     return UnicodeSamples()
 
@@ -418,6 +431,6 @@ class _ScriptRunner(object):
 @pytest.fixture
 def script_runner():
     '''
-    Saves script and runs it, capturing output. Does not remove the script file.
+    Component to create and execute python scripts.
     '''
     return _ScriptRunner()

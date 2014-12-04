@@ -1,10 +1,9 @@
-# coding: UTF-8
 from __future__ import unicode_literals
-from ben10.execute import Execute2
-from ben10.filesystem import CanonicalPath, CreateDirectory
+from ben10.filesystem import CanonicalPath
 from ben10.foundation import is_frozen
 from ben10.foundation.platform_ import Platform
 from ben10.foundation.pushpop import PushPop
+from ben10.foundation.string import Dedent
 from ben10.foundation.uname import (GetApplicationDir, GetExecutableDir, GetUserHomeDir,
     IsRunningOn64BitMachine)
 import os
@@ -48,32 +47,32 @@ class Test():
                 assert home_dir == '%(HOME)s' % os.environ
 
 
-    _SCRIPT = r'''# coding: UTF-8
-from ben10.foundation.uname import GetApplicationDir, GetUserHomeDir
-import sys
+    _SCRIPT = Dedent(r'''# coding: UTF-8
+        from ben10.foundation.uname import GetApplicationDir, GetUserHomeDir
+        import sys
 
-option = sys.argv[1]
-if option == 'app':
-    dir_name = GetApplicationDir()
+        option = sys.argv[1]
+        if option == 'app':
+            dir_name = GetApplicationDir()
 
-elif option == 'home':
-    app_dir = GetApplicationDir()
+        elif option == 'home':
+            app_dir = GetApplicationDir()
 
-    import locale
-    import os
-    if sys.platform == 'win32':
-        drive, path = os.path.splitdrive(app_dir)
-        os.environ['HOMEDRIVE'] = drive.encode(locale.getpreferredencoding())
+            import locale
+            import os
+            if sys.platform == 'win32':
+                drive, path = os.path.splitdrive(app_dir)
+                os.environ['HOMEDRIVE'] = drive.encode(locale.getpreferredencoding())
 
-        os.environ['HOMEPATH'] = path.encode(locale.getpreferredencoding())
+                os.environ['HOMEPATH'] = path.encode(locale.getpreferredencoding())
 
-    else:
-        os.environ['HOME'] = app_dir.encode(locale.getpreferredencoding())
+            else:
+                os.environ['HOME'] = app_dir.encode(locale.getpreferredencoding())
 
-    dir_name = GetUserHomeDir()
+            dir_name = GetUserHomeDir()
 
-print dir_name.encode('utf-8')
-'''
+        print dir_name.encode('utf-8')
+        ''')
 
 
     def testGetUserHomeDirNonAscii(self, embed_data, unicode_samples, script_runner):
