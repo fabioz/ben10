@@ -365,11 +365,15 @@ class UnicodeSamples(object):
     """
     Sample strings that are valid in different encodings, can be used in tests to ensure
     compliance with different encoding sets.
+
+    Sources:
+    - http://pages.ucsd.edu/~dkjordan/chin/unitestuni.html
     """
     PURE_ASCII = 'your-usual-ascii-string'
     LATIN_1 = 'joão-poço'
     FULL_LATIN_1 = b''.join(chr(i) for i in xrange(1, 255 + 1)).decode('latin-1')
-    FULL_UNICODE = '€πώðęăшкл տել მტკ सक 傷ทำ 森 ☃'
+    FULL_UNICODE = 'ĂÀǖǘǚǜŬĵΜῆνιν ἄειδε θεὰ Πηληϊάδεω ἈχιλῆοςЯ не говорю по-русски' \
+        'אני לא לומד עברית我们刚才从图书馆来了。我們剛才從圖書館來了。𦮙€πώðęăшкл տել მტკ सक 傷ทำ 森 ☃'
     UNICODE_PREFERRED_LOCALE = (LATIN_1 + FULL_UNICODE).encode(
         locale.getpreferredencoding(), 'replace').decode(locale.getpreferredencoding()).replace(
             '?', '-')
