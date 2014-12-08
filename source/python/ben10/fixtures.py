@@ -376,6 +376,9 @@ class UnicodeSamples(object):
         All valid latin-1 characters.
 
     :cvar UNICODE:
+        Sample of unicode chars.
+
+    :cvar UNICODE_MULTIPLE_LANGUAGES:
         Sample of unicode chars from several languages.
 
     :cvar UNICODE_PREFERRED_LOCALE:
@@ -387,8 +390,9 @@ class UnicodeSamples(object):
     PURE_ASCII = 'action'
     LATIN_1 = 'ação'
     FULL_LATIN_1 = b''.join(chr(i + 1) for i in xrange(255)).decode('latin-1')
-    UNICODE = '動_ĂǜĵΜῆἄθΠηωχς пкת我。館來了。𦮙ώęăлտլმტკ सक 傷ทำ 森 ☃'
-    UNICODE_PREFERRED_LOCALE = (LATIN_1 + UNICODE).encode(
+    UNICODE = '動'
+    UNICODE_MULTIPLE_LANGUAGES = UNICODE + '_ĂǜĵΜῆἄθΠηωχς пкת我。館來了。𦮙ώęăлտլმტკ सक 傷ทำ 森 ☃'
+    UNICODE_PREFERRED_LOCALE = (LATIN_1 + UNICODE_MULTIPLE_LANGUAGES).encode(
         locale.getpreferredencoding(), 'replace').decode(locale.getpreferredencoding()).replace(
             '?', '-')
 
