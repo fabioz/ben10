@@ -4,6 +4,21 @@ import sys
 
 
 #===================================================================================================
+# _StreamWrapper
+#===================================================================================================
+class _StreamWrapper(object):
+    '''
+    A simple wrapper to decode bytes into unicode objects before writing to an unicode-only stream.
+    '''
+    def __init__(self, stream, encoding):
+        self.stream = stream
+        self.encoding = encoding
+
+    def write(self, value):
+        self.stream.write(value.decode(self.encoding))
+
+
+#===================================================================================================
 # PrintDetailedTraceback
 #===================================================================================================
 def PrintDetailedTraceback(exc_info=None, stream=None, max_levels=None, max_line_width=120, omit_locals=False):
@@ -37,7 +52,13 @@ def PrintDetailedTraceback(exc_info=None, stream=None, max_levels=None, max_line
         this feature.
     '''
     from ben10.foundation.exceptions import ExceptionToUnicode
+    from ben10.foundation.klass import IsInstance
+    import StringIO
+    import cStringIO
     import io
+    import locale
+
+    assert not IsInstance(stream, (StringIO.StringIO, cStringIO.OutputType)), 'Old-style StringIO passed to PrintDetailedTraceback()'
 
     # For sys.stderr and sys.stdout, we should encode the unicode objects before writing.
     def _WriteToEncodedStream(message):
@@ -51,9 +72,15 @@ def PrintDetailedTraceback(exc_info=None, stream=None, max_levels=None, max_line
     if stream is None:
         stream = sys.stderr
 
-    _WriteToStream = _WriteToUnicodeStream
+
     if stream in (sys.stderr, sys.stdout):
         _WriteToStream = _WriteToEncodedStream
+        wrapped_stream = stream
+    else:
+        _WriteToStream = _WriteToUnicodeStream
+        encoding = locale.getpreferredencoding()
+        wrapped_stream = _StreamWrapper(stream, encoding)
+
 
     if exc_info is None:
         exc_info = sys.exc_info()
@@ -62,9 +89,9 @@ def PrintDetailedTraceback(exc_info=None, stream=None, max_levels=None, max_line
 
     if exc_type is None or tb is None:
         # if no exception is given, or no traceback is available, let the print_exception deal
-        # with it.
+        # with it. Since our stream deals with unicode, wrap it
         import traceback
-        traceback.print_exception(exc_type, exception, tb, max_levels, stream)
+        traceback.print_exception(exc_type, exception, tb, max_levels, wrapped_stream)
         return
 
     # find the bottom node of the traceback

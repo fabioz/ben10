@@ -71,14 +71,24 @@ def testNoException():
     Should not print anything in case there's no exception info (complies with the behavoir from
     traceback.print_exception)
     '''
-    from StringIO import StringIO as OldStringIO
-
     # "Old", non-io StringIO: doesn't perform typechecks when writing. Since when there's no
     # exception the code falls back to traceback.print_exception, the stream must be able to
     # accept bytes.
-    stream = OldStringIO()
+    stream = StringIO()
     PrintDetailedTraceback(exc_info=(None, None, None), stream=stream)
     assert stream.getvalue() == 'None\n'
+
+
+def testWrongStreamType():
+    '''
+    Test whether old-style streams correctly raise assertion errors.
+    '''
+    import StringIO as OldStringIO
+    import cStringIO
+
+    for stream in [cStringIO.StringIO(), OldStringIO.StringIO()]:
+        with pytest.raises(AssertionError):
+            PrintDetailedTraceback(exc_info=(None, None, None), stream=stream)
 
 
 @pytest.mark.parametrize(('exception_message',), [(u'fake unicode message',), (u'Сообщение об ошибке.',)])
