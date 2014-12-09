@@ -42,23 +42,32 @@ def Reraise(exception, message, separator='\n'):
     from ben10.foundation.exceptions import ExceptionToUnicode
     import sys
 
-    current_message = ExceptionToUnicode(exception)
+    # IMPORTANT: Do NOT use try/except mechanisms in this method or the sys.exc_info()[-1] will be invalid
+
+    if hasattr(exception, 'reraised_message'):
+        current_message = exception.reraised_message
+    else:
+        current_message = ExceptionToUnicode(exception)
 
     # Build the new message
     if not current_message.startswith(separator):
         current_message = separator + current_message
     message = '\n' + message + current_message
 
-    try:
+    if exception.__class__ in _SPECIAL_EXCEPTION_MAP:
         # Handling for special case, some exceptions have different behaviors.
-        exception = _SPECIAL_EXCEPTION_MAP[exception.__class__](message, exception.args)
-    except KeyError:
+        exception = _SPECIAL_EXCEPTION_MAP[exception.__class__](*exception.args)
+
+    elif exception.__class__ not in _SPECIAL_EXCEPTION_MAP.values():
         # In Python 2.5 overriding the exception "__str__" has no effect in "unicode()". Instead, we
         # must change the "args" attribute which is used to build the string representation.
         # Even though the documentation says "args" will be deprecated, it uses its first argument
         # in unicode() implementation and not "message".
-        exception.message = message
-        exception.args = (exception.message,)
+        exception.args = (message,)
+
+    exception.message = message
+    # keep the already decoded message in the object in case this exception is reraised again
+    exception.reraised_message = message
 
     # Reraise the exception with the EXTRA message information
     raise exception, None, sys.exc_info()[-1]
@@ -84,9 +93,9 @@ def Reraise(exception, message, separator='\n'):
 #     cog.out(Dedent(
 #         '''
 #         class Reraised%(superclass_name)s(%(superclass_name)s):
-#             def __init__(self, message, original_args):
-#                 %(superclass_name)s.__init__(self, *original_args)
-#                 self.message = message
+#             def __init__(self, *args):
+#                 %(superclass_name)s.__init__(self, *args)
+#                 self.message = None
 #
 #             def __str__(self):
 #                 return self.message
@@ -102,41 +111,41 @@ def Reraise(exception, message, separator='\n'):
 # ))
 # ]]]
 class ReraisedKeyError(KeyError):
-    def __init__(self, message, original_args):
-        KeyError.__init__(self, *original_args)
-        self.message = message
+    def __init__(self, *args):
+        KeyError.__init__(self, *args)
+        self.message = None
 
     def __str__(self):
         return self.message
 
 class ReraisedOSError(OSError):
-    def __init__(self, message, original_args):
-        OSError.__init__(self, *original_args)
-        self.message = message
+    def __init__(self, *args):
+        OSError.__init__(self, *args)
+        self.message = None
 
     def __str__(self):
         return self.message
 
 class ReraisedSyntaxError(SyntaxError):
-    def __init__(self, message, original_args):
-        SyntaxError.__init__(self, *original_args)
-        self.message = message
+    def __init__(self, *args):
+        SyntaxError.__init__(self, *args)
+        self.message = None
 
     def __str__(self):
         return self.message
 
 class ReraisedUnicodeDecodeError(UnicodeDecodeError):
-    def __init__(self, message, original_args):
-        UnicodeDecodeError.__init__(self, *original_args)
-        self.message = message
+    def __init__(self, *args):
+        UnicodeDecodeError.__init__(self, *args)
+        self.message = None
 
     def __str__(self):
         return self.message
 
 class ReraisedUnicodeEncodeError(UnicodeEncodeError):
-    def __init__(self, message, original_args):
-        UnicodeEncodeError.__init__(self, *original_args)
-        self.message = message
+    def __init__(self, *args):
+        UnicodeEncodeError.__init__(self, *args)
+        self.message = None
 
     def __str__(self):
         return self.message
@@ -148,4 +157,4 @@ _SPECIAL_EXCEPTION_MAP = {
     UnicodeDecodeError : ReraisedUnicodeDecodeError,
     UnicodeEncodeError : ReraisedUnicodeEncodeError,
 }
-# [[[end]]] (checksum: 3e2d0264f057a4a0d871c0eba1b5b4a4)
+# [[[end]]] (checksum: 457262f8ea7b2cb41fc010baa24fac41)

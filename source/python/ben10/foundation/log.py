@@ -186,7 +186,7 @@ def _ExceptionWithDetailedTraceback(logger, msg):
     '''
     Writes the current exception as a detailed traceback into the log.
 
-    It is similar to exception, but using coilib's detailed traceback.
+    It is similar to exception, but using ben10's detailed traceback.
 
     :param unicode msg:
         Message to display before traceback.

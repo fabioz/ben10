@@ -5,6 +5,21 @@ import sys
 
 
 #===================================================================================================
+# _StreamWrapper
+#===================================================================================================
+class _StreamWrapper(object):
+    '''
+    A simple wrapper to decode bytes into unicode objects before writing to an unicode-only stream.
+    '''
+    def __init__(self, stream, encoding):
+        self.stream = stream
+        self.encoding = encoding
+
+    def write(self, value):
+        self.stream.write(value.decode(self.encoding))
+
+
+#===================================================================================================
 # PrintDetailedTraceback
 #===================================================================================================
 def PrintDetailedTraceback(exc_info=None, stream=None, max_levels=None, max_line_width=120, omit_locals=False):
@@ -19,7 +34,9 @@ def PrintDetailedTraceback(exc_info=None, stream=None, max_levels=None, max_line
 
     :type stream: file-like object
     :param stream:
-        File like object to print the traceback to.
+        File like object to print the traceback to. Note that the traceback will be written directly
+        as unicode to the stream, unless the stream is either sys.stderr or sys.stdout. If no stream
+        is passed, sys.stderr is used.
 
     :param int max_levels:
         The maximum levels up in the traceback to display. If None, print all levels.
@@ -35,8 +52,36 @@ def PrintDetailedTraceback(exc_info=None, stream=None, max_levels=None, max_line
         private information as a password. Defaults to false as most cases won't be interested in
         this feature.
     '''
+    from ben10.foundation.exceptions import ExceptionToUnicode
+    from ben10.foundation.klass import IsInstance
+    import StringIO
+    import cStringIO
+    import io
+    import locale
+
+    assert not IsInstance(stream, (StringIO.StringIO, cStringIO.OutputType)), 'Old-style StringIO passed to PrintDetailedTraceback()'
+
+    # For sys.stderr and sys.stdout, we should encode the unicode objects before writing.
+    def _WriteToEncodedStream(message):
+        assert type(message) is unicode
+        stream.write(message.encode(stream.encoding, errors='replace'))
+
+    def _WriteToUnicodeStream(message):
+        assert type(message) is unicode
+        stream.write(message)
+
     if stream is None:
         stream = sys.stderr
+
+
+    if stream in (sys.stderr, sys.stdout):
+        _WriteToStream = _WriteToEncodedStream
+        wrapped_stream = stream
+    else:
+        _WriteToStream = _WriteToUnicodeStream
+        encoding = locale.getpreferredencoding()
+        wrapped_stream = _StreamWrapper(stream, encoding)
+
 
     if exc_info is None:
         exc_info = sys.exc_info()
@@ -45,9 +90,9 @@ def PrintDetailedTraceback(exc_info=None, stream=None, max_levels=None, max_line
 
     if exc_type is None or tb is None:
         # if no exception is given, or no traceback is available, let the print_exception deal
-        # with it.
+        # with it. Since our stream deals with unicode, wrap it
         import traceback
-        traceback.print_exception(exc_type, exception, tb, max_levels, stream)
+        traceback.print_exception(exc_type, exception, tb, max_levels, wrapped_stream)
         return
 
     # find the bottom node of the traceback
@@ -68,7 +113,7 @@ def PrintDetailedTraceback(exc_info=None, stream=None, max_levels=None, max_line
             break
     stack.reverse()
 
-    stream.write('Traceback (most recent call last):\n')
+    _WriteToStream('Traceback (most recent call last):\n')
 
     encoding = locale.getpreferredencoding()
     for frame in stack:
@@ -77,14 +122,16 @@ def PrintDetailedTraceback(exc_info=None, stream=None, max_levels=None, max_line
             filename=frame.f_code.co_filename.decode(encoding),
             lineno=frame.f_lineno,
         )
-        stream.write('  File "%(filename)s", line %(lineno)d, in %(name)s\n' % params)
+
+        _WriteToStream('  File "%(filename)s", line %(lineno)d, in %(name)s\n' % params)
+
         try:
-            lines = file(frame.f_code.co_filename).readlines()
+            lines = io.open(frame.f_code.co_filename).readlines()
             line = lines[frame.f_lineno - 1]
         except:
             pass  # don't show the line source
         else:
-            stream.write('    %s\n' % line.strip())
+            _WriteToStream('    %s\n' % line.strip())
 
         if not omit_locals:
             # string used to truncate string representations of objects that exceed the maximum
@@ -108,17 +155,9 @@ def PrintDetailedTraceback(exc_info=None, stream=None, max_levels=None, max_line
                         middle = int(space / 2)
                         val_repr = val_repr[:middle] + trunc_str + val_repr[-(middle + len(trunc_str)):]
 
-                stream.write(ss + val_repr + '\n')
+                _WriteToStream(ss + val_repr + '\n')
 
-    #
-    # Replaced "exception" by "exception.message" because "unicode(exception)" generate an
-    # UnicodeEncodeError when the exception is encoding using unicode (utf-8).
-    # That problem occurred with Apache + Django translation.
-    #
-    if hasattr(exception, 'message'):
-        message = exception.message
+    message = ExceptionToUnicode(exception)
 
-    else:
-        message = unicode(exception)  # Default behavior
+    _WriteToStream('%s: %s\n' % (exc_type.__name__, message))
 
-    stream.write('%s: %s\n' % (exc_type.__name__, message))

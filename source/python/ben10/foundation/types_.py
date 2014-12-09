@@ -104,17 +104,17 @@ def CheckType(object_, type_, message=None):
         type_names = '" or "'.join(type_names)
 
         # 002) Build the error message
-        message = 'CheckType: Expecting "%s", got "%s": %s' % (
+        exception_message = 'CheckType: Expecting "%s", got "%s": %s' % (
             type_names,
             object_.__class__.__name__,
             repr(object_))
 
         # 003) Appends the user message at the end
         if message:
-            message += '\n%s' % message
+            exception_message += '\n%s' % message
 
         # 004) Raises the exception
-        raise TypeError(message)
+        raise TypeError(exception_message)
 
     return result
 
