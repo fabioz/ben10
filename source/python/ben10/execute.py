@@ -2,8 +2,10 @@ from __future__ import unicode_literals
 from ben10.filesystem import CanonicalPath, StandardizePath
 from ben10.foundation.reraise import Reraise
 from ben10.foundation.string import SafeSplit
+from ben10.foundation.types_ import CheckType
 from ben10.foundation.uname import GetExecutableDir
 from cStringIO import StringIO
+from multiprocessing.process import current_process
 from txtout.txtout import TextOutput
 import os
 import shlex
@@ -618,6 +620,85 @@ def ProcessOpen(
             '%s\n'
             % (EnvStr(environ), cwd, CmdLineStr(command_line))
         )
+
+
+#===================================================================================================
+# GetUnicodeArgv
+#===================================================================================================
+def GetUnicodeArgv():
+    '''
+    This function should be executed as early as possible (e.g. in your main function).
+    If the sys.argv is not in unicode already it tries to decode it.
+
+    Windows is a special case and we don't even look into sys.argv to get the unicode version. See
+    L{_GetWindowsUnicodeArgv} for more details.
+
+    :rtype: list(unicode)
+    :returns:
+        The sys.argv content in unicode.
+    '''
+    # The unicode argv extracted from windows is valid only for the main process.
+    if current_process().name == 'MainProcess':
+        if sys.platform == 'win32':
+            return _GetWindowsUnicodeArgv()
+        else:
+            return _GetLinuxUnicodeArgv()
+    # If it is a subprocess it should be already in unicode.
+    else:
+        _CheckIfSysArgvIsAlreadyUnicode()
+        return sys.argv
+
+
+def _GetWindowsUnicodeArgv():
+    '''
+    This code was taken from:
+
+    http://stackoverflow.com/questions/846850/read-unicode-characters-from-command-line-arguments-in-python-2-x-on-windows
+
+    Uses shell32.GetCommandLineArgvW to get sys.argv as a list of Unicode
+    strings.
+
+    Versions 2.x of Python don't support Unicode in sys.argv on
+    Windows, with the underlying Windows API instead replacing multi-byte
+    characters with '?'.
+
+    :rtype: list(unicode)
+        The sys.argv as unicode.
+    '''
+
+    from ctypes import POINTER, byref, c_int, cdll, windll
+    from ctypes.wintypes import LPCWSTR, LPWSTR
+
+    GetCommandLineW = cdll.kernel32.GetCommandLineW
+    GetCommandLineW.argtypes = []
+    GetCommandLineW.restype = LPCWSTR
+
+    CommandLineToArgvW = windll.shell32.CommandLineToArgvW
+    CommandLineToArgvW.argtypes = [LPCWSTR, POINTER(c_int)]
+    CommandLineToArgvW.restype = POINTER(LPWSTR)
+
+    cmd = GetCommandLineW()
+    argc = c_int(0)
+    argv = CommandLineToArgvW(cmd, byref(argc))
+    if argc.value > 0:
+        # Remove Python executable and commands if present
+        start = argc.value - len(sys.argv)
+        return [argv[i] for i in
+                xrange(start, argc.value)]
+
+
+def _GetLinuxUnicodeArgv():
+    '''
+    :rtype: list(unicode)
+        The sys.argv converted to unicode using utf-8.
+    '''
+    return [arg.decode('utf-8') for arg in sys.argv]
+
+
+def _CheckIfSysArgvIsAlreadyUnicode():
+    message = 'In a subprocess sys.argv should be already in unicode. sys.argv="%s"' % sys.argv
+    for arg in sys.argv:
+        CheckType(arg, unicode, message)
 
 
 

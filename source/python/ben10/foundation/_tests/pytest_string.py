@@ -189,6 +189,16 @@ class Test:
         assert SafeSplit('alpha bravo charlie', ' ', 2) == ['alpha', 'bravo', 'charlie']
 
 
+    def testFormatIterable(self):
+        from ben10.foundation.string import FormatIterable
+
+        item1 = 'a'
+        item2 = 'b'
+        my_list = [item1, item2]
+
+        assert FormatIterable(my_list) == "['a', 'b']"
+
+
     @patch.object(locale, 'getpreferredencoding', autospec=True, return_value='UTF-8')
     def testToUnicode(self, *args):
         value = RuntimeError('Não'.encode('cp1252'))

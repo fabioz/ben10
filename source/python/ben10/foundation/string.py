@@ -176,6 +176,31 @@ def ToByteString(arg):
     return arg
 
 
+#===============================================================================
+# FormatIterable
+#===============================================================================
+def FormatIterable(iterable, format_expr="'%s'"):
+    '''
+    Formats an iterable into a string by applying format_expr to each item.
+
+    The resulting string is equivalent to stringifying a list, but unicode
+    items won't have the prefix 'u'.
+
+    Ex:
+    a = u'My Item'
+    b = [a]
+    FormatIterable(b) # outputs "['a']", rather than "[u'a']"
+
+    :param object iterable:
+    Any iterable object.
+    :param unicode format_expr:
+    The format expression to use on each item. Defaults to "'%s'" so that the
+    string representation of each item is encapsulated in single quotes.
+    '''
+    items = ', '.join((format_expr % (item,) for item in iterable))
+    return '[%s]'  % (items,)
+
+
 #===================================================================================================
 # ToUnicode
 #===================================================================================================

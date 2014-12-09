@@ -77,6 +77,15 @@ class Test:
             CheckFormatString('%s m %s', 1, 3, 3)
 
 
+    def testIfCustomMessageIsAppendedToDefaultMessage(self):
+        message = 'Zero is not unicode!'
+
+        with pytest.raises(TypeError) as exception:
+            CheckType(0, unicode, message)
+
+        assert message in exception.value.message
+
+
     def testBasicType(self):
 
         class NonBasic(object):
