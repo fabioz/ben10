@@ -2,6 +2,7 @@
 from __future__ import unicode_literals
 from ben10.execute import (EnvironmentContextManager, Execute, ExecuteNoWait, GetSubprocessOutput,
     PrintEnvironment)
+from ben10.foundation.exceptions import ExceptionToUnicode
 from ben10.foundation.string import Dedent
 from txtout.txtout import TextOutput
 import io
@@ -130,16 +131,6 @@ class Test(object):
 
 
     def testExecuteAndEnviron(self, embed_data):
-        '''
-        This test sometimes fails on Windows 7 64bits with an extra environment variable:
-
-            __COMPAT_LAYER: DisableUserCallbackException
-
-        This environment variable is added by the system to indicate to the process that it is
-        registered as a AppCompatFlags as explained in this article:
-
-            http://stackoverflow.com/questions/5600735/how-do-i-fix-win7-app-compatibility-shim-with-disableusercallbackexception
-        '''
         self._AssertExecute(
             Dedent(
                 '''
