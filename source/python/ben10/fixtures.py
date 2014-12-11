@@ -386,15 +386,19 @@ class UnicodeSamples(object):
 
     Sources:
     - http://pages.ucsd.edu/~dkjordan/chin/unitestuni.html
+
+    Note:
+        We had to limit the unicode character examples to those who can be represented in ucs2. I.e, in our current
+        compiled version of python, unichr(0x26B99) raises
+        "ValueError: unichr() arg not in range(0x10000) (narrow Python build)"
     """
     PURE_ASCII = 'action'
     LATIN_1 = 'ação'
     FULL_LATIN_1 = b''.join(chr(i + 1) for i in xrange(255)).decode('latin-1')
     UNICODE = '動'
-    UNICODE_MULTIPLE_LANGUAGES = UNICODE + '_ĂǜĵΜῆἄθΠηωχς пкת我。館來了。𦮙ώęăлտլმტკ सक 傷ทำ 森 ☃'
+    UNICODE_MULTIPLE_LANGUAGES = UNICODE + '_ĂǜĵΜῆἄθΠηωχς пкת我。館來了。ώęăлտլმტკ सक 傷ทำ 森 ☃'
     UNICODE_PREFERRED_LOCALE = (LATIN_1 + UNICODE_MULTIPLE_LANGUAGES).encode(
-        locale.getpreferredencoding(), 'replace').decode(locale.getpreferredencoding()).replace(
-            '?', '-')
+        locale.getpreferredencoding(), 'replace').decode(locale.getpreferredencoding()).replace('?', '-')
 
 
 
