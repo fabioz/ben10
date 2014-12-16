@@ -816,8 +816,6 @@ def MoveDirectory(source_dir, target_dir):
         If trying to move anything other than:
             Local dir -> local dir
             FTP dir -> FTP dir (same host)
-
-
     '''
     if not IsDir(source_dir):
         from ._filesystem_exceptions import DirectoryNotFoundError
