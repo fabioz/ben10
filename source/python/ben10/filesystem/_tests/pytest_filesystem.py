@@ -10,9 +10,10 @@ from ben10.filesystem import (AppendToFile, CanonicalPath, CheckIsDir, CheckIsFi
     MoveFile, NormStandardPath, NormalizePath, NotImplementedForRemotePathError,
     NotImplementedProtocol, OpenFile, ReadLink, ReplaceInFile, ServerTimeoutError, StandardizePath)
 from ben10.filesystem._filesystem import CreateTemporaryFile, FindFiles
-from ben10.foundation.pushpop import PushPopItem
+from ben10.foundation.pushpop import PushPopAttr, PushPopItem
 from mock import patch
 import errno
+import mock
 import os
 import pytest
 import subprocess
@@ -454,16 +455,6 @@ class Test:
             FileError('alpha.txt')
 
 
-    @pytest.mark.serial
-    def testFTPFileContents(self, monkeypatch, embed_data, ftpserver):
-        obtained = GetFileContents(ftpserver('file.txt'))
-        expected = GetFileContents(embed_data['file.txt'])
-        assert obtained == expected
-
-        with pytest.raises(FileNotFoundError):
-            GetFileContents(ftpserver('missing_file.txt'))
-
-
     def testCreateFile(self, embed_data):
         contents = 'First\nSecond\r\nThird\rFourth'
         contents_unix = 'First\nSecond\nThird\nFourth'
@@ -506,58 +497,6 @@ class Test:
         assert GetFileContents(filename) == "alpha bravo charlie delta echo"
 
 
-    @pytest.mark.serial
-    def testFTPUnicode(self, embed_data, ftpserver):
-        '''
-        Test support for unicode filenames in FTP
-        '''
-        u_dirname = 'únicode_dir'
-        CreateDirectory(embed_data[u_dirname])
-        ftp_u_dirname = ftpserver(u_dirname)
-
-        u_filename = 'únicode_dir/filê.txt'
-        CreateFile(embed_data[u_filename], 'filê', encoding='UTF-8')
-        ftp_u_filename = ftpserver(u_filename)
-
-        ascii_dirname = 'ascii_directory'
-        CreateDirectory(embed_data[ascii_dirname])
-        ftp_ascii_dirname = ftpserver(ascii_dirname)  # @UnusedVariable
-
-        def check_unicode(value):
-            if isinstance(value, list):
-                map(check_unicode, value)
-            assert isinstance(value, unicode)
-
-        # Functions
-        CheckIsDir(ftp_u_dirname)
-        CheckIsFile(ftp_u_filename)
-        CopyFiles(ftp_u_dirname, embed_data[ascii_dirname])  # FTP to local
-        CreateDirectory(ftp_u_dirname)
-        CreateFile(ftp_u_filename, 'cóntents', encoding='UTF-8')
-        OpenFile(ftp_u_filename)
-
-        assert GetFileContents(ftp_u_filename, binary=True) == 'cóntents'.encode('UTF-8')
-        assert GetFileContents(ftp_u_filename, encoding='UTF-8') == 'cóntents'
-        assert GetFileLines(ftp_u_filename, encoding='UTF-8') == ['cóntents']
-        assert ListFiles(ftp_u_dirname) == ['filê.txt']
-
-        assert IsDir(ftp_u_dirname)
-        assert IsFile(ftp_u_filename)
-        CreateMD5(ftp_u_filename)
-        assert IsFile(ftp_u_filename + '.md5')
-
-        MoveDirectory(ftp_u_dirname, ftp_u_dirname + '2')
-
-        # No support for FTP (yet?)
-        # AppendToFile(ftp_u_filename, 'contents')
-        # CopyDirectory(ftp_ascii_dirname, ftp_u_dirname)
-        # CopyFile(ftp_u_filename, ftp_u_filename + '2') # FTP to FTP
-        # CopyFilesX([(ftp_u_dirname, ftp_ascii_dirname + '/*')])
-        # DeleteDirectory(ftp_u_dirname)
-        # DeleteFile(ftp_u_filename)
-        # MoveFile(ftp_u_filename, ftp_u_filename + '2')
-
-
     def testCreateFileInMissingDirectory(self, embed_data):
         # Trying to create a file in a directory that does not exist should raise an error
         target_file = embed_data['missing_dir/sub_dir/file.txt']
@@ -575,19 +514,6 @@ class Test:
             CreateFile(single_file, contents='contents', create_dir=True)
         finally:
             DeleteFile(single_file)
-
-
-    @pytest.mark.serial
-    def testFTPCreateFileInMissingDirectory(self, ftpserver):
-        from ftputil.error import FTPIOError
-
-        target_ftp_file = ftpserver('missing_ftp_dir/sub_dir/file.txt')
-
-        with pytest.raises(FTPIOError):
-            CreateFile(target_ftp_file, contents='contents', create_dir=False)
-
-        CreateFile(target_ftp_file, contents='contents', create_dir=True)
-        assert GetFileContents(target_ftp_file) == 'contents'
 
 
     def testAppendToFile(self, embed_data):
@@ -864,7 +790,7 @@ class Test:
 
     def testCopyFileNonAscii(self, embed_data):
         '''
-            Creates files with non-ascii filenames and copies them.
+        Creates files with non-ascii filenames and copies them.
         '''
         source_file = embed_data['ação.txt']
         target_file = embed_data['ação_copy.txt']
@@ -897,133 +823,6 @@ class Test:
     def testIsDir(self, embed_data):
         assert IsDir('.')
         assert not IsDir(embed_data['missing_dir'])
-
-
-    @pytest.mark.serial
-    def testFTPIsDir(self, monkeypatch, embed_data, ftpserver):
-        assert IsDir(ftpserver('.'))
-        assert not IsDir(ftpserver('missing_dir'))
-        assert not IsDir(ftpserver('missing_dir/missing_sub_dir'))
-
-
-    @pytest.mark.serial
-    def testFTPCopyFiles(self, monkeypatch, embed_data, ftpserver):
-        source_dir = embed_data['files/source']
-        target_dir = ftpserver('ftp_target_dir')
-
-        # Make sure that the target dir does not exist
-        assert not os.path.isdir(target_dir)
-
-        # We should get an error if trying to copy files into a missing dir
-        with pytest.raises(DirectoryNotFoundError):
-            CopyFiles(source_dir, target_dir)
-
-        # Create dir and check files
-        CopyFiles(source_dir, target_dir, create_target_dir=True)
-
-        assert set(ListFiles(source_dir)) == set(ListFiles(target_dir))
-
-
-    @pytest.mark.serial
-    def testFTPMoveDirectory(self, monkeypatch, embed_data, ftpserver):
-        source_dir = ftpserver('files/source')
-        target_dir = ftpserver('ftp_target_dir')
-
-        # Make sure that the source exists, and target does not
-        assert IsDir(source_dir)
-        assert not IsDir(target_dir)
-
-        # Keep a list of files in source_dir
-        source_files = ListFiles(source_dir)
-
-        # Move directory
-        MoveDirectory(source_dir, target_dir)
-
-        # Make sure that the target exists, and source does not
-        assert IsDir(target_dir)
-        assert not IsDir(source_dir)
-
-        # list of files should be the same as before
-        assert ListFiles(target_dir) == source_files
-
-        # Cannot rename a directory if the target dir already exists
-        source_dir = ftpserver('some_directory')
-        CreateDirectory(source_dir)
-        with pytest.raises(DirectoryAlreadyExistsError):
-            MoveDirectory(source_dir, target_dir)
-
-
-    @pytest.mark.serial
-    def testFTPCopyFile(self, monkeypatch, embed_data, ftpserver):
-        def CopyAndCheckFiles(source_file, target_file, override=True):
-            CopyFile(
-                source_file,
-                target_file,
-                override,
-            )
-            assert GetFileContents(source_file) == GetFileContents(target_file)
-
-        # Upload file form local to FTP
-        source_file = embed_data['files/source/alpha.txt']
-        target_file = ftpserver('alpha.txt')
-        CopyAndCheckFiles(source_file, target_file)
-
-        # Upload file form local to FTP, testing override
-        source_file = embed_data['files/source/alpha.txt']
-        target_file = ftpserver('alpha.txt')
-        with pytest.raises(FileAlreadyExistsError):
-            CopyAndCheckFiles(source_file, target_file, override=False,)
-
-        # Download file to local
-        source_file = ftpserver('alpha.txt')
-        target_file = embed_data['alpha_copied_from_ftp.txt']
-        CopyAndCheckFiles(source_file, target_file)
-
-        with pytest.raises(NotImplementedProtocol):
-            CopyFile(ftpserver('alpha.txt'), 'ERROR://target')
-
-
-    @pytest.mark.serial
-    def testFTPCreateFile(self, monkeypatch, embed_data, ftpserver):
-        target_file = ftpserver('ftp.txt')
-        contents = 'This is a new file.'
-        CreateFile(
-            target_file,
-            contents
-        )
-        assert GetFileContents(target_file) == contents
-
-
-    @pytest.mark.serial
-    def testFTPIsFile(self, embed_data, ftpserver):
-        assert IsFile(ftpserver('file.txt'))
-        assert IsFile(ftpserver('files/source/alpha.txt'))
-        assert not IsFile(ftpserver('doesnt_exist'))
-        assert not IsFile(ftpserver('doesnt_exist/doesnt_exist'))
-        assert not IsFile(ftpserver('files/doesnt_exist'))
-
-
-    @pytest.mark.serial
-    def testFTPListFiles(self, monkeypatch, embed_data, ftpserver):
-        # List FTP files
-        assert ListFiles(ftpserver('files/source')) == [
-            'alpha.txt',
-            'bravo.txt',
-            'subfolder',
-        ]
-
-        # Try listing a directory that does not exist
-        assert ListFiles(ftpserver('files/non-existent')) is None
-
-        # Check for assertion for invalid url: starts with two slashes.
-        with pytest.raises(AssertionError):
-            ListFiles(ftpserver('//files/non-existent'))
-
-
-    @pytest.mark.serial
-    def testFTPMakeDirs(self, monkeypatch, embed_data, ftpserver):
-        CreateDirectory(ftpserver('/ftp_dir1'))
-        assert os.path.isdir(embed_data['ftp_dir1'])
 
 
     def testStandardizePath(self):
@@ -1082,7 +881,7 @@ class Test:
         assert obtained == expected
 
 
-    def testCheckIsFile(self, monkeypatch, embed_data):
+    def testCheckIsFile(self, embed_data):
         # assert not raises Exception
         CheckIsFile(embed_data['file.txt'])
 
@@ -1093,18 +892,8 @@ class Test:
             CheckIsFile(embed_data.GetDataDirectory())  # Not a file
 
 
-    @pytest.mark.serial
-    def testFTPCheckIsFile(self, ftpserver):
-        # assert not raises Exception
-        CheckIsFile(ftpserver('file.txt'))
-        with pytest.raises(FileNotFoundError):
-            CheckIsFile(ftpserver('MISSING_FILE'))
-        with pytest.raises(FileNotFoundError):
-            CheckIsFile(ftpserver('.'))  # Not a file
-
-
     @pytest.mark.skipif(not sys.platform.startswith('win'), reason="drives are only valid in windows filesystems")
-    def testCheckDriveType(self, monkeypatch, embed_data, ftpserver):
+    def testCheckDriveType(self, embed_data, ftpserver):
         assert GetDriveType('') == DRIVE_FIXED
         assert GetDriveType(embed_data['file.txt']) == DRIVE_FIXED
         assert GetDriveType(os.path.abspath(embed_data['file.txt'])) == DRIVE_FIXED
@@ -1117,7 +906,7 @@ class Test:
             assert GetDriveType(r'\\fileserversc\dev') == DRIVE_REMOTE
 
 
-    def testCheckIsDir(self, monkeypatch, embed_data):
+    def testCheckIsDir(self, embed_data):
         # assert not raises Exception
         CheckIsDir(embed_data.GetDataDirectory())
 
@@ -1126,18 +915,6 @@ class Test:
 
         with pytest.raises(DirectoryNotFoundError):
             CheckIsDir(embed_data['file.txt'])  # Not a directory
-
-
-    @pytest.mark.serial
-    def testFTPCheckIsDir(self, ftpserver):
-        # assert not raises Exception
-        CheckIsDir(ftpserver('.'))
-
-        with pytest.raises(DirectoryNotFoundError):
-            CheckIsDir(ftpserver('MISSING_DIR'))
-
-        with pytest.raises(DirectoryNotFoundError):
-            CheckIsDir(ftpserver('file.txt'))  # Not a directory
 
 
     def testGetMTime__slow(self, embed_data):
@@ -1404,88 +1181,239 @@ class Test:
         assert set(a) == set(b)
 
 
+class TestFTP(object):
+    '''
+    Tests for FTP operations in filesystem
+    '''
+    def testFTPIsFile(self, ftpserver):
+        ftpserver.ftp.path.isfile.return_value = False
+        assert IsFile(ftpserver['file.txt']) == False
+
+        ftpserver.ftp.path.isfile.return_value = True
+        assert IsFile(ftpserver['file.txt']) == True
+
+        from ftputil.error import PermanentError
+        ftpserver.ftp.path.isfile.side_effect = PermanentError('550 File not found')
+        assert IsFile(ftpserver['file.txt']) == False
+
+
+    def testFTPCheckIsFile(self, ftpserver):
+        ftpserver.ftp.path.isfile.return_value = True
+        CheckIsFile(ftpserver['path'])
+
+        from ftputil.error import PermanentError
+        ftpserver.ftp.path.isfile.side_effect = PermanentError('550 File not found')
+        with pytest.raises(FileNotFoundError):
+            CheckIsFile(ftpserver['MISSING_FILE'])
+
+        ftpserver.ftp.path.isfile.return_value = False
+        with pytest.raises(FileNotFoundError):
+            CheckIsFile(ftpserver['path'])
+
+
+    def testFTPIsDir(self, ftpserver):
+        ftpserver.ftp.path.isdir.return_value = False
+        assert IsDir(ftpserver['path']) == False
+
+        ftpserver.ftp.path.isdir.return_value = True
+        assert IsDir(ftpserver['path']) == True
+
+        from ftputil.error import PermanentError
+        ftpserver.ftp.path.isdir.side_effect = PermanentError('550 File not found')
+        assert IsDir(ftpserver['path']) == False
+
+
+    def testFTPCheckIsDir(self, ftpserver):
+        ftpserver.ftp.path.isdir.return_value = False
+        with pytest.raises(DirectoryNotFoundError):
+            CheckIsDir(ftpserver['path'])
+
+        ftpserver.ftp.path.isdir.return_value = True
+        CheckIsDir(ftpserver['path'])
+
+        from ftputil.error import PermanentError
+        ftpserver.ftp.path.isdir.side_effect = PermanentError('550 File not found')
+        with pytest.raises(DirectoryNotFoundError):
+            CheckIsDir(ftpserver['MISSING_DIR'])
+
+
+    def testFTPListFiles(self, ftpserver):
+        # Check for assertion for invalid url: starts with two slashes.
+        with pytest.raises(AssertionError):
+            ListFiles(ftpserver['//files/non-existent'])
+
+        # List FTP files
+        ftpserver.ftp.listdir.return_value = ['1', '2']
+        assert ListFiles(ftpserver['files/source']) == ['1', '2']
+
+        # Try listing a directory that does not exist
+        from ftputil.error import PermanentError
+        ftpserver.ftp.listdir.side_effect = PermanentError('550 File not found')
+        assert ListFiles(ftpserver['files/non-existent']) is None
+
+
+    def testFTPFileContents(self, ftpserver):
+        obtained = GetFileContents(ftpserver['file.txt'])
+        assert obtained == 'mock file contents'
+
+        # Assert that ftphost.open was called with correct parameters
+        ftpserver.ftp.open.assert_called_once_with(u'/file.txt', u'r', encoding=None)
+
+        # Assert that we get a pretty FileNotFoundError when FTP raises 550
+        with pytest.raises(FileNotFoundError):
+            from ftputil.error import FTPIOError
+            ftpserver.ftp.open.side_effect = FTPIOError('550 File not found')
+            GetFileContents(ftpserver['missing_file.txt'])
+
+
+    def testFTPMakeDirs(self, ftpserver):
+        CreateDirectory(ftpserver['/ftp_dir1'])
+        ftpserver.ftp.makedirs.assert_called_once_with('//ftp_dir1')
+
+
+    def testFTPCreateFile(self, ftpserver):
+        CreateFile(ftpserver['ftp.txt'], 'contents')
+        ftpserver.ftp.open.assert_called_once_with('/ftp.txt', u'wb', encoding=None)
+        ftpserver.ftp.open.return_value.write.assert_called_once_with('contents')
+
+
+    def testFTPCreateFileInMissingDirectory(self, ftpserver):
+        from ftputil.error import FTPIOError
+
+        target_ftp_file = ftpserver['missing_ftp_dir/sub_dir/file.txt']
+
+        # We leak FTPIOError if directory does not exist and `create_dir` = False
+        with PushPopAttr(ftpserver.ftp.open, 'side_effect', FTPIOError('550 not found')):
+            with pytest.raises(FTPIOError):
+                CreateFile(target_ftp_file, contents='contents', create_dir=False)
+
+        # If `create_dir` = True, the directory is created
+        CreateFile(target_ftp_file, contents='contents', create_dir=True)
+        ftpserver.ftp.makedirs.assert_called_once_with('/missing_ftp_dir/sub_dir')
+        ftpserver.ftp.open.assert_called_with('/missing_ftp_dir/sub_dir/file.txt', u'wb', encoding=None)
+
+
+    def testFTPCopyFile(self, embed_data, ftpserver):
+        source_file = embed_data['files/source/alpha.txt']
+        target_file = ftpserver['alpha.txt']
+
+        # Upload file from local to FTP
+        CopyFile(source_file, target_file)
+        ftpserver.ftp.upload.assert_called_once_with(source_file, '/alpha.txt')
+
+        # Upload file form local to FTP, testing override
+        ftpserver.ftp.path.isdir.return_value = True
+        with pytest.raises(FileAlreadyExistsError):
+            CopyFile(source_file, target_file, override=False)
+
+        CopyFile(source_file, target_file, override=True)
+        assert ftpserver.ftp.upload.call_count == 2
+        ftpserver.ftp.upload.assert_called_with(source_file, '/alpha.txt')
+
+        # Download file to local
+        source_file = ftpserver['alpha.txt']
+        target_file = embed_data['alpha_copied_from_ftp.txt']
+        CopyFile(source_file, target_file)
+        ftpserver.ftp.download.assert_called_with(source='/alpha.txt', target=target_file)
+
+        with pytest.raises(NotImplementedProtocol):
+            CopyFile(ftpserver['alpha.txt'], 'ERROR://target')
+
+
+    def testFTPCopyFiles(self, embed_data, ftpserver):
+        source_dir = embed_data['files/source']
+        target_dir = ftpserver['ftp_target_dir']
+
+        # We should get an error if trying to copy files into a missing dir
+        with pytest.raises(DirectoryNotFoundError):
+            CopyFiles(source_dir, target_dir)
+
+        # Create dir and check files
+        CopyFiles(source_dir, target_dir, create_target_dir=True)
+        ftpserver.ftp.upload.assert_has_calls(
+            [
+                mock.call(source_dir + '/alpha.txt', '/ftp_target_dir/alpha.txt'),
+                mock.call(source_dir + '/bravo.txt', '/ftp_target_dir/bravo.txt'),
+                mock.call(source_dir + '/subfolder/subfile.txt', '/ftp_target_dir/subfolder/subfile.txt')
+            ],
+            any_order=True
+        )
+
+
+    def testFTPMoveDirectory(self, ftpserver):
+        source = ftpserver['source']
+        target = ftpserver['target']
+
+        # Pretend that only the source directory exists
+        def IsDir(dirname): return 'source' in dirname
+        ftpserver.ftp.path.isdir.side_effect = IsDir
+
+        MoveDirectory(source, target)
+        ftpserver.ftp.rename.assert_called_once_with('/source', '/target')
+
+        # Pretend that both directories exist
+        ftpserver.ftp.path.isdir.side_effect = None
+        ftpserver.ftp.path.isdir.return_value = True
+
+        with pytest.raises(DirectoryAlreadyExistsError):
+            MoveDirectory(source, target)
+
+
+    def testFTPUnicode(self):
+        '''
+        Assert that all communication made via FTP uses UTF-8 encoding.
+
+        This test is a bit intrusive, and tests some internal ftplib.FTP objects used by filesystem.
+        '''
+        from ben10.filesystem._filesystem_remote import _MyFTP
+        my_ftp = _MyFTP()
+
+        with mock.patch.object(my_ftp, 'sock', autospec=True) as mock_socket:  # @UndefinedVariable
+            my_ftp.putline('ação')
+            mock_socket.sendall.assert_called_once_with('ação\r\n'.encode('UTF-8'))
+
+
 
 #===================================================================================================
 # Fixtures
 #===================================================================================================
 @pytest.fixture
-def ftpserver(monkeypatch, embed_data, request):
-    '''
-    Fixtures used for tests that evolves FTP protocol.
+def ftpserver(embed_data, request):
+    class FTPServerFixture():
 
-    Usage:
-        def testAlpha(ftpserver, embed_data):
-            ftpserver.Serve(embed_data.GetDataDirectory()
+        def __init__(self):
+            self.ftp = self._Mock('ftputil.FTPHost')
 
-            url = ftpserver('filename.txt')
-    '''
-    # Find a free port in localhost
-    import socket
-    s = socket.socket()
-    s.bind(('', 0))
-    host, port = s.getsockname()[:2]
-    s.close()  # Close because we want our subprocess to use this
+            # FTPFile has many 'missing' functions that are redirected in getattr. We have to build
+            # them manually because mock.patch can't find them.
+            mock_file = self._Mock('ftputil.file.FTPFile')
+            mock_file.close.__name__ = 'close'  # ben10.foundation.callback needs __name__ in functions
+            mock_file.write = mock.Mock()
+            mock_file.read = mock.Mock()
+            mock_file.read.return_value = 'mock file contents'
+            mock_file.__enter__.return_value = mock_file
+            self.ftp.open.return_value = mock_file
 
-    # Create a function to facilitate use
-    base_dir = 'ftp://dev:123@127.0.0.1:%(port)s' % locals()
-    def GetFTPUrl(filename):
-        '''
-        Returns the url to access the given filename using this ftp-server.
+            # Set some default return values
+            self.ftp.path = self._Mock('ftputil.path._Path')
+            self.ftp.path.isdir.return_value = False
+            self.ftp.path.isfile.return_value = False
 
-        :param str filename:
-            The non-absolute filename to access.
-
-        :return str:
-            The full url for the given filename.
-        '''
-        return '/'.join([base_dir, filename])
+            self._Mock('ben10.filesystem._filesystem_remote.FTPHost', return_value=self.ftp)
 
 
-    # We serve the current directory using the same instance of the ftpserver for all tests.
-    # All URLs must be prefixed by the data-directory in order to properly access the test data.
-    from multiprocessing.process import Process
-    directory = embed_data.GetDataDirectory()
-    process = Process(target=FTPServe, args=(directory, (host, port)))
-    process.start()
-
-    # Sleep for a while while ftp server starts
-    import time
-    time.sleep(0.5)
-
-    # Make sure we end the process when this test is over
-    request.addfinalizer(process.terminate)
-
-    return GetFTPUrl
+        def __getitem__(self, key):
+            return 'ftp://dev:123@localhost/' + key
 
 
+        def _Mock(self, import_path, **kwargs):
+            if 'autospec' not in kwargs:
+                kwargs['autospec'] = True
 
-#===================================================================================================
-# FTPServe
-#===================================================================================================
-def FTPServe(basedir, addr):
-    '''
-    Start an FTP server in `basedir`, being served at `addr`
+            my_patch = mock.patch(import_path, **kwargs)
+            my_mock = my_patch.start()
+            request.addfinalizer(my_patch.stop)
+            return my_mock
 
-    :param unicode basedir:
-        FTP root directory
 
-    :param tuple(unicode,int) addr:
-        IP / port
-    '''
-    from pyftpdlib.authorizers import DummyAuthorizer
-    from pyftpdlib.handlers import FTPHandler
-    from pyftpdlib.servers import FTPServer
-    import logging
-
-    pyftpdlib_log = logging.getLogger('pyftpdlib')
-    pyftpdlib_log.disabled = True
-
-    authorizer = DummyAuthorizer()
-    authorizer.add_user('dev', '123', basedir, perm='elradfmwM')  # full perms
-    authorizer.add_anonymous(basedir)
-
-    handler = FTPHandler
-    handler.authorizer = authorizer
-    server = FTPServer(addr, handler)
-
-    server.serve_forever()
+    return FTPServerFixture()
