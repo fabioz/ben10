@@ -1,3 +1,4 @@
+# coding: UTF-8
 '''
 Collection of fixtures for pytests.
 
@@ -5,8 +6,11 @@ Collection of fixtures for pytests.
     Coverage for this file gives a lot of misses, just like calling coverage from module's main.
 '''
 from __future__ import unicode_literals
+from ben10.execute import Execute2
+from ben10.filesystem import CreateDirectory
 from ben10.foundation import handle_exception
 import faulthandler
+import locale
 import os
 import pytest
 
@@ -458,3 +462,89 @@ def platform():
     '''
     from ben10.foundation.platform_ import Platform
     return Platform.GetCurrentPlatform()
+
+
+#===================================================================================================
+# UnicodeSamples
+#===================================================================================================
+class UnicodeSamples(object):
+    """
+    Sample strings that are valid in different encodings, can be used in tests to ensure
+    compliance with different encoding sets.
+
+    :cvar PURE_ASCII:
+        Only chars valid in ascii.
+
+    :cvar LATIN_1:
+        Only chars valid in latin-1.
+
+    :cvar FULL_LATIN_1:
+        All valid latin-1 characters.
+
+    :cvar UNICODE:
+        Sample of unicode chars.
+
+    :cvar UNICODE_MULTIPLE_LANGUAGES:
+        Sample of unicode chars from several languages.
+
+    :cvar UNICODE_PREFERRED_LOCALE:
+        Sample of unicode chars that are valid in the encoding of the current locale.
+
+    Sources:
+    - http://pages.ucsd.edu/~dkjordan/chin/unitestuni.html
+
+    Note:
+        We had to limit the unicode character examples to those who can be represented in ucs2. I.e, in our current
+        compiled version of python, unichr(0x26B99) raises
+        "ValueError: unichr() arg not in range(0x10000) (narrow Python build)"
+    """
+    PURE_ASCII = 'action'
+    LATIN_1 = 'ação'
+    FULL_LATIN_1 = b''.join(chr(i + 1) for i in xrange(255)).decode('latin-1')
+    UNICODE = '動'
+    UNICODE_MULTIPLE_LANGUAGES = UNICODE + '_ĂǜĵΜῆἄθΠηωχς пкת我。館來了。ώęăлտլმტკ सक 傷ทำ 森 ☃'
+    UNICODE_PREFERRED_LOCALE = (LATIN_1 + UNICODE_MULTIPLE_LANGUAGES).encode(
+        locale.getpreferredencoding(), 'replace').decode(locale.getpreferredencoding()).replace('?', '-')
+
+
+
+@pytest.fixture
+def unicode_samples():
+    '''
+    Component that contains samples from various character sets decoded as unicode.
+    '''
+    return UnicodeSamples()
+
+
+
+#===================================================================================================
+# _ScriptRunner
+#===================================================================================================
+class _ScriptRunner(object):
+    '''
+    Saves script and runs it, capturing output. Does not remove the script file.
+    '''
+
+    def ExecuteScript(self, filename, contents, *args):
+        '''
+        Saves script and runs it, capturing output. Does not remove the script file.
+
+        :returns unicode:
+            Script output.
+        '''
+        dir_name = os.path.dirname(filename)
+        CreateDirectory(dir_name)
+        script_name = os.path.join(dir_name, 'script.py_')
+        with open(script_name, 'w') as f:
+            f.write(contents)
+
+        output, _ = Execute2(['python', script_name] + list(args))
+        return ''.join(output).strip()
+
+
+@pytest.fixture
+def script_runner():
+    '''
+    Component to create and execute python scripts.
+    '''
+    return _ScriptRunner()

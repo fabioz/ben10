@@ -1,6 +1,7 @@
 from __future__ import unicode_literals
 from ben10.foundation.is_frozen import IsFrozen
 from ben10.foundation.platform_ import Platform
+import locale
 import os
 import sys
 
@@ -57,11 +58,11 @@ def GetApplicationDir():
     '''
     if IsFrozen():
         result = os.path.dirname(sys.executable)
-        result = os.path.normpath(os.path.join(result, '..'))
+        result = os.path.normpath(os.path.join(result, b'..'))
     else:
         result = sys.path[0]
 
-    return result.decode('ascii')
+    return result.decode(locale.getpreferredencoding())
 
 
 #===================================================================================================
@@ -73,7 +74,7 @@ def GetExecutableDir():
         Directory containing sys.executable
     '''
     result = os.path.dirname(sys.executable)
-    return result.decode('ascii')
+    return result.decode(locale.getpreferredencoding())
 
 
 #===================================================================================================
@@ -96,4 +97,4 @@ def GetUserHomeDir():
     else:
         path = os.environ['HOME']
 
-    return path.decode('ascii')
+    return path.decode(locale.getpreferredencoding())

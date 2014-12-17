@@ -1,4 +1,5 @@
 from __future__ import unicode_literals
+import locale
 import sys
 
 
@@ -114,10 +115,11 @@ def PrintDetailedTraceback(exc_info=None, stream=None, max_levels=None, max_line
 
     _WriteToStream('Traceback (most recent call last):\n')
 
+    encoding = locale.getpreferredencoding()
     for frame in stack:
         params = dict(
-            name=frame.f_code.co_name,
-            filename=frame.f_code.co_filename,
+            name=frame.f_code.co_name.decode(encoding),
+            filename=frame.f_code.co_filename.decode(encoding),
             lineno=frame.f_lineno,
         )
 
@@ -141,7 +143,7 @@ def PrintDetailedTraceback(exc_info=None, stream=None, max_levels=None, max_line
                 # representation of the value at the stack, because raising an exception here
                 # would shadow the original exception
                 try:
-                    val_repr = repr(value)
+                    val_repr = repr(value).decode(encoding)
                 except:
                     val_repr = '<ERROR WHILE PRINTING VALUE>'
                 else:

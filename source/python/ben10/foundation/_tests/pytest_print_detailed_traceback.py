@@ -2,9 +2,11 @@
 from __future__ import unicode_literals
 from ben10.filesystem import CreateFile
 from ben10.foundation.print_detailed_traceback import PrintDetailedTraceback
+from ben10.foundation.string import Dedent
 from io import BytesIO, StringIO
 import pytest
 import re
+
 
 
 def testPrintDetailedTraceback(embed_data):
@@ -62,8 +64,23 @@ def testPrintDetailedTraceback(embed_data):
     embed_data.AssertEqualFiles(
         obtained_filename,
         'traceback.expected.txt',
-        fix_callback = FixIt
+        fix_callback=FixIt
     )
+
+
+def testPrintDetailedTracebackNotAsciiPath(embed_data, unicode_samples, script_runner):
+    SCRIPT = Dedent(r'''# coding: UTF-8
+        from ben10.foundation.print_detailed_traceback import PrintDetailedTraceback
+        import io
+        try:
+            assert False
+        except:
+            PrintDetailedTraceback(stream=io.StringIO())
+            print 'COMPLETE'
+        ''')
+    script_name = embed_data.GetDataFilename('%s/script.py_' % unicode_samples.UNICODE_PREFERRED_LOCALE)
+    obtained = script_runner.ExecuteScript(script_name, SCRIPT)
+    assert obtained == 'COMPLETE'
 
 
 def testNoException():
