@@ -2,7 +2,7 @@ from __future__ import unicode_literals
 from archivist import Archivist
 from ben10.filesystem import (CopyFile, CreateDirectory, CreateFile, CreateLink,
     CreateTemporaryDirectory, DeleteDirectory, DeleteFile, DeleteLink, Exists, IsDir, IsLink,
-    StandardizePath)
+    ListFiles, StandardizePath)
 from ben10.filesystem._filesystem_exceptions import FileNotFoundError
 from ben10.foundation.decorators import Override
 import os
@@ -282,7 +282,8 @@ class DirCache(DirCacheLocal):
             All caches point to their mirror in `remote_dir`.
         '''
         dircaches = []
-        for dirname in sorted(os.listdir(cache_base_dir)):
+        caches = ListFiles(cache_base_dir) or []
+        for dirname in sorted(caches):
             if not os.path.isdir(cache_base_dir + '/' + dirname):
                 continue
 
