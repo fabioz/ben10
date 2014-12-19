@@ -125,6 +125,9 @@ class Test(object):
         remote_dir = embed_data['remotes']
         cache_dir = embed_data['cache']
 
+        caches = DirCache.GetAllCacheDirs(remote_dir, cache_dir)
+        assert caches == []
+
         CreateDirectory(cache_dir + '/alpha')
         CreateDirectory(cache_dir + '/bravo')
         CreateDirectory(cache_dir + '/charlie')

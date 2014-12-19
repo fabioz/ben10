@@ -1,12 +1,50 @@
 from __future__ import unicode_literals
 from contextlib import closing
 from ftputil.error import FTPIOError, FTPOSError, PermanentError
+import ftplib
+import ftputil
 
 
 
 #===================================================================================================
 # FTPHost
 #===================================================================================================
+# Always use UTF-8 in ftputil, otherwise it sometimes uses UTF-8, and other times latin-1
+ftputil.tool.LOSSLESS_ENCODING = 'UTF-8'
+class _MyFTP(ftplib.FTP):
+    def __init__(self, host='', user='', passwd='', acct='', port=ftplib.FTP.port):
+        # Must call parent constructor without any parameter so it don't try to perform
+        # the connect without the port parameter (it have the same "if host" code in there)
+        ftplib.FTP.__init__(self)
+
+        if host:
+            self.connect(host, port)
+
+            if user:
+                self.login(user, passwd, acct)
+            else:
+                self.login()
+
+        # Use active FTP by default
+        self.set_pasv(False)
+
+
+    # ftplib does not support unicode in Python < 3
+    # This was taken from http://stackoverflow.com/a/10691041
+    def putline(self, line):
+        line = line + '\r\n'
+        if isinstance(line, unicode):
+            line = line.encode('UTF-8')
+        self.sock.sendall(line)
+
+
+class _MyPassiveFTP(_MyFTP):
+    def __init__(self, *args, **kwargs):
+        _MyFTP.__init__(self, *args, **kwargs)
+        self.makepasv()
+        self.set_pasv(True)
+
+
 def FTPHost(url):
     '''
     Create an ftputil.FTPHost instance at the target url. Configure the host to correctly use the
@@ -17,46 +55,6 @@ def FTPHost(url):
 
     :rtype: ftputil.FTPHost
     '''
-    import ftplib
-    import ftputil
-
-    # Always use UTF-8 in ftputil, otherwise it makes a mess by sometimes using UTF-8, and other
-    # times latin-1
-    ftputil.tool.LOSSLESS_ENCODING = 'UTF-8'
-    class MyFTP(ftplib.FTP):
-        def __init__(self, host='', user='', passwd='', acct='', port=ftplib.FTP.port):
-            # Must call parent constructor without any parameter so it don't try to perform
-            # the connect without the port parameter (it have the same "if host" code in there)
-            ftplib.FTP.__init__(self)
-
-            if host:
-                self.connect(host, port)
-
-                if user:
-                    self.login(user, passwd, acct)
-                else:
-                    self.login()
-
-            # Use active FTP by default
-            self.set_pasv(False)
-
-
-        # ftplib does not support unicode in Python < 3
-        # This was taken from http://stackoverflow.com/a/10691041
-        def putline(self, line):
-            line = line + '\r\n'
-            if isinstance(line, unicode):
-                line = line.encode('UTF-8')
-            self.sock.sendall(line)
-
-
-    class MyPassiveFTP(MyFTP):
-        def __init__(self, *args, **kwargs):
-            MyFTP.__init__(self, *args, **kwargs)
-            self.makepasv()
-            self.set_pasv(True)
-
-
     from functools import partial
     create_host = partial(
         ftputil.FTPHost,
@@ -71,7 +69,7 @@ def FTPHost(url):
 
         # In Windows, use Active FTP by default
         if sys.platform == 'win32':
-            host = create_host(session_factory=MyFTP)
+            host = create_host(session_factory=_MyFTP)
 
             # Check if a simple operation fails in active ftp, if it does, switch to passive ftp
             try:
@@ -80,18 +78,18 @@ def FTPHost(url):
                 if e.errno in [425, 500]:
                     # 425 = Errno raised when trying to a server without active ftp
                     # 500 = Illegal PORT command. In this case we also want to try passive mode.
-                    host = create_host(session_factory=MyPassiveFTP)
+                    host = create_host(session_factory=_MyPassiveFTP)
 
             return host
 
         # In Linux, use Passive FTP by default
         else:
             try:
-                return create_host(session_factory=MyPassiveFTP)
+                return create_host(session_factory=_MyPassiveFTP)
             except:
                 # If we cant use Passive FTP, fallback to Active (this can happen if the server does
                 # not accept PASV command).
-                return create_host(session_factory=MyFTP)
+                return create_host(session_factory=_MyFTP)
 
 
     except FTPOSError, e:
