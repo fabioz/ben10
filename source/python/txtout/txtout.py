@@ -173,6 +173,10 @@ class AbstractTextOutput(object):
         raise NotImplementedError()
 
 
+    def DETAILED_EXCEPTION(self, **kargs):
+        raise NotImplementedError()
+
+
     def EXCEPTION(self, **kargs):
         raise NotImplementedError()
 
@@ -700,6 +704,11 @@ class TextOutput(AbstractTextOutput):
         self.P(' '.join(args), color=text_color, indent=indent)
         self.LINE(line_char, color=line_color, indent=indent)
         self._HandleBottomMargin(kargs)
+
+
+    def DETAILED_EXCEPTION(self, **kargs):
+        from ben10.foundation.print_detailed_traceback import PrintDetailedTraceback
+        PrintDetailedTraceback(stream=self, max_line_width=self.c_page_width)
 
 
     def EXCEPTION(self, **kargs):
