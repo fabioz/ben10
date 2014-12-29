@@ -712,3 +712,60 @@ class StringDictIO(object):
                     contents_dict[key] = value
 
         return contents_dict
+
+
+#===================================================================================================
+# StructMap
+#===================================================================================================
+def StructMap(obj, func, conditional=lambda x:True):
+    '''
+    Maps an object recursively for dict/tuple/list types.
+
+    :param callable func:
+        Called for each non-container value IF conditional returns True.
+
+    :param callable conditional:
+        Filters which values to execute func.
+
+    :return object:
+        Returns a copy of the object with all non-container types mapped via func.
+
+    Example:
+        Converts all "str" instances to "unicode" inside nested container objects
+
+        struct = {
+            'name' : 'Alpha',
+            'numbers' : (1,2,3),
+            'surnames' : ('Bravo', 'Charlie'),
+        }
+
+        struct = StructMap(
+            struct,
+            lambda x: x.decode('UTF-8'),
+            lambda x: isinstance(x, str)
+        )
+
+        struct = {
+            u'name' : u'Alpha',
+            u'numbers' : (1,2,3),
+            u'surnames' : (u'Bravo', u'Charlie'),
+        }
+    '''
+    if isinstance(obj, dict):
+        return {
+            StructMap(i, func, conditional):StructMap(j, func, conditional)
+            for i,j in obj.iteritems()
+        }
+    if isinstance(obj, tuple):
+        return tuple(
+            StructMap(i, func, conditional)
+            for i in obj
+        )
+    if isinstance(obj, list):
+        return [
+            StructMap(i, func, conditional)
+            for i in obj
+        ]
+    if conditional(obj):
+        obj = func(obj)
+    return obj

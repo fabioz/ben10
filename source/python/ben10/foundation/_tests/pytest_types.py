@@ -3,7 +3,8 @@ from ben10.filesystem import CreateFile, GetFileContents
 from ben10.foundation.is_frozen import IsDevelopment, SetIsDevelopment
 from ben10.foundation.types_ import (AsList, Boolean, CheckBasicType, CheckEnum, CheckFormatString,
     CheckIsNumber, CheckType, CreateDevelopmentCheckType, Flatten, Intersection, IsBasicType,
-    IsNumber, MergeDictsRecursively, Null, OrderedIntersection, StringDictIO, _GetKnownNumberTypes)
+    IsNumber, MergeDictsRecursively, Null, OrderedIntersection, StringDictIO, _GetKnownNumberTypes,
+    StructMap)
 import copy
 import pytest
 
@@ -471,3 +472,16 @@ class Test:
         # Test sorted
         StringDictIO.Save(ordered_dict, filename, sort_items=True)
         assert GetFileContents(filename) == 'a = last\nz = first\n'
+
+
+    def testStructMap(self):
+
+        a = {'alpha' : [1,2,3], 'bravo' : (1,2,3)}
+
+        obtained = StructMap(
+            a,
+            func=str,
+            conditional=lambda x: isinstance(x, int)
+        )
+        expected = {'alpha' : ['1','2','3'], 'bravo' : ('1','2','3')}
+        assert obtained == expected
