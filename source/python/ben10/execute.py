@@ -452,6 +452,19 @@ def GetSubprocessOutput(
         encoding=None,
         encoding_errors=None,
     ):
+    '''
+    New/simpler implementation for Execute.
+
+    Execute a command-line returning the generated output and return code.
+
+    :param binary:
+        If True returns the process output as bytes, without handling the encoding.
+
+    See ProcessOpen for parameter descriptions.
+
+    :return tuple(unicode|str, int):
+        Returns the sub-process output (merging stdout and stderr) and the return code.
+    '''
     encoding = encoding or DEFAULT_ENCODING
     encoding_errors = encoding_errors or DEFAULT_ENCODING_ERRORS
 
