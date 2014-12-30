@@ -222,5 +222,5 @@ class Test(object):
 #===================================================================================================
 if __name__ == '__main__':
     # Executes with specific coverage.
-    retcode = pytest.main(['--cov-report=term-missing', '--cov=aasimar10.refactor', __file__])
+    retcode = pytest.main(['--cov-report=term-missing', '--cov=aasimar.refactor', __file__])
     sys.exit(retcode)
