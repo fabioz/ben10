@@ -47,6 +47,16 @@ class Test(object):
         assert obtained_output == expected_output
 
 
+    def testErrorWithIgnoreAutoQuote(self):
+        '''
+        Tests a bug that messed up the error message when using a string command line with
+        ignore_auto_quote. .. seealso:: BEN-65
+        '''
+        with pytest.raises(RuntimeError) as e:
+            Execute('unicode command line', ignore_auto_quote=True)
+        assert 'command_line::\n    unicode command line' in ExceptionToUnicode(e.value)
+
+
     def testUnknownFileUnicodePath(self):
         # This should raise an error because that file does not exist
         with pytest.raises(RuntimeError) as e:
