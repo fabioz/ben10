@@ -538,6 +538,8 @@ def ProcessOpen(
     locale_encoding = locale.getpreferredencoding()
 
     def CmdLineStr(cmd_line):
+        if isinstance(cmd_line, unicode):
+            return '    ' + cmd_line
         return '    ' + '\n    '.join(cmd_line)
 
     def EncodeWithLocale(value):
