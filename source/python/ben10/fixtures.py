@@ -13,6 +13,7 @@ import faulthandler
 import locale
 import os
 import pytest
+import sys
 
 
 
@@ -50,6 +51,7 @@ class _ShowHandledExceptionsError(object):
 
     def __init__(self):
         self._handled_exceptions = []
+        self._handled_exceptions_types = []
 
     def _OnHandledException(self):
         '''
@@ -60,6 +62,7 @@ class _ShowHandledExceptionsError(object):
 
         s = StringIO()
         traceback.print_exc(file=s)
+        self._handled_exceptions_types.append(sys.exc_info()[0])
         self._handled_exceptions.append(s.getvalue())
 
     def __enter__(self, *args, **kwargs):
@@ -73,7 +76,15 @@ class _ShowHandledExceptionsError(object):
         '''
         Clears the handled exceptions
         '''
+        del self._handled_exceptions_types[:]
         del self._handled_exceptions[:]
+
+    def GetHandledExceptionTypes(self):
+        '''
+        :return list(type):
+            Returns a list with the exception types we found.
+        '''
+        return self._handled_exceptions_types
 
     def GetHandledExceptions(self):
         '''
@@ -136,10 +147,14 @@ def handled_exceptions():
             handled_exceptions.GetHandledExceptions = \
                 show_handled_exceptions_error.GetHandledExceptions
 
+            handled_exceptions.GetHandledExceptionTypes = \
+                show_handled_exceptions_error.GetHandledExceptionTypes
+
             yield show_handled_exceptions_error
     finally:
         handled_exceptions.ClearHandledExceptions = None
         handled_exceptions.GetHandledExceptions = None
+        handled_exceptions.GetHandledExceptionTypes = None
 
     show_handled_exceptions_error.RaiseFoundExceptions()
 
