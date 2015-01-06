@@ -36,12 +36,14 @@ class Test():
 
 
     def testPushPopItem(self):
-
-        obj = {
-            'key' : 1
-        }
+        obj = {'key' : 1}
 
         assert obj['key'] == 1
         with PushPopItem(obj, 'key', 2):
             assert obj['key'] == 2
         assert obj['key'] == 1
+
+        assert 'other_key' not in obj
+        with PushPopItem(obj, 'other_key', 1):
+            assert obj['other_key'] == 1
+        assert 'other_key' not in obj

@@ -32,7 +32,6 @@ PushPop = PushPopAttr
 
 
 
-
 #===================================================================================================
 # PushPopItem
 #===================================================================================================
@@ -51,7 +50,13 @@ def PushPopItem(obj, key, value):
         pytest.raises(ImportError):
           import alpha
     '''
-    old_value = obj.__getitem__(key)
-    obj.__setitem__(key, value)
-    yield value
-    obj.__setitem__(key, old_value)
+    if key in obj:
+        old_value = obj[key]
+        obj[key] = value
+        yield value
+        obj[key] = old_value
+
+    else:
+        obj[key] = value
+        yield value
+        del obj[key]
