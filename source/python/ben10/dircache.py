@@ -310,7 +310,7 @@ class DirCache(DirCacheLocal):
             List of cache filenames in `remote_dir`
         '''
         if invalidate_cache or remote_dir not in cls._REMOTE_CACHE_DIRS:
-            cls._REMOTE_CACHE_DIRS[remote_dir] = ListFiles(remote_dir)
+            cls._REMOTE_CACHE_DIRS[remote_dir] = ListFiles(remote_dir) or []
         return cls._REMOTE_CACHE_DIRS[remote_dir]
 
 
