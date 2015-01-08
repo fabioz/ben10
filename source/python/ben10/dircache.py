@@ -232,12 +232,13 @@ class DirCache(DirCacheLocal):
     execute many jobs that requires the same resources.
 
     :ivar str remote:
-        Path to a remote archive.
-        This can be a local directory, ftp or http url.
+        Path to a remote .zip archive. Accepts local, ftp and http paths.
 
     :ivar str remote_filename:
         The filename portion of `remote`.
-        This may differ from the resource local directory.
+
+    :ivar str remote_dir:
+        The directory portion of `remote`.
 
     :ivar str local_dir:
         The local directory to place a link with this name pointing to the
@@ -253,6 +254,9 @@ class DirCache(DirCacheLocal):
     :ivar str cache_name:
         Basename of `cache_dir` (just the final directory_
     '''
+
+    # Cache for GetRemoteCacheDirs (list of cache dirs available in a directory)
+    _REMOTE_CACHE_DIRS = {}
 
     def __init__(self, remote, local_dir, cache_base_dir, cache_tag_contents=''):
         '''
@@ -296,6 +300,20 @@ class DirCache(DirCacheLocal):
         return dircaches
 
 
+    @classmethod
+    def GetRemoteCacheFiles(cls, remote_dir, invalidate_cache=False):
+        '''
+        :param str remote_dir:
+            Path to a remote directory where cache archives are stored
+
+        :return list(unicode):
+            List of cache filenames in `remote_dir`
+        '''
+        if invalidate_cache or remote_dir not in cls._REMOTE_CACHE_DIRS:
+            cls._REMOTE_CACHE_DIRS[remote_dir] = ListFiles(remote_dir)
+        return cls._REMOTE_CACHE_DIRS[remote_dir]
+
+
     # Properties -----------------------------------------------------------------------------------
     # .. seealso:: class docs for property docs
     @property
@@ -307,6 +325,10 @@ class DirCache(DirCacheLocal):
     def remote_filename(self):
         return self._filename
 
+
+    @property
+    def remote_dir(self):
+        return os.path.dirname(self.remote)
 
 
     # Functions ------------------------------------------------------------------------------------
@@ -343,13 +365,24 @@ class DirCache(DirCacheLocal):
         self._UploadRemote()
 
 
-    def RemoteExists(self):
+    def DeleteRemote(self):
+        '''
+        Deletes the remote cache
+        '''
+        if not self.RemoteExists():
+            return
+
+        DeleteFile(self.remote)
+        self._REMOTE_CACHE_DIRS[self.remote_dir].remove(self.remote_filename)
+
+
+    def RemoteExists(self, invalidate_cache=False):
         '''
         Checks if the remote resource exists.
 
         :returns bool:
         '''
-        return Exists(self.remote)
+        return self.remote_filename in self.GetRemoteCacheFiles(self.remote_dir, invalidate_cache)
 
 
     def _DownloadRemote(self, target_dir):
@@ -378,4 +411,5 @@ class DirCache(DirCacheLocal):
             tmp_archive = os.path.join(tmp_dir, self.remote_filename)
             Archivist().CreateArchive(tmp_archive, [('', '+' + self.cache_dir + '/*')])
             CopyFile(tmp_archive, self.remote)
+            self._REMOTE_CACHE_DIRS.setdefault(self.remote_dir, []).append(self.remote_filename)
             DeleteFile(tmp_archive)

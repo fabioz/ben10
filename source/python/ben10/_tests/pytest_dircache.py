@@ -107,7 +107,7 @@ class Test(object):
         dir_cache.CreateRemote()
 
         # Make sure that the remote does not exist
-        DeleteFile(dir_cache.remote)
+        dir_cache.DeleteRemote()
         assert not IsFile(dir_cache.remote)
 
         CreateFile(dir_cache.cache_dir + '/' + 'alpha.txt', contents='')
