@@ -306,6 +306,11 @@ class DirCache(DirCacheLocal):
         :param str remote_dir:
             Path to a remote directory where cache archives are stored
 
+        :param bool invalidate_cache:
+            If True, invalidates the current cached list of remote cache files for `remote_dir`.
+            Note that this cache is automatically updated when `CreateRemote` and `DeleteRemote` are
+            called.
+
         :return list(unicode):
             List of cache filenames in `remote_dir`
         '''
@@ -379,6 +384,9 @@ class DirCache(DirCacheLocal):
     def RemoteExists(self, invalidate_cache=False):
         '''
         Checks if the remote resource exists.
+
+        :param invalidate_cache:
+            .. seealso:: GetRemoteCacheFiles
 
         :returns bool:
         '''
