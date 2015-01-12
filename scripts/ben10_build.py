@@ -1,8 +1,5 @@
 from __future__ import unicode_literals
-try:
-    from aasimar.shared_commands import BuildCommand
-except ImportError:
-    from aasimar10.shared_commands import BuildCommand
+from aasimar.shared_commands import BuildCommand
 from ben10.foundation.decorators import Override
 
 
