@@ -827,8 +827,6 @@ class Git(Singleton):
         :raises NotCurrentlyInAnyBranchError:
             If not on any branch.
         '''
-
-        # TODO: BEN-47: Find the correct way of handling submodules on DevSpace jobs.
         # Returns the branch of the host repository if the given repo_path is a submodule.
         if submodule and self._IsSubModule(repo_path):
             repo_path = self._GetTopLevel(os.path.dirname(self._GetTopLevel(repo_path)))
@@ -1081,7 +1079,6 @@ class Git(Singleton):
             Returns True if the given path is a git-repository and False otherwise.
         '''
         from ben10.filesystem import Exists
-        import os
 
         git_filename = os.path.join(repo_path, '.git')
 
@@ -1102,8 +1099,6 @@ class Git(Singleton):
             Returns None if the given path does not belong to a local git repository.
         '''
         # Assume that if we have a .git dir, we are a valid repository
-        import os
-
         result = os.path.normpath(os.path.abspath(path))
         dir_name = os.path.dirname(result)
         while result != dir_name:
