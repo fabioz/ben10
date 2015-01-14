@@ -71,7 +71,7 @@ class Test():
 
             dir_name = GetUserHomeDir()
 
-        print dir_name.encode('utf-8')
+        print dir_name
         ''')
 
 

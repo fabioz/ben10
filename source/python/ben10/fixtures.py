@@ -6,7 +6,6 @@ Collection of fixtures for pytests.
     Coverage for this file gives a lot of misses, just like calling coverage from module's main.
 '''
 from __future__ import unicode_literals
-from ben10.execute import Execute2
 from ben10.filesystem import CreateDirectory
 from ben10.foundation import handle_exception
 import faulthandler
@@ -547,13 +546,14 @@ class _ScriptRunner(object):
         :returns unicode:
             Script output.
         '''
-        dir_name = os.path.dirname(filename)
-        CreateDirectory(dir_name)
-        script_name = os.path.join(dir_name, 'script.py_')
-        with open(script_name, 'w') as f:
-            f.write(contents)
+        from ben10.filesystem._filesystem import CreateFile
+        CreateFile(filename, contents)
 
-        output, _ = Execute2(['python', script_name] + list(args))
+        from ben10.execute import DEFAULT_ENCODING, Execute2
+        output, _ = Execute2(
+            ['python', filename] + list(args),
+            extra_environ={'PYTHONIOENCODING' : DEFAULT_ENCODING}
+        )
         return ''.join(output).strip()
 
 

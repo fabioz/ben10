@@ -7,6 +7,7 @@ from ben10.foundation.uname import GetExecutableDir
 from cStringIO import StringIO
 from multiprocessing.process import current_process
 from txtout.txtout import TextOutput
+import locale
 import os
 import shlex
 import subprocess
@@ -25,8 +26,8 @@ class COPY_FROM_ENVIRONMENT(object):
 
 
 # Default encoding for output_encoding and encoding parameters + error handler.
-DEFAULT_ENCODING = 'UTF-8'
-DEFAULT_ENCODING_ERRORS = 'strict'
+DEFAULT_ENCODING = locale.getpreferredencoding()
+DEFAULT_ENCODING_ERRORS = 'replace'
 
 
 
@@ -547,7 +548,6 @@ def ProcessOpen(
 
     :returns subprocess.Popen:
     '''
-    import locale
     locale_encoding = locale.getpreferredencoding()
 
     def CmdLineStr(cmd_line):
