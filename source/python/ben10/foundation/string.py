@@ -57,7 +57,7 @@ def Dedent(text, ignore_first_linebreak=True, ignore_last_linebreak=True):
         text = text.rsplit('\n', 1)[0]
 
     import re
-    _leading_whitespace_re = re.compile('(^[ \t]*)(?:[^ \t\n])', re.MULTILINE)
+    _leading_whitespace_re = re.compile('(^[ ]*)(?:[^ \n])', re.MULTILINE)
 
     # Look for the longest leading string of spaces and tabs common to
     # all non-empty lines.
