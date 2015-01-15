@@ -148,9 +148,6 @@ class ModuleFinder(object):
             A set containing project names for all ESSS imports found in the given path
 
             e.g. set(['coilib50', 'sharedscripts10'])
-
-
-        TODO: EDEN-257: Move GetEsssImports from coilib50 to sharedscripts10
         '''
 
         def IsMatch(module_path, regex_):
