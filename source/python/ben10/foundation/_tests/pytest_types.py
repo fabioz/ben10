@@ -2,9 +2,9 @@ from __future__ import unicode_literals
 from ben10.filesystem import CreateFile, GetFileContents
 from ben10.foundation.is_frozen import IsDevelopment, SetIsDevelopment
 from ben10.foundation.types_ import (AsList, Boolean, CheckBasicType, CheckEnum, CheckFormatString,
-    CheckIsNumber, CheckType, CreateDevelopmentCheckType, Flatten, Intersection, IsBasicType,
-    IsNumber, MergeDictsRecursively, Null, OrderedIntersection, StringDictIO, _GetKnownNumberTypes,
-    StructMap)
+    CheckIsNumber, CheckType, CreateDevelopmentCheckType, Flatten, FlattenDictValues, Intersection,
+    IsBasicType, IsNumber, MergeDictsRecursively, Null, OrderedIntersection, StringDictIO,
+    StructMap, _GetKnownNumberTypes)
 import copy
 import pytest
 
@@ -485,3 +485,17 @@ class Test:
         )
         expected = {'alpha' : ['1','2','3'], 'bravo' : ('1','2','3')}
         assert obtained == expected
+
+
+    def testFlattenDictValues(self):
+        assert FlattenDictValues({'a' : 1, 'b' : 2}) == range(1, 3)
+        assert FlattenDictValues({'a' : 1, 'b' : { 'c' : 2 }}) == range(1, 3)
+        assert FlattenDictValues({'a' : 1, 'b' : [2, 3]}) == range(1, 4)
+        assert FlattenDictValues({'a' : 1, 'b' : { 'c' : [2, 3]}}) == range(1, 4)
+        assert FlattenDictValues({'a' : 1, 'b' : { 'c' : [2, {'d' : 3}]}}) == range(1, 4)
+        assert FlattenDictValues({'a' : 1, 'b' : [{'c' : 2}, 3, [4, [5]]]}) == range(1, 6)
+
+        with pytest.raises(ValueError):
+            FlattenDictValues([1, 2])
+        with pytest.raises(ValueError):
+            FlattenDictValues(1)

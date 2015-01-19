@@ -432,6 +432,42 @@ def IterFlattened(iterable, skip_types=None):
                 yield x
 
 
+#===================================================================================================
+# IterFlattenedDictValues
+#===================================================================================================
+def IterFlattenedDictValues(dictionary):
+    '''
+    Flattens a dictionary values() recursively.
+
+    If the outer dictionary contains an inner dictionary the inner dictionary values are also flattened.
+
+    Other containers will be flattened too, not only the dicts.
+
+    :param dict dictionary:
+    :return: sequence(object)
+    '''
+    if not isinstance(dictionary, dict):
+        raise ValueError('Parameter "dictionary" must be a dict')
+    values = IterFlattened(dictionary.itervalues(), skip_types=[dict])
+    for v in values:
+        if isinstance(v, dict):
+            for v2 in IterFlattenedDictValues(v):
+                yield v2
+        else:
+            yield v
+
+
+#===================================================================================================
+# FlattenDictValues
+#===================================================================================================
+def FlattenDictValues(dictionary):
+    '''
+    :param dict dictionary:
+    :return: list(object)
+    :see: IterFlattenedDictValues
+    '''
+    return list(IterFlattenedDictValues(dictionary))
+
 
 #===================================================================================================
 # MergeDictsRecursively
