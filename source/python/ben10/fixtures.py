@@ -174,6 +174,7 @@ def fault_handler_fixture(request):
     '''
     # skip items that are not python test items (for example: doctest)
     if not hasattr(request.node, 'module'):
+        yield
         return
     name = '%s.%s.txt' % (request.node.module.__name__, request.node.name)
     invalid_chars = [os.sep, os.pathsep, ':', '<', '>', '@']
