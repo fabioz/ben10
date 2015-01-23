@@ -6,7 +6,6 @@ Collection of fixtures for pytests.
     Coverage for this file gives a lot of misses, just like calling coverage from module's main.
 '''
 from __future__ import unicode_literals
-from ben10.filesystem import CreateDirectory
 from ben10.foundation import handle_exception
 import faulthandler
 import locale
@@ -17,13 +16,12 @@ import sys
 
 
 #===================================================================================================
-# pytest_sessionstart
+# global_settings_fixture
 #===================================================================================================
-def pytest_sessionstart(session):
+@pytest.fixture(autouse=True, scope='session')
+def global_settings_fixture():
     '''
-    pytest hook called before each session begins (including on each slave when running in xdist).
-
-    We use this hook in order to configure global settings that should be set for all tests in our
+    Auto-use fixture that configures global settings that should be set for all tests in our
     runs.
     '''
     from ben10.foundation.is_frozen import SetIsDevelopment
@@ -159,9 +157,10 @@ def handled_exceptions():
 
 
 #===================================================================================================
-# pytest_runtest_protocol
+# fault_handler_fixture
 #===================================================================================================
-def pytest_runtest_protocol(item, __multicall__):
+@pytest.yield_fixture(autouse=True)
+def fault_handler_fixture(request):
     '''
     pytest hook that implements the full test run protocol, setup/call/teardown.
 
@@ -174,27 +173,26 @@ def pytest_runtest_protocol(item, __multicall__):
         no crash occurred.
     '''
     # skip items that are not python test items (for example: pytest)
-    if not hasattr(item, 'module'):
+    if not hasattr(request.node, 'module'):
         return
-    name = '%s.%s.txt' % (item.module.__name__, item.name)
+    name = '%s.%s.txt' % (request.node.module.__name__, request.node.name)
     invalid_chars = [os.sep, os.pathsep, ':', '<', '>', '@']
     if os.altsep:
         invalid_chars.append(os.altsep)
     for c in invalid_chars:
         name = name.replace(c, '-')
-    filename = os.path.join(item.config.getoption('fault_handler_dir'), name)
-    item.fault_handler_stream = open(filename, 'w')
-    faulthandler.enable(item.fault_handler_stream)
+    filename = os.path.join(request.config.getoption('fault_handler_dir'), name)
+    request.node.fault_handler_stream = open(filename, 'w')
+    faulthandler.enable(request.node.fault_handler_stream)
 
+    yield
+
+    request.node.fault_handler_stream.close()
+    request.node.fault_handler_stream = None
     try:
-        return __multicall__.execute()
-    finally:
-        item.fault_handler_stream.close()
-        item.fault_handler_stream = None
-        try:
-            os.remove(filename)
-        except (OSError, IOError):
-            pass
+        os.remove(filename)
+    except (OSError, IOError):
+        pass
 
 
 #===================================================================================================
