@@ -172,7 +172,7 @@ def fault_handler_fixture(request):
         Since this file is only useful if a a test crashes, it is removed during tear down if
         no crash occurred.
     '''
-    # skip items that are not python test items (for example: pytest)
+    # skip items that are not python test items (for example: doctest)
     if not hasattr(request.node, 'module'):
         return
     name = '%s.%s.txt' % (request.node.module.__name__, request.node.name)
