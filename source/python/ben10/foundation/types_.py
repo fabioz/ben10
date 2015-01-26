@@ -250,7 +250,7 @@ def IsBasicType(value, accept_compound=False, additional=None):
         True if the passed value is from a basic python type
     '''
     if isinstance(value, (int, unicode, bytes, long, float, bool, complex)) or \
-        value is None or (additional and isinstance(value, additional)):
+        value is None or (additional and IsInstance(value, additional)):
         return True
 
     if accept_compound:
