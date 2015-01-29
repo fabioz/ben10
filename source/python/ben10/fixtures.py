@@ -162,26 +162,18 @@ def handled_exceptions():
 @pytest.yield_fixture(autouse=True)
 def fault_handler_fixture(request):
     '''
-    pytest hook that implements the full test run protocol, setup/call/teardown.
-
-    - faulthandler: we enable a fault handler in the current process, which will stream crash errors
-        to a file in the directory configured by the "--fault-handler-dir" command-line option.
-        The file is named based on the module and test name, for example:
-            "~/ben10._tests.pytest_fixtures.testFaultHandler.txt"
-
-        Since this file is only useful if a a test crashes, it is removed during tear down if
-        no crash occurred.
+    Auto-fixture that enables a fault handler in the current process, which will stream crash errors
+    to a file in the directory configured by the "--fault-handler-dir" command-line option.
+    The file is named using the full test node id, and because this file is only useful if a a test
+    actually crashes, it is removed during tear down if no crash occurred.
     '''
     # skip items that are not python test items (for example: doctest)
     if not hasattr(request.node, 'module'):
         yield
         return
-    name = '%s.%s.txt' % (request.node.module.__name__, request.node.name)
-    invalid_chars = [os.sep, os.pathsep, ':', '<', '>', '@']
-    if os.altsep:
-        invalid_chars.append(os.altsep)
-    for c in invalid_chars:
-        name = name.replace(c, '-')
+
+    import re
+    name = re.sub(r'\W', '_', request.node.nodeid) + '.fault_handler.txt'
     filename = os.path.join(request.config.getoption('fault_handler_dir'), name)
     request.node.fault_handler_stream = open(filename, 'w')
     faulthandler.enable(request.node.fault_handler_stream)
