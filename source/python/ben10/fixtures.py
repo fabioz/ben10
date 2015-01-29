@@ -173,8 +173,21 @@ def fault_handler_fixture(request):
         return
 
     import re
-    name = re.sub(r'\W', '_', request.node.nodeid) + '.fault_handler.txt'
-    filename = os.path.join(request.config.getoption('fault_handler_dir'), name)
+
+    basename = request.node.module.__name__
+
+    # make sure to include the class name (if any), otherwise we get a name clash
+    # if two classes in the same module have one or more duplicated test names
+    parent_cls = request.node.parent.cls
+    class_name = parent_cls.__name__ if parent_cls is not None else ''
+    if class_name:
+        basename += '.' + class_name
+
+    # request.node.name might contain any characters due to parametrize(), so escape those
+    node_name = re.sub(r'\W', '_', request.node.name)
+    basename += '.' + node_name + '.txt'
+
+    filename = os.path.join(request.config.getoption('fault_handler_dir'), basename)
     request.node.fault_handler_stream = open(filename, 'w')
     faulthandler.enable(request.node.fault_handler_stream)
 
