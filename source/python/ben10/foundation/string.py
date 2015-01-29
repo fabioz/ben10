@@ -57,12 +57,13 @@ def Dedent(text, ignore_first_linebreak=True, ignore_last_linebreak=True):
         text = text.rsplit('\n', 1)[0]
 
     import re
-    _leading_whitespace_re = re.compile('(^[ \t]*)(?:[^ \t\n])', re.MULTILINE)
+    _leading_whitespace_re = re.compile('(^[ ]*)(?:[^ \n])', re.MULTILINE)
 
     # Look for the longest leading string of spaces and tabs common to
     # all non-empty lines.
     margin = None
     indents = _leading_whitespace_re.findall(text)
+
     for indent in indents:
         if margin is None:
             margin = indent
@@ -76,13 +77,6 @@ def Dedent(text, ignore_first_linebreak=True, ignore_last_linebreak=True):
         # it's the new winner.
         elif margin.startswith(indent):
             margin = indent
-
-        # Current line and previous winner have no common whitespace:
-        # there is no margin.
-        else:
-            # TODO: BEN-18: Improve coverage
-            margin = ""
-            break
 
     if margin:
         text = re.sub(r'(?m)^' + margin, '', text)
@@ -198,7 +192,7 @@ def FormatIterable(iterable, format_expr="'%s'"):
     string representation of each item is encapsulated in single quotes.
     '''
     items = ', '.join((format_expr % (item,) for item in iterable))
-    return '[%s]'  % (items,)
+    return '[%s]' % (items,)
 
 
 #===================================================================================================
