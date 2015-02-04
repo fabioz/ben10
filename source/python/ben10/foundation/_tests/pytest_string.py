@@ -108,9 +108,7 @@ class Test:
 
     def testDedent9(self):
         '''
-        Coverage 100%
-
-        TODO: BEN-21: Strange behavior on Dedent when mixing tabs and spaces.
+        Test behavior when using \t at the start of a string. .. seealso:: BEN-21 @ JIRA
         '''
         string = Dedent(
             '''
@@ -118,7 +116,7 @@ class Test:
             \tbravo
             '''
         )
-        assert string == '                alpha\n            \tbravo'
+        assert string == '    alpha\n\tbravo'
 
 
     def testDedent10(self):

@@ -552,17 +552,17 @@ class Test:
 
 
     def testAssertImplementsDoesNotDirObject(self):
-
+        '''
+        AssertImplements does not attempt to __getattr__ methods from an object, it only considers
+        methods that are actually bound to the class.
+        '''
         class M1(object):
-
             def __getattr__(self, attr):
-                if attr == 'm1':
-                    class MyMethod(Method):
-                        def __call__(self):
-                            ''
-                    return MyMethod()
-                else:
-                    raise AttributeError  # TODO: BEN-18: Improve coverage
+                assert attr == 'm1'  # This test only accepts this attribute
+                class MyMethod(Method):
+                    def __call__(self):
+                        ''
+                return MyMethod()
 
         m1 = M1()
         m1.m1()

@@ -134,10 +134,6 @@ class Test(object):
                 self.id = 1
                 self.n_calls = 0
 
-# TODO: BEN-18: Improve coverage
-#             def __str__(self):
-#                 return '%s %d' % (self.name, self.id)
-
             def Foo(self, par):
                 self.n_calls += 1
                 return '%s %d' % (par, self.id)
