@@ -1,4 +1,5 @@
 from __future__ import unicode_literals
+import functools
 import os
 import pstats
 import subprocess
@@ -104,6 +105,7 @@ def ProfileMethod(filename, rows=50, sort=(('cumul',), ('time',)), show_graph=Fa
     '''
 
     def wrapper(method):
+        @functools.wraps(method)
         def inner(*args, **kwargs):
             prof = profile.Profile()
             result = prof.runcall(method, *args, **kwargs)
@@ -125,7 +127,6 @@ def ProfileMethod(filename, rows=50, sort=(('cumul',), ('time',)), show_graph=Fa
             stats = pstats.Stats(prof)
             for s in tup_sort:
                 stats.strip_dirs().sort_stats(*s).print_stats(int(rows))
-
 
             return result
         return inner
