@@ -592,8 +592,7 @@ class Git(Singleton):
         :param bool ignore_merges:
             If True, will skip all merge commit revisions.
 
-        :rtype: list(unicode)
-        :returns:
+        :return list(unicode):
             A list of all revision hashes that are reachable by r2, but not by r1.
             Orders from earliest to latest.
         '''
@@ -639,8 +638,11 @@ class Git(Singleton):
         :param unicode repo_path:
 
         :param unicode filename:
+
+        :return list(unicode):
+            Returns the command execution output.
         '''
-        self.Execute(['add', filename], repo_path)
+        return self.Execute(['add', filename], repo_path)
 
 
     def Commit(self, repo_path, commit_message, flags=[]):
@@ -650,8 +652,11 @@ class Git(Singleton):
         :param unicode repo_path:
 
         :param unicode commit_message:
+
+        :return list(unicode):
+            Returns the command execution output.
         '''
-        self.Execute(['commit', '-m', commit_message] + flags, repo_path)
+        return self.Execute(['commit', '-m', commit_message] + flags, repo_path)
 
 
     def Push(self, repo_path, remote_name=None, ref=None, tags=False):
@@ -667,6 +672,9 @@ class Git(Singleton):
 
         :param bool tags:
             If True, also pushes tags
+
+        :return list(unicode):
+            Returns the command execution output.
         '''
         command_line = ['push']
 
@@ -679,7 +687,7 @@ class Git(Singleton):
         if tags:
             command_line.append('--tags')
 
-        self.Execute(command_line, repo_path)
+        return self.Execute(command_line, repo_path)
 
 
     def Fetch(self, repo_path, remote_name=None, ref=None, tags=False, flags=[]):
@@ -701,9 +709,8 @@ class Git(Singleton):
         :param list(unicode) flags:
             Additional flags passed to git fetch
 
-        :rtype: list(unicode)
-        :returns:
-            Output from git log
+        :return list(unicode):
+            Returns the command execution output.
         '''
         command_line = ['fetch']
 
@@ -734,7 +741,7 @@ class Git(Singleton):
 
         :rtype: list(unicode)
         :returns:
-            Output from git log
+            Returns the command execution output.
         '''
         command_line = ['reset', '--hard']
         if ref is not None:
@@ -769,7 +776,7 @@ class Git(Singleton):
             .. seealso:: self.Execute
 
         :return list(unicode):
-            Output from git pull
+            Returns the command execution output.
         '''
         command_line = ['pull']
 
@@ -810,7 +817,7 @@ class Git(Singleton):
             e.g. ('--oneline',)
 
         :returns list(unicode):
-            Output from git log
+            Returns the command execution output.
         '''
         return self.Execute(('log',) + flags, repo_path)
 
