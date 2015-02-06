@@ -18,7 +18,7 @@ import sys
 #===================================================================================================
 # global_settings_fixture
 #===================================================================================================
-@pytest.fixture(autouse=True, scope='session')
+@pytest.yield_fixture(autouse=True, scope='session')
 def global_settings_fixture():
     '''
     Auto-use fixture that configures global settings that should be set for all tests in our
@@ -27,15 +27,24 @@ def global_settings_fixture():
     from ben10.foundation.is_frozen import SetIsDevelopment
     import sys
 
-    if sys.platform.startswith('win'):
+    on_windows = sys.platform.startswith('win')
+
+    if on_windows:
         # Makes the system hide the Windows Error Reporting dialog.
         # http://msdn.microsoft.com/en-us/library/windows/desktop/ms680621%28v=vs.85%29.aspx
         import ctypes
         SEM_NOGPFAULTERRORBOX = 0x0002
-        ctypes.windll.kernel32.SetErrorMode(SEM_NOGPFAULTERRORBOX)
+        old_error_mode = ctypes.windll.kernel32.SetErrorMode(SEM_NOGPFAULTERRORBOX)
+        new_error_mode = old_error_mode | SEM_NOGPFAULTERRORBOX
+        ctypes.windll.kernel32.SetErrorMode(new_error_mode)
 
     # Enable development-only checks
     SetIsDevelopment(True)
+
+    yield
+
+    if on_windows:
+        ctypes.windll.kernel32.SetErrorMode(old_error_mode)
 
 
 #===================================================================================================
@@ -193,6 +202,7 @@ def fault_handler_fixture(request):
 
     yield
 
+    faulthandler.disable()
     request.node.fault_handler_stream.close()
     request.node.fault_handler_stream = None
     try:
