@@ -733,17 +733,84 @@ def _GetEnviron(environ=None, extra_environ=None):
     '''
     if environ is None:
         environ = os.environ.copy()
+    else:
+        for i_name, i_value in environ.items():
+            if i_value is COPY_FROM_ENVIRONMENT:
+                env_value = os.environ.get(bytes(i_name))
+                if env_value is None:
+                    del environ[i_name]
+                else:
+                    environ[i_name] = env_value
 
     if extra_environ:
+        assert COPY_FROM_ENVIRONMENT not in extra_environ.values()
         environ.update(extra_environ)
-
-    replace_environ = {}
-    for i_name, i_value in environ.iteritems():
-        if i_value is COPY_FROM_ENVIRONMENT and i_name in os.environ:
-            replace_environ[i_name] = os.environ[i_name]
-    environ.update(replace_environ)
 
     # subprocess does not accept unicode strings in the environment
     environ = {bytes(key) : bytes(value) for key, value in environ.iteritems()}
 
     return environ
+
+
+
+#===================================================================================================
+# ExecutePython
+#===================================================================================================
+def ExecutePython(
+        filename,
+        parameters=None,
+        cwd=None,
+        environ=None,
+        extra_environ=None,
+        python_executable='python',
+    ):
+    '''
+    Executes a python script.
+
+    Handle some details regarding handling Python execution such as:
+
+    * Required environment variables
+      On linux we need LD_LIBRARY_PATH copied to the sub-process in order to properly import
+      non-default python modules.
+
+    * PYTHONIOENCODING definition
+      We define this environment variable in order to TRY to make both this and the sub-process talk
+      with the same encoding.
+
+    :param unicode filename:
+        The name of the python script to execute
+
+    :param bool debug:
+        If True uses the debug version of Python.
+
+    .. seealso:: ben10.execute.Execute
+        For param and return doc
+    '''
+    import sys
+
+    command_line = [
+        python_executable,
+        '-u',  # Use unbuffered mode in Python, to make sure we capture output as it arrives
+        filename
+    ]
+    if parameters is not None:
+        command_line += parameters
+
+    extra_environ = extra_environ or {}
+    # Set output encoding to our default expected encoding in Execute
+    extra_environ['PYTHONIOENCODING'] = DEFAULT_ENCODING
+
+    # Make sure we have LD_LIBRARY_PATH in the user-given environ on linux.
+    if sys.platform != 'win32' and environ is not None:
+        environ.setdefault('LD_LIBRARY_PATH', COPY_FROM_ENVIRONMENT)
+
+    # TODO: Find a better way to make it work on travis-ci. Today sub-scripts can't find ben10's imports.
+    if 'TRAVIS_BUILD_DIR' in os.environ:
+        extra_environ['PYTHONPATH'] = os.path.expandvars(b'$TRAVIS_BUILD_DIR/source/python')
+
+    return GetSubprocessOutput(
+        command_line,
+        cwd=cwd,
+        environ=environ,
+        extra_environ=extra_environ,
+    )

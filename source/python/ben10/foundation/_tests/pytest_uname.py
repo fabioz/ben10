@@ -47,38 +47,47 @@ class Test():
                 assert home_dir == '%(HOME)s' % os.environ
 
 
-    _SCRIPT = Dedent(r'''# coding: UTF-8
-        from ben10.foundation.uname import GetApplicationDir, GetUserHomeDir
-        import sys
+    _SCRIPT = Dedent(
+        '''
+            # coding: UTF-8
+            from ben10.foundation.uname import GetApplicationDir, GetUserHomeDir
+            import sys
 
-        option = sys.argv[1]
-        if option == 'app':
-            dir_name = GetApplicationDir()
+            option = sys.argv[1]
+            if option == 'app':
+                dir_name = GetApplicationDir()
 
-        elif option == 'home':
-            app_dir = GetApplicationDir()
+            elif option == 'home':
+                app_dir = GetApplicationDir()
 
-            import locale
-            import os
-            if sys.platform == 'win32':
-                drive, path = os.path.splitdrive(app_dir)
-                os.environ['HOMEDRIVE'] = drive.encode(locale.getpreferredencoding())
+                import locale
+                import os
+                if sys.platform == 'win32':
+                    drive, path = os.path.splitdrive(app_dir)
+                    os.environ['HOMEDRIVE'] = drive.encode(locale.getpreferredencoding())
 
-                os.environ['HOMEPATH'] = path.encode(locale.getpreferredencoding())
+                    os.environ['HOMEPATH'] = path.encode(locale.getpreferredencoding())
 
-            else:
-                os.environ['HOME'] = app_dir.encode(locale.getpreferredencoding())
+                else:
+                    os.environ['HOME'] = app_dir.encode(locale.getpreferredencoding())
 
-            dir_name = GetUserHomeDir()
+                dir_name = GetUserHomeDir()
 
-        print dir_name
-        ''')
+            print dir_name
+        '''
+    )
 
 
     def testGetUserHomeDirNonAscii(self, embed_data, unicode_samples, script_runner):
-        dir_name = embed_data.GetDataFilename(unicode_samples.UNICODE_PREFERRED_LOCALE)
+        dir_name = embed_data.GetDataFilename(
+            unicode_samples.UNICODE_PREFERRED_LOCALE,
+            absolute=True
+        )
         home_dir = script_runner.ExecuteScript(
-            os.path.join(dir_name, 'script.py_'), self._SCRIPT, 'home')
+            os.path.join(dir_name, 'script.py_'),
+            self._SCRIPT,
+            'home'
+        )
         assert CanonicalPath(home_dir) == CanonicalPath(dir_name)
 
 
@@ -100,7 +109,11 @@ class Test():
 
     def testGetApplicationDirNonAscii(self, embed_data, unicode_samples, script_runner):
         dir_name = embed_data.GetDataFilename(unicode_samples.LATIN_1)
-        obtained = script_runner.ExecuteScript(os.path.join(dir_name, 'script.py_'), self._SCRIPT, 'app')
+        obtained = script_runner.ExecuteScript(
+            os.path.join(dir_name, 'script.py_'),
+            self._SCRIPT,
+            'app'
+        )
         assert CanonicalPath(obtained) == CanonicalPath(dir_name)
 
 
