@@ -43,7 +43,14 @@ def global_settings_fixture():
 
     yield
 
-    if on_windows:
+    # If `reenable_error_dialogs` is False, this means that crashes happening after the pytest
+    # suite is run (e.g., on garbage collection) may go completely unnoticed.
+    #
+    # This is temporarily False until we guarantee that there are no crashes like this in our
+    # test suite.
+    reenable_error_dialogs = False
+
+    if on_windows and reenable_error_dialogs:
         ctypes.windll.kernel32.SetErrorMode(old_error_mode)
 
 
