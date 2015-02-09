@@ -3,14 +3,14 @@ junit_patterns:
 
 platform-windows:build_batch_commands:
 - |
-  %AA_AASIMAR_AA_CONFIG% --aasimar-ref=origin/master --dist-ref=origin/development --projects-dir=%WORKSPACE% --dist={dist} --platform={platform} --conf-dir=%WORKSPACE% --reset-env --load-env=git || goto :eof
+  %AA_AASIMAR_AA_CONFIG% --aasimar-ref=origin/master --dist-ref=origin/master --projects-dir=%WORKSPACE% --dist={dist} --platform={platform} --conf-dir=%WORKSPACE% --reset-env --load-env=git || goto :eof
   %AA_AASIMAR_AA% -t project.build ben10  || goto :eof
   %AA_AASIMAR_II% pak              ben10 --branch={branch}
 
 
 platform-linux:build_shell_commands:
 - |
-  $AA_AASIMAR_AA_CONFIG --aasimar-ref=origin/master --dist-ref=origin/development --projects-dir=$WORKSPACE --dist={dist} --platform={platform} --conf-dir=$WORKSPACE --reset-env --load-env=git
+  $AA_AASIMAR_AA_CONFIG --aasimar-ref=origin/master --dist-ref=origin/master --projects-dir=$WORKSPACE --dist={dist} --platform={platform} --conf-dir=$WORKSPACE --reset-env --load-env=git
   $AA_AASIMAR_AA -t project.build ben10
 
 
