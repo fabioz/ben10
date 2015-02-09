@@ -2,6 +2,7 @@
 
 [![Build Status](https://travis-ci.org/ESSS/ben10.png)](https://travis-ci.org/ESSS/ben10)
 [![Coverage Status](https://coveralls.io/repos/ESSS/ben10/badge.png)](https://coveralls.io/r/ESSS/ben10)
+[![Dependency Status](https://gemnasium.com/ESSS/ben10.svg)](https://gemnasium.com/ESSS/ben10)
 
 
 ## About
@@ -34,7 +35,7 @@ The contents of this library is composed by all code from coilib50 that is commo
         * **bunch.py**: A simpler object definition for python.
         * **callback.py**: Callback implementation.
         * **debug.py**: Debugging utitilities.
-        * **decorators.py**: A collection of decorators such as Overwrite. 
+        * **decorators.py**: A collection of decorators such as Overwrite.
         * **enum.py**: Enumerate implementation.
         * **fifo.py**: "First In First Out" stack implementation.
         * **handle_exception.py**: Handles an exception, printing the traceback without breaking the process.

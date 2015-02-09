@@ -560,15 +560,15 @@ class _ScriptRunner(object):
         :returns unicode:
             Script output.
         '''
-        from ben10.filesystem._filesystem import CreateFile
+        from ben10.execute import ExecutePython
+        from ben10.filesystem import CreateFile
+
         CreateFile(filename, contents)
 
-        from ben10.execute import DEFAULT_ENCODING, Execute2
-        output, _ = Execute2(
-            ['python', filename] + list(args),
-            extra_environ={'PYTHONIOENCODING' : DEFAULT_ENCODING}
-        )
-        return ''.join(output).strip()
+        output, _retcode = ExecutePython(filename, list(args))
+        # Questionable whether we should perform strip here. But this is what the current uses
+        # expect.
+        return output.strip()
 
 
 @pytest.fixture

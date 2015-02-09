@@ -1,7 +1,7 @@
 # coding: UTF-8
 from __future__ import unicode_literals
-from ben10.execute import (EnvironmentContextManager, Execute, ExecuteNoWait, GetSubprocessOutput,
-    PrintEnvironment)
+from ben10.execute import (DEFAULT_ENCODING, EnvironmentContextManager, Execute, ExecuteNoWait,
+    ExecutePython, GetSubprocessOutput, PrintEnvironment)
 from ben10.foundation.exceptions import ExceptionToUnicode
 from ben10.foundation.string import Dedent
 from txtout.txtout import TextOutput
@@ -243,8 +243,10 @@ class Test(object):
         assert 'testEnvironmentContextManager' not in os.environ
 
 
-    def testIfAPythonProgramReceivesUnicodeArgv(self, embed_data):
+    def _testIfAPythonProgramReceivesUnicodeArgv(self, embed_data):
         '''
+        TODO: BEN-67: Test failing wiht INTERNALERROR on linux.
+
         A spawned python process should be able to access the arguments as unicode.
         '''
         python_script = embed_data['unicode_argv_test.py']
@@ -261,3 +263,39 @@ class Test(object):
         assert len(output) == 1
         assert output == ['OK']
 
+
+    def testPythonExecute(self, embed_data):
+        obtained_output, retcode = ExecutePython(embed_data.GetDataFilename('testPythonExecute.py_'))
+        assert obtained_output == 'testPythonExecute: Hello, world!\n'
+
+
+    def testPythonExecuteAndEnviron(self, embed_data):
+
+        # Fill the expected output, which may vary depending on the environment variables available.
+        expected_output = [
+            'testPythonExecuteAndEnviron: ALPHA: alpha',
+            'testPythonExecuteAndEnviron: BRAVO: bravo',
+            'testPythonExecuteAndEnviron: PYTHONIOENCODING: %s' % DEFAULT_ENCODING,
+        ]
+
+        if 'TRAVIS_BUILD_DIR' in os.environ:
+            expected_output.append(
+                os.path.expandvars('testPythonExecuteAndEnviron: PYTHONPATH: $TRAVIS_BUILD_DIR/source/python')
+            )
+
+        if sys.platform != 'win32' and b'LD_LIBRARY_PATH' in os.environ:
+            expected_output.append(
+                'testPythonExecuteAndEnviron: LD_LIBRARY_PATH: %s' % os.environ[b'LD_LIBRARY_PATH']
+            )
+
+        expected_output = '\n'.join(sorted(expected_output)) + '\n'
+
+        obtained_output, retcode = ExecutePython(
+            embed_data.GetDataFilename('testPythonExecuteAndEnviron.py_'),
+            environ={
+                'ALPHA' : 'alpha',
+                'BRAVO' : 'bravo',
+            },
+        )
+
+        assert obtained_output == expected_output

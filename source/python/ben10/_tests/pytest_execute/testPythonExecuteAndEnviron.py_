@@ -1,0 +1,3 @@
+import os
+for i in sorted(os.environ.items()):
+    print "testPythonExecuteAndEnviron: %s: %s" % i
