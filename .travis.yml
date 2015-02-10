@@ -10,3 +10,5 @@ script:
     - coverage run --source=source setup.py test
 after_success:
     - coveralls
+notifications:
+    slack: esss:X8WNRDb8Ih8Wh3O7Rio513vO
