@@ -267,7 +267,7 @@ def testProperty():
 
 
 def testPropertiesStr():
-    from ben10.property_ import PropertiesStr
+    from ben10.property_ import Property
 
     class Alpha(object):
 
