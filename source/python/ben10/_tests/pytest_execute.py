@@ -243,10 +243,8 @@ class Test(object):
         assert 'testEnvironmentContextManager' not in os.environ
 
 
-    def _testIfAPythonProgramReceivesUnicodeArgv(self, embed_data):
+    def testIfAPythonProgramReceivesUnicodeArgv(self, embed_data):
         '''
-        TODO: BEN-67: Test failing wiht INTERNALERROR on linux.
-
         A spawned python process should be able to access the arguments as unicode.
         '''
         python_script = embed_data['unicode_argv_test.py']
@@ -254,13 +252,12 @@ class Test(object):
 
         output = Execute(
             [
-                'python.exe',
+                'python',
                 python_script,
                 input_file,
             ]
         )
 
-        assert len(output) == 1
         assert output == ['OK']
 
 
