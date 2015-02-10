@@ -16,21 +16,10 @@ class Property(object):
 
     def __init__(self, fget=None, fset=None, fdel=None, doc=None):
         '''
-        :type fget: function or NoneType
-        :param fget:
-            The get function
-
-        :type fset: function or NoneType
-        :param fset:
-            The set function
-
-        :type fdel: function or NoneType
-        :param fdel:
-            The del function
-
-        :type doc: str or NoneType
-        :param doc:
-            This is the docstring of the property
+        :param callable|None fget: The get function.
+        :param callable(obj)|None fset: The set function.
+        :param callable|None fdel: The del function.
+        :param unicode|None doc: This is the docstring of the property.
         '''
         if fget is None:
             self.fget_name = '' #Will give attribute error when accessed with getattr.
@@ -54,7 +43,17 @@ class Property(object):
         self.doc = doc or ''
 
 
+    @classmethod
     def FromNames(cls, fget_name, fset_name=None, fdel_name=None, doc=None):
+        '''
+        Create a Property instance from the methods names instead of using their references.
+
+        :param unicode fget_name: The name of the get method.
+        :param unicode fset_name: The name of the set method.
+        :param unicode fdel_name: The name of the del method.
+        :param unicode doc: Property documentation.
+        :return Property:
+        '''
         result = cls()
         result.fget_name = fget_name or ''
         result.fset_name = fset_name or ''
@@ -62,13 +61,12 @@ class Property(object):
         result.doc = doc or ''
         return result
 
-    FromNames = classmethod(FromNames)
-
 
     def __get__(self, obj, objtype=None):
         if obj is None:
             return self
         return getattr(obj, self.fget_name)()
+
 
     def __set__(self, obj, value):  # @DontTrace
         getattr(obj, self.fset_name)(value)

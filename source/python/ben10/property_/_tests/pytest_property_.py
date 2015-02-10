@@ -240,3 +240,51 @@ def test_MakeSetName():
         property_.MakeSetName('alpha_too')
         == 'SetAlphaToo'
     )
+
+
+def testProperty():
+    from ben10.property_ import Property
+
+    class Alpha(object):
+
+        def __init__(self):
+            self._value = 999
+
+        def GetValue(self):
+            return self._value
+
+        def SetValue(self, value):
+            self._value = value
+
+        def DelValue(self):
+            pass
+
+        value1 = Property(GetValue, SetValue, DelValue, 'The Value')
+        value2 = Property.FromNames('GetValue', 'SetValue', 'DelValue', 'The Value')
+
+    assert repr(Alpha.value1) == 'Property(fget=GetValue, fset=SetValue, fdel=DelValue, doc=u\'The Value\')'
+    assert repr(Alpha.value2) == 'Property(fget=GetValue, fset=SetValue, fdel=DelValue, doc=u\'The Value\')'
+
+
+def testPropertiesStr():
+    from ben10.property_ import PropertiesStr
+
+    class Alpha(object):
+
+        def __init__(self):
+            self._value = 999
+
+        def GetValue(self):
+            return self._value
+
+        def SetValue(self, value):
+            self._value = value
+
+        def DelValue(self):
+            pass
+
+        value1 = Property(GetValue, SetValue, DelValue, 'The Value')
+        value2 = Property.FromNames('GetValue', 'SetValue', 'DelValue', 'The Value')
+
+    assert repr(Alpha.value1) == 'Property(fget=GetValue, fset=SetValue, fdel=DelValue, doc=u\'The Value\')'
+    assert repr(Alpha.value2) == 'Property(fget=GetValue, fset=SetValue, fdel=DelValue, doc=u\'The Value\')'

@@ -47,7 +47,6 @@ def Copy(from_obj, to_obj):
 
 
 
-
 #===================================================================================================
 # DeepCopy
 #===================================================================================================
@@ -63,31 +62,3 @@ def DeepCopy(from_obj, to_obj):
             DeepCopy(from_value, to_value)
         else:
             setattr(to_obj, prop_name, from_value)
-
-
-
-#===================================================================================================
-# PropertiesStr
-#===================================================================================================
-def PropertiesStr(obj, props=None):
-    '''
-    Returns a string with the properties from an object.
-
-    :type props: (optional) can be used to specify which properties should be printed (useful
-    :param props:
-    if you don't want to print everything
-    '''
-    if props is None:
-        props = obj.__properties__
-
-    s = ''
-    props = copy.copy(props)
-    props.sort()
-
-    for prop_name in props:
-        s += prop_name
-        s += ' = '
-        s += str(getattr(obj, prop_name))
-        s += '\n'
-
-    return s
