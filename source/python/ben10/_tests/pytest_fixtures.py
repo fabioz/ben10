@@ -103,24 +103,6 @@ def testEmbedDataAssertEqualFiles(embed_data):
     )
 
 
-def testNotOnFrozen(monkeypatch, embed_data):
-    '''
-    We fail to create data directory IF we are inside a generated executable (IsFrozen).
-    '''
-    was_frozen = IsFrozen()
-    try:
-        SetIsFrozen(True)
-
-        with pytest.raises(RuntimeError) as exception:
-            embed_data.CreateDataDir()
-
-        assert \
-            '_EmbedDataFixture is not ready for execution inside an executable.' \
-            in unicode(exception)
-    finally:
-        SetIsFrozen(was_frozen)
-
-
 def testEmbedDataFixture(request):
     assert os.path.isdir('data_fixtures__testEmbedDataFixture') == False
 
