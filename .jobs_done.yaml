@@ -40,3 +40,5 @@ timeout: 5
 git:
   reference: "$AA_SYSTEM_REF_REPOS/{name}"
 
+slack_notifier: bos
+
