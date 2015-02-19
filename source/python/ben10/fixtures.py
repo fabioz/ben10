@@ -7,7 +7,6 @@ Collection of fixtures for pytests.
 '''
 from __future__ import unicode_literals
 from ben10.foundation import handle_exception
-import faulthandler
 import locale
 import os
 import pytest
@@ -19,39 +18,52 @@ import sys
 # global_settings_fixture
 #===================================================================================================
 @pytest.yield_fixture(autouse=True, scope='session')
-def global_settings_fixture():
+def global_settings_fixture(request):
     '''
     Auto-use fixture that configures global settings that should be set for all tests in our
     runs.
     '''
-    from ben10.foundation.is_frozen import SetIsDevelopment
-    import sys
+    from contextlib import contextmanager
 
-    on_windows = sys.platform.startswith('win')
+    @contextmanager
+    def NoDialogs():
+        '''
+        Makes the system hide the Windows Error Reporting dialog.
+        '''
+        if request.config.getoption('no_dialogs') and sys.platform.startswith('win'):
+            # http://msdn.microsoft.com/en-us/library/windows/desktop/ms680621%28v=vs.85%29.aspx
+            import ctypes
+            SEM_NOGPFAULTERRORBOX = 0x0002
+            old_error_mode = ctypes.windll.kernel32.SetErrorMode(SEM_NOGPFAULTERRORBOX)  # @UndefinedVariable
+            new_error_mode = old_error_mode | SEM_NOGPFAULTERRORBOX
+            ctypes.windll.kernel32.SetErrorMode(new_error_mode)  # @UndefinedVariable
 
-    if on_windows:
-        # Makes the system hide the Windows Error Reporting dialog.
-        # http://msdn.microsoft.com/en-us/library/windows/desktop/ms680621%28v=vs.85%29.aspx
-        import ctypes
-        SEM_NOGPFAULTERRORBOX = 0x0002
-        old_error_mode = ctypes.windll.kernel32.SetErrorMode(SEM_NOGPFAULTERRORBOX)
-        new_error_mode = old_error_mode | SEM_NOGPFAULTERRORBOX
-        ctypes.windll.kernel32.SetErrorMode(new_error_mode)
+            try:
+                yield
+            finally:
+                # If `reenable_error_dialogs` is False, this means that crashes happening after the
+                # pytest suite is run (e.g., on garbage collection) may go completely unnoticed.
+                #
+                # This is temporarily False until we guarantee that there are no crashes like this
+                # in # our test suite.
+                reenable_error_dialogs = False
+                if reenable_error_dialogs:
+                    ctypes.windll.kernel32.SetErrorMode(old_error_mode)  # @UndefinedVariable
+        else:
+            yield
 
-    # Enable development-only checks
-    SetIsDevelopment(True)
+    @contextmanager
+    def Development():
+        '''
+        Enable development-only checks
+        '''
+        from ben10.foundation.is_frozen import SetIsDevelopment
+        SetIsDevelopment(True)
+        yield
 
-    yield
+    with Development(), NoDialogs():
+        yield
 
-    # If `reenable_error_dialogs` is False, this means that crashes happening after the pytest
-    # suite is run (e.g., on garbage collection) may go completely unnoticed.
-    #
-    # This is temporarily False until we guarantee that there are no crashes like this in our
-    # test suite.
-    reenable_error_dialogs = False
-
-    if on_windows and reenable_error_dialogs:
-        ctypes.windll.kernel32.SetErrorMode(old_error_mode)
 
 
 #===================================================================================================
@@ -172,50 +184,22 @@ def handled_exceptions():
     show_handled_exceptions_error.RaiseFoundExceptions()
 
 
+
 #===================================================================================================
-# fault_handler_fixture
+# pytest_configure
 #===================================================================================================
-@pytest.yield_fixture(autouse=True)
-def fault_handler_fixture(request):
+def pytest_configure(config):
     '''
-    Auto-fixture that enables a fault handler in the current process, which will stream crash errors
-    to a file in the directory configured by the "--fault-handler-dir" command-line option.
-    The file is named using the full test node id, and because this file is only useful if a a test
-    actually crashes, it is removed during tear down if no crash occurred.
+    Enable faulthandler during pytest_configure (before sys.stderr is redirected)
     '''
-    # skip items that are not python test items (for example: doctest)
-    if not hasattr(request.node, 'module'):
-        yield
-        return
-
-    import re
-
-    basename = request.node.module.__name__
-
-    # make sure to include the class name (if any), otherwise we get a name clash
-    # if two classes in the same module have one or more duplicated test names
-    parent_cls = request.node.parent.cls
-    class_name = parent_cls.__name__ if parent_cls is not None else ''
-    if class_name:
-        basename += '.' + class_name
-
-    # request.node.name might contain any characters due to parametrize(), so escape those
-    node_name = re.sub(r'\W', '_', request.node.name)
-    basename += '.' + node_name + '.txt'
-
-    filename = os.path.join(request.config.getoption('fault_handler_dir'), basename)
-    request.node.fault_handler_stream = open(filename, 'w')
-    faulthandler.enable(request.node.fault_handler_stream)
-
-    yield
-
-    faulthandler.disable()
-    request.node.fault_handler_stream.close()
-    request.node.fault_handler_stream = None
     try:
-        os.remove(filename)
-    except (OSError, IOError):
+        import faulthandler
+    except ImportError:
         pass
+    else:
+        stderr_fd_copy = os.dup(sys.stderr.fileno())
+        stderr_copy = os.fdopen(stderr_fd_copy, 'w')
+        faulthandler.enable(stderr_copy)
 
 
 #===================================================================================================
@@ -223,29 +207,17 @@ def fault_handler_fixture(request):
 #===================================================================================================
 def pytest_addoption(parser):
     '''
-    Add an option to pytest to change the default directory where to write fault handler report
-    files. Specially useful in the CI server.
+    Add extra options to pytest.
 
     :param optparse.OptionParser parser:
     '''
     group = parser.getgroup("debugconfig")  # default pytest group for debugging/reporting
     group.addoption(
-        '--fault-handler-dir',
-        dest="fault_handler_dir",
-        default=os.getcwdu(),
-        metavar="dir",
-        help="directory where to save crash reports (must exist)")
-
-
-#===================================================================================================
-# pytest_report_header
-#===================================================================================================
-def pytest_report_header(config):
-    '''
-    pytest hook to add a line to the report header showing the directory where fault handler report
-    files will be generated.
-    '''
-    return ['fault handler directory: %s' % config.getoption('fault_handler_dir')]
+        '--no-dialogs',
+        action='store_true',
+        default=False,
+        help='Disable Windows Error dialog boxes during tests'
+    )
 
 
 #===================================================================================================
