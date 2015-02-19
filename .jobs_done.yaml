@@ -40,5 +40,9 @@ timeout: 5
 git:
   reference: "$AA_SYSTEM_REF_REPOS/{name}"
 
-slack_notifier: bos
+slack:
+    room: bos
+    token: fcpqo7zgjcTVFk5Gb6cy8u40
+    url: https://eden.esss.com.br/jenkins
+  
 
