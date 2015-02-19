@@ -156,6 +156,7 @@ class Test:
 
         stream = StringIO()
         oss.SetOutputStream(stream)
+        oss.flat_output = False
         oss.PROCESSING('...', 'Doing')
         oss.PROCESSING('Done')
         oss.PROCESSING('...', 'Multi\nline\ndoing')
