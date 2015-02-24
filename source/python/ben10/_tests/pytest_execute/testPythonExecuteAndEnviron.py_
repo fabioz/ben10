@@ -10,5 +10,5 @@ import os
 environ = os.environ.copy()
 environ.pop('__COMPAT_LAYER', None)
 
-for i in sorted(os.environ.items()):
+for i in sorted(environ.items()):
     print "testPythonExecuteAndEnviron: %s: %s" % i
