@@ -347,9 +347,9 @@ class Platform(object):
         '''
         RESULT = {
             self.REDHAT : {self.REDHAT, 'centos5'},
-            self.UBUNTU : {self.UBUNTU, 'new-linuxes'},
+            self.UBUNTU : {self.UBUNTU, 'ubuntu1404', 'new-linuxes'},
             self.DEBIAN : {self.DEBIAN, 'new-linuxes'},
-            self.CENTOS : {self.CENTOS, 'new-linuxes'},
+            self.CENTOS : {self.CENTOS, 'centos7', 'new-linuxes'},
         }
         try:
             return RESULT.get(self.name, set())
