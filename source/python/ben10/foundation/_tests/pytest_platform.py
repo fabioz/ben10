@@ -61,6 +61,10 @@ class Test(object):
 
     def testGetValidPlatforms(self):
         assert set(Platform.GetValidPlatforms()) == {
+            'centos32',
+            'centos32d',
+            'centos64',
+            'centos64d',
             'darwin32',
             'darwin32d',
             'darwin64',
@@ -149,9 +153,10 @@ class Test(object):
         assert Platform.GetAllFlags() == {
             'windows', 'linux', 'darwin',
             'win32', 'win32d', 'win64', 'win64d',
-            'redhat32', 'redhat32d', 'redhat64', 'redhat64d',
+            'centos64', 'centos32', 'centos32d', 'centos64d',
             'darwin32', 'darwin32d', 'darwin64', 'darwin64d',
             'debian64', 'debian32', 'debian64d', 'debian32d',
+            'redhat32', 'redhat32d', 'redhat64', 'redhat64d',
             'ubuntu64', 'ubuntu32', 'ubuntu32d', 'ubuntu64d',
         }
 
@@ -163,3 +168,6 @@ class Test(object):
 
         platform = Platform.Create('redhat64')
         assert platform.GetFlags() == {'linux', 'redhat64'}
+
+        platform = Platform.Create('centos64')
+        assert platform.GetFlags() == {'linux', 'centos64'}

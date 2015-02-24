@@ -273,11 +273,9 @@ class TextOutput(AbstractTextOutput):
         self._processing_count = 0
         self._processing_indent = 0
 
-        self.flat_output = False
 
 
     # Output Stream --------------------------------------------------------------------------------
-
     def SetOutputStream(self, stream, force_console=False, verbose=False):
         '''
         Set the output stream for the given one.
@@ -289,9 +287,13 @@ class TextOutput(AbstractTextOutput):
 
         self._oss = color_stream.ColorStream(stream, force_console=force_console, verbose=verbose)
 
+        if force_console or self._oss.IsConsole():
+            self.flat_output = False
+        else:
+            self.flat_output = True
+
 
     # Keywords -------------------------------------------------------------------------------------
-
     def SetKeyword(self, keyword, on=True):
         if on:
             self._current_keywords.add(keyword)
@@ -314,7 +316,6 @@ class TextOutput(AbstractTextOutput):
 
 
     # Indentation ----------------------------------------------------------------------------------
-
     def ResetIndentation(self, **kargs):
         '''
         Resets the indentation level.
@@ -370,7 +371,6 @@ class TextOutput(AbstractTextOutput):
 
 
     # Write ----------------------------------------------------------------------------------------
-
     def WriteCarriageReturn(self):
         '''
         Writes a carriage return, considering the "IsConsole" property. For non-console streams,
@@ -438,7 +438,6 @@ class TextOutput(AbstractTextOutput):
 
 
     # Handlers -------------------------------------------------------------------------------------
-
     def _HandleIndent(self, p_kargs):
         '''
         Handles the 'indent' and 'mark' keywords of the given 'kargs'. Returns the same result
