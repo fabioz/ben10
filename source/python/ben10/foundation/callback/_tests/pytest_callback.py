@@ -906,7 +906,7 @@ class Test(object):
 
             project_manager.on_save.Register(OnSave)
             project_manager.SlotSave()
-            assert self.filename, self.ext == ('foo.file', '.txt')
+            assert (self.filename, self.ext) == ('foo.file', '.txt')
         """
         magic_mock = mock.MagicMock()
         c = Callback()

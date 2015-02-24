@@ -235,7 +235,7 @@ class Callback(object):
             # object when an attribute is accessed, we will end up calling it incorrectly later on
             # because we check for that attribute (see _GetKey
             # and _GetInfo) to decide if "func" is either a function, method or general callable.
-            # Removing "im_func" from the mock will make Callback treat it as a general callable,
+            # Removing "im_self" from the mock will make Callback treat it as a general callable,
             # which is what we want during testing.
             del func.im_self
         if extra_args is not self._EXTRA_ARGS_CONSTANT:
