@@ -339,6 +339,24 @@ class Platform(object):
             raise UnknownPlatform(self.name)
 
 
+    def GetPlatformDistroFlags(self):
+        '''
+        Returns a set of (linux) distro flags.
+
+        :returns set(unicode):
+        '''
+        RESULT = {
+            self.REDHAT : {self.REDHAT, 'centos5'},
+            self.UBUNTU : {self.UBUNTU, 'new-linuxes'},
+            self.DEBIAN : {self.DEBIAN, 'new-linuxes'},
+            self.CENTOS : {self.CENTOS, 'new-linuxes'},
+        }
+        try:
+            return RESULT.get(self.name, set())
+        except KeyError:
+            raise UnknownPlatform(self.name)
+
+
     def __str__(self):
         '''
         String representation of the platform.
@@ -460,6 +478,7 @@ class Platform(object):
             self.GetBaseName(),  # Example: "win32" (for both win32d and win32)
             self.GetPlatformFlavour(),  # Example: "windows" (for all windows variations)
         }
+        result.update(self.GetPlatformDistroFlags())
         if self.debug:
             result.add('debug')
         return result
