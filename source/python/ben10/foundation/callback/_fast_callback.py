@@ -2,6 +2,7 @@ from __future__ import unicode_literals
 from _callback_wrapper import _CallbackWrapper
 from ben10.foundation.odict import odict
 from ben10.foundation.reraise import Reraise
+import mock
 import new
 import weakref
 
@@ -229,6 +230,14 @@ class Callback(object):
         :param list(object) extra_args:
             A list with the objects to be used
         '''
+        if isinstance(func, mock.MagicMock):
+            # Because mock objects always return an
+            # object when an attribute is accessed, we will end up calling it incorrectly later on
+            # because we check for that attribute (see _GetKey
+            # and _GetInfo) to decide if "func" is either a function, method or general callable.
+            # Removing "im_func" from the mock will make Callback treat it as a general callable,
+            # which is what we want during testing.
+            del func.im_self
         if extra_args is not self._EXTRA_ARGS_CONSTANT:
             extra_args = tuple(extra_args)
 

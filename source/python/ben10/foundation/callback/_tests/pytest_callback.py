@@ -880,3 +880,44 @@ class Test(object):
         def AfterSetIstodraw():
             pass
         w = After(s.SetIstodraw, AfterSetIstodraw)
+
+
+    def testCallbackWithMagicMock(self):
+        """
+        Check that we can register mock.MagicMock objects in callbacks.
+
+        This makes it easier to test that public callbacks are being called with correct arguments.
+
+        Usage (in testing, of course):
+
+            save_listener = mock.MagicMock()
+            project_manager.on_save.Register(save_listener)
+            project_manager.SlotSave()
+            assert save_listener.call_args == mock.call('foo.file', '.txt')
+
+        Instead of the more traditional:
+
+            def OnSave(filename, ext):
+                self.filename = filename
+                self.ext = ext
+
+            self.filename = None
+            self.ext = ext
+
+            project_manager.on_save.Register(OnSave)
+            project_manager.SlotSave()
+            assert self.filename, self.ext == ('foo.file', '.txt')
+        """
+        magic_mock = mock.MagicMock()
+        c = Callback()
+        c.Register(magic_mock)
+
+        c(10, name='X')
+        assert magic_mock.call_args_list == [mock.call(10, name='X')]
+
+        c(20, name='Y')
+        assert magic_mock.call_args_list == [mock.call(10, name='X'), mock.call(20, name='Y')]
+
+        c.Unregister(magic_mock)
+        c(30, name='Z')
+        assert len(magic_mock.call_args_list) == 2
