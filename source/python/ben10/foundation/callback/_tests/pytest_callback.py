@@ -1,7 +1,5 @@
 from __future__ import unicode_literals
-from ben10.foundation.callback import (After, Before, Callback, Callbacks,
-    FunctionNotRegisteredError, Remove, _CallbackWrapper)
-from ben10.foundation.string import Dedent
+from ben10.foundation.callback import After, Before, Callback, Callbacks, Remove, _CallbackWrapper
 from ben10.foundation.types_ import Null
 from ben10.foundation.weak_ref import WeakMethodRef
 import mock
@@ -651,6 +649,7 @@ class Test(object):
 
 
     def testHandleErrorOnCallback(self):
+        old_default_handle_errors = Callback.DEFAULT_HANDLE_ERRORS
         Callback.DEFAULT_HANDLE_ERRORS = False
         try:
 
@@ -690,7 +689,7 @@ class Test(object):
                 c()
             assert self.called == 1
         finally:
-            Callback.DEFAULT_HANDLE_ERRORS = True
+            Callback.DEFAULT_HANDLE_ERRORS = old_default_handle_errors
 
 
     def testAfterBeforeHandleError(self):
@@ -908,7 +907,12 @@ class Test(object):
             project_manager.SlotSave()
             assert (self.filename, self.ext) == ('foo.file', '.txt')
         """
-        magic_mock = mock.MagicMock()
+        c = Callback()
+
+        with pytest.raises(RuntimeError):
+            c.Register(mock.MagicMock())
+
+        magic_mock = mock.MagicMock(spec=lambda: None)
         c = Callback()
         c.Register(magic_mock)
 
