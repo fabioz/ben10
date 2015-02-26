@@ -137,6 +137,7 @@ class Git(Singleton):
         target_dir,
         update_if_already_exists=False,
         no_checkout=False,
+        branch='master',
         output_callback=None,
         ):
         '''
@@ -157,6 +158,10 @@ class Git(Singleton):
         :param bool no_checkout:
             "No checkout of HEAD is performed after the clone is complete."
 
+        :param unicode|None branch:
+            The optional branch name to checkout. Defaults explicitly to 'master'. Use None if you
+            want to checkout the remote default branch.
+
         :param output_callback:
             .. seealso:: self.Execute
         '''
@@ -169,7 +174,7 @@ class Git(Singleton):
             if ListFiles(target_dir):
                 if not update_if_already_exists:
                     raise TargetDirAlreadyExistsError(target_dir)
-                self.Checkout(target_dir, 'master')
+                self.Checkout(target_dir, branch)
                 self.Pull(target_dir, output_callback=output_callback)
 
             # If there's nothing there, just clone it
@@ -177,12 +182,18 @@ class Git(Singleton):
                 cmdline = ['clone']
                 if no_checkout:
                     cmdline += ['-n']
+                elif branch is not None:
+                    cmdline += ['-b', branch]
                 cmdline += [repository_url, target_dir]
                 self.Execute(
                     cmdline,
                     output_callback=output_callback,
                     clean_eol=False
                 )
+
+            # Clear cache since we could have changed ref/branch/dirty files.
+            self.ClearCache()
+
         except GitExecuteError, e:
             known_errors = [
                 ('ssh: Could not resolve', SSHServerCantBeFoundError),
