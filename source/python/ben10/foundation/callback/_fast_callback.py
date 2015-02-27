@@ -216,8 +216,6 @@ class Callback(object):
         return to_call
 
 
-    #Should be OK using a mutable object here as it'll only be accessed internally and
-    #should never have anything appended.
     _EXTRA_ARGS_CONSTANT = tuple()
 
 
