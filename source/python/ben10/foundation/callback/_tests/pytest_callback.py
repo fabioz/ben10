@@ -889,7 +889,7 @@ class Test(object):
 
         Usage (in testing, of course):
 
-            save_listener = mock.MagicMock()
+            save_listener = mock.MagicMock(spec=lambda: None)
             project_manager.on_save.Register(save_listener)
             project_manager.SlotSave()
             assert save_listener.call_args == mock.call('foo.file', '.txt')
