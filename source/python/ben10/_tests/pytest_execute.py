@@ -21,12 +21,8 @@ import time
 class Test(object):
 
     def _AssertExecute(self, expected_output, *args, **kwargs):
-
         if 'input' not in kwargs:
-            # Testing GetSubprocessOutput before Execute to try to pin-point a flaky error on
-            # testExecuteAndEnviron. I'm trying to reproduce the error and check if it only happens
-            # with Execute or if it also happens with GetSubprocessOutput and its usage of
-            # subprocess's "communicate" method.
+            # Also tests "GetSubprocessOutput" variation if there is no "input" in the test.
             obtained_output, obtained_retcode = GetSubprocessOutput(*args, **kwargs)
             assert obtained_retcode == 0
             self._AssertOutput(obtained_output.splitlines(), expected_output)

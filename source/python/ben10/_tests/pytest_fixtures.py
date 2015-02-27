@@ -120,17 +120,12 @@ def testEmbedDataFixture(request):
 
 _invalid_chars_for_paths = os.sep + os.pathsep
 
-@pytest.mark.parametrize('i', [0, 1, 'foo-' + _invalid_chars_for_paths])
-def testFaultHandler(i, request):
-    """
-    Make sure that faulthandler library is enabled during tests run.
 
-    .. note:: we use a parametrized test here to ensure we are taking parametrization in account
-        when we generate the file name for the fault handler log file, including using
-        a parameter that contains invalid characters for paths.
-    """
+def testFaultHandler():
+    '''
+    Make sure that faulthandler library is enabled during tests
+    '''
     assert faulthandler.is_enabled()
-    assert os.path.isfile(request.node.fault_handler_stream.name)
 
 
 def testHandledExceptions(handled_exceptions):

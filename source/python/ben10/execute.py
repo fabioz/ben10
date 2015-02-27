@@ -743,6 +743,7 @@ def _GetEnviron(environ=None, extra_environ=None):
                     environ[i_name] = env_value
 
     if extra_environ:
+        # Make sure we don't have any placeholder (COPY_FROM_ENVIRON) in the final dictionary.
         assert COPY_FROM_ENVIRONMENT not in extra_environ.values()
         environ.update(extra_environ)
 
@@ -804,7 +805,7 @@ def ExecutePython(
     if sys.platform != 'win32' and environ is not None:
         environ.setdefault('LD_LIBRARY_PATH', COPY_FROM_ENVIRONMENT)
 
-    # TODO: Find a better way to make it work on travis-ci. Today sub-scripts can't find ben10's imports.
+    # TODO: Find a better way to find ben10's python dir on travis-ci.
     if 'TRAVIS_BUILD_DIR' in os.environ:
         extra_environ['PYTHONPATH'] = os.path.expandvars(b'$TRAVIS_BUILD_DIR/source/python')
 

@@ -1,14 +1,15 @@
 language: python
 python:
-    - 2.7
+- 2.7
 install:
-    - sudo apt-get install -qq unrar
-    - pip install --use-wheel -r requirements.txt
-    - pip install --use-wheel coveralls
-    - sudo rm -rf /dev/shm && sudo ln -s /run/shm /dev/shm
+- sudo apt-get install -qq unrar
+- pip install --use-wheel -r requirements.txt
+- pip install --use-wheel coveralls
+- sudo rm -rf /dev/shm && sudo ln -s /run/shm /dev/shm
 script:
-    - coverage run --source=source setup.py test
+- coverage run --source=source setup.py test
 after_success:
-    - coveralls
+- coveralls
 notifications:
-    slack: esss:X8WNRDb8Ih8Wh3O7Rio513vO
+  slack:
+    secure: J16JHZ51SAAqNAJZYVkislScicGew2zqVdjnjfktFO4LAQ/Y3jHja4FdXEhcNkfcJY5PwZCd5cmsUGPh6D8FvWCG5mHPyN99El9SAUKPH4Gz/4GrZuhTessQy3ZHs3fVO9v9UGG2nNkkQ1Iz/VwuVcZhYKyhdL4roN8agRi9siM=

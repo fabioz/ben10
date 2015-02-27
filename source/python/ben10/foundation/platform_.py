@@ -63,12 +63,13 @@ class Platform(object):
     UBUNTU = 'ubuntu'
     DARWIN = 'darwin'
     DEBIAN = 'debian'
+    CENTOS = 'centos'
 
     FLAVOUR_WINDOWS = 'windows'
     FLAVOUR_LINUX = 'linux'
     FLAVOUR_DARWIN = 'darwin'
 
-    _VALID_NAMES = [WIN, REDHAT, DEBIAN, UBUNTU, DARWIN]
+    _VALID_NAMES = [WIN, REDHAT, DEBIAN, UBUNTU, DARWIN, CENTOS]
     _VALID_BITS = ['32', '64']
     _VALID_DEBUG = [True, False]
 
@@ -157,6 +158,7 @@ class Platform(object):
             'win64d' : (cls.WIN, '64', True),
             'redhat64' : (cls.REDHAT, '64', False),
             'fedora64' : (cls.REDHAT, '64', False),
+            'centos64' : (cls.CENTOS, '64', False),
             'ubuntu64' : (cls.UBUNTU, '64', False),
             'debian64' : (cls.DEBIAN, '64', False),
             'darwin32' : (cls.DARWIN, '32', False),
@@ -328,6 +330,7 @@ class Platform(object):
             self.REDHAT : self.FLAVOUR_LINUX,
             self.UBUNTU : self.FLAVOUR_LINUX,
             self.DEBIAN : self.FLAVOUR_LINUX,
+            self.CENTOS : self.FLAVOUR_LINUX,
             self.DARWIN : self.FLAVOUR_DARWIN,
         }
         try:
@@ -384,6 +387,7 @@ class Platform(object):
             'win64' : 'amd64.win32',
             'win64d' : 'amd64.win32',
             'redhat64' : 'amd64.redhat',
+            'centos64' : 'amd64.centos',
             'ubuntu64' : 'amd64.ubuntu',
             'debian64' : 'amd64.debian',
             'darwin32' : 'i686.darwin',
@@ -419,6 +423,7 @@ class Platform(object):
             'win64' : 'Windows 64-bit',
             'win64d' : 'Windows 64-bit DEBUG',
             'redhat64' : 'RedHat Linux 64-bit',
+            'centos64' : 'CentOS Linux 64-bit',
             'ubuntu64' : 'Ubuntu Linux 64-bit',
             'debian64' : 'Debian Linux 64-bit',
             'darwin32' : 'Darwin 32-bit',

@@ -240,7 +240,7 @@ class ColorStream(object):
             stream = self._stream.stream
         else:
             stream = self._stream
-        return stream in [sys.__stdout__, sys.__stderr__]
+        return stream in [sys.__stdout__, sys.__stderr__] and stream.isatty()
 
 
     def write(self, p_contents):
