@@ -1,5 +1,6 @@
 from __future__ import unicode_literals
 from _callback_wrapper import _CallbackWrapper
+from ben10.foundation.is_frozen import IsDevelopment
 from ben10.foundation.odict import odict
 from ben10.foundation.reraise import Reraise
 import inspect
@@ -230,7 +231,7 @@ class Callback(object):
         :param list(object) extra_args:
             A list with the objects to be used
         '''
-        if hasattr(func, 'im_class'):
+        if IsDevelopment() and hasattr(func, 'im_class'):
             if not inspect.isclass(func.im_class):
                 msg = '%r object has inconsistent internal attributes and is not compatible with ' \
                     'Callback.\nim_class = %r\n(If using a MagicMock, remember to pass spec=lambda:None).'
