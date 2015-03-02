@@ -1,7 +1,5 @@
 from __future__ import unicode_literals
-from ben10.foundation.callback import (After, Before, Callback, Callbacks,
-    FunctionNotRegisteredError, Remove, _CallbackWrapper)
-from ben10.foundation.string import Dedent
+from ben10.foundation.callback import After, Before, Callback, Callbacks, Remove, _CallbackWrapper
 from ben10.foundation.types_ import Null
 from ben10.foundation.weak_ref import WeakMethodRef
 import mock
@@ -651,6 +649,7 @@ class Test(object):
 
 
     def testHandleErrorOnCallback(self):
+        old_default_handle_errors = Callback.DEFAULT_HANDLE_ERRORS
         Callback.DEFAULT_HANDLE_ERRORS = False
         try:
 
@@ -678,7 +677,7 @@ class Test(object):
                 assert self.called == 4
             assert mocked.call_count == 2
             mocked.assert_called_with(
-                '''Error while trying to call \n  File "%s", line 662, in After2 (Called from Callback)\nArgs: (1,)\nKwargs: {\'a\': 2}\n''' % __file__
+                '''Error while trying to call \n  File "%s", line 661, in After2 (Called from Callback)\nArgs: (1,)\nKwargs: {\'a\': 2}\n''' % __file__
             )
 
             # test the default behaviour: errors are not handled and stop execution as usual
@@ -690,7 +689,7 @@ class Test(object):
                 c()
             assert self.called == 1
         finally:
-            Callback.DEFAULT_HANDLE_ERRORS = True
+            Callback.DEFAULT_HANDLE_ERRORS = old_default_handle_errors
 
 
     def testAfterBeforeHandleError(self):
@@ -880,3 +879,49 @@ class Test(object):
         def AfterSetIstodraw():
             pass
         w = After(s.SetIstodraw, AfterSetIstodraw)
+
+
+    def testCallbackWithMagicMock(self):
+        """
+        Check that we can register mock.MagicMock objects in callbacks.
+
+        This makes it easier to test that public callbacks are being called with correct arguments.
+
+        Usage (in testing, of course):
+
+            save_listener = mock.MagicMock(spec=lambda: None)
+            project_manager.on_save.Register(save_listener)
+            project_manager.SlotSave()
+            assert save_listener.call_args == mock.call('foo.file', '.txt')
+
+        Instead of the more traditional:
+
+            def OnSave(filename, ext):
+                self.filename = filename
+                self.ext = ext
+
+            self.filename = None
+            self.ext = ext
+
+            project_manager.on_save.Register(OnSave)
+            project_manager.SlotSave()
+            assert (self.filename, self.ext) == ('foo.file', '.txt')
+        """
+        c = Callback()
+
+        with pytest.raises(RuntimeError):
+            c.Register(mock.MagicMock())
+
+        magic_mock = mock.MagicMock(spec=lambda: None)
+        c = Callback()
+        c.Register(magic_mock)
+
+        c(10, name='X')
+        assert magic_mock.call_args_list == [mock.call(10, name='X')]
+
+        c(20, name='Y')
+        assert magic_mock.call_args_list == [mock.call(10, name='X'), mock.call(20, name='Y')]
+
+        c.Unregister(magic_mock)
+        c(30, name='Z')
+        assert len(magic_mock.call_args_list) == 2
