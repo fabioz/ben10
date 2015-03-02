@@ -1,6 +1,6 @@
 from __future__ import unicode_literals
 from ben10.filesystem import CreateFile, StandardizePath
-from ben10.fixtures import MultipleFilesNotFound, _EmbedDataFixture
+from ben10.fixtures import InstallFaultHandler, MultipleFilesNotFound, _EmbedDataFixture
 from ben10.foundation import handle_exception
 from ben10.foundation.handle_exception import IgnoringHandleException
 from ben10.foundation.is_frozen import IsFrozen, SetIsFrozen
@@ -121,11 +121,32 @@ def testEmbedDataFixture(request):
 _invalid_chars_for_paths = os.sep + os.pathsep
 
 
-def testFaultHandler():
+def testFaultHandler(pytestconfig):
     '''
     Make sure that faulthandler library is enabled during tests
     '''
     assert faulthandler.is_enabled()
+    assert pytestconfig.fault_handler_file is None
+
+
+def testFaultHandlerWithoutStderr(monkeypatch, embed_data):
+    """
+    Test we are enabling fault handler in a file based on sys.executable in case sys.stderr does not
+    point to a valid file. This happens in frozen applications without a console.
+    """
+    import sys
+
+    class Dummy(object):
+        pass
+
+    monkeypatch.setattr(sys, 'stderr', Dummy())
+    monkeypatch.setattr(sys, 'executable', embed_data['myapp'])
+    config = Dummy()
+    InstallFaultHandler(config)
+    assert config.fault_handler_file is not None
+    assert config.fault_handler_file.name == embed_data['myapp'] + ('.faulthandler-%s.txt' % os.getpid())
+    assert os.path.isfile(config.fault_handler_file.name)
+    config.fault_handler_file.close()
 
 
 def testHandledExceptions(handled_exceptions):
