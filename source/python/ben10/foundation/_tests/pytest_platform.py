@@ -167,7 +167,13 @@ class Test(object):
         assert platform.GetFlags() == {'windows', 'win32', 'win32d', 'debug'}
 
         platform = Platform.Create('redhat64')
-        assert platform.GetFlags() == {'linux', 'redhat64'}
+        assert platform.GetFlags() == {'linux', 'redhat64', 'redhat', 'centos5'}
 
         platform = Platform.Create('centos64')
-        assert platform.GetFlags() == {'linux', 'centos64'}
+        assert platform.GetFlags() == {'linux', 'centos64', 'centos7', 'centos', 'new-linuxes'}
+
+        platform = Platform.Create('ubuntu64')
+        assert platform.GetFlags() == {'linux', 'ubuntu64', 'ubuntu1404', 'ubuntu', 'new-linuxes'}
+
+        platform = Platform.Create('debian64')
+        assert platform.GetFlags() == {'linux', 'debian64', 'debian', 'new-linuxes'}
