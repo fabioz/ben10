@@ -112,6 +112,16 @@ class Git(Singleton):
     # call shortcut
     __call__ = Execute
 
+
+    @property
+    def version(self):
+        '''
+        :return unicode:
+            Current git version
+        '''
+        return self.Execute('--version', flat_output=True).split('git version ')[1]
+
+
     def Exists(self, repository_url):
         '''
         Checks if a remote Git repository exists

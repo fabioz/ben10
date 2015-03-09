@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 from ben10.filesystem import CreateFile, GetFileContents
 from ben10.foundation.string import Dedent
 from terraformer.tf_script import app
+import pytest
 
 
 
@@ -33,6 +34,7 @@ def testDocs():
     )
 
 
+@pytest.mark.xfail(reason='EDEN-1067')
 def testSymbols(embed_data):
     '''
     Test tf symbols command.
@@ -65,6 +67,7 @@ def testSymbols(embed_data):
     )
 
 
+@pytest.mark.xfail(reason='EDEN-1067')
 def testFixFormat(embed_data):
     '''
     General test for tbe "tf fix-format" command.
@@ -117,6 +120,7 @@ def testFixFormat(embed_data):
     )
 
 
+@pytest.mark.xfail(reason='EDEN-1067')
 def testAddImportSymbol(embed_data):
     '''
     General test for the "tf add-import-symbol" command.
