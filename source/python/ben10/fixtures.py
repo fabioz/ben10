@@ -188,39 +188,18 @@ def handled_exceptions():
 #===================================================================================================
 # pytest_configure
 #===================================================================================================
-def pytest_configure(config):
+def pytest_configure():
     '''
-    Enable faulthandler during pytest_configure (before sys.stderr is redirected)
+    Enable fault handler directly into sys.stderr.
     '''
-    InstallFaultHandler(config)
-
-
-def InstallFaultHandler(config):
-    """
-    Install fault handler. If we have a real sys.stderr, we install directly in there. Otherwise
-    (frozen executable without console for example) we write into a file next to the executable,
-    which is usually a frozen executable.
-
-    .. note:: this is a separate function because we want to test it explicitly.
-
-    :param config: pytest config object
-    """
     try:
         import faulthandler
     except ImportError:
         pass
     else:
-        if hasattr(sys.stderr, 'fileno'):
-            stderr_fd_copy = os.dup(sys.stderr.fileno())
-            stderr_copy = os.fdopen(stderr_fd_copy, 'w')
-            faulthandler.enable(stderr_copy)
-            config.fault_handler_file = None
-        else:
-            # in frozen executables it might be that sys.stderr is actually a wrapper and not a
-            # real object, then write the fault handler to a file
-            filename = os.path.splitext(sys.executable)[0] + ('.faulthandler-%d.txt' % os.getpid())
-            config.fault_handler_file = file(filename, 'w')
-            faulthandler.enable(config.fault_handler_file)
+        stderr_fd_copy = os.dup(sys.stderr.fileno())
+        stderr_copy = os.fdopen(stderr_fd_copy, 'w')
+        faulthandler.enable(stderr_copy)
 
 
 #===================================================================================================
