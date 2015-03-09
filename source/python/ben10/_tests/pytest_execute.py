@@ -262,7 +262,6 @@ class Test(object):
         assert obtained_output == 'testPythonExecute: Hello, world!\n'
 
 
-    @pytest.mark.xfail(reason='Failing randomly on CI')
     def testPythonExecuteAndEnviron(self, embed_data):
 
         # Fill the expected output, which may vary depending on the environment variables available.
