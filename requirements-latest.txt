@@ -1,6 +1,11 @@
 colorama
+cov_core
+coverage
+faulthandler
 ftputil
+mock
 path.py
+py
 pyftpdlib
 pytest
 pytest-cov
@@ -8,5 +13,5 @@ pytest-localserver
 pytest-timeout
 pytest-xdist
 rarfile
+ruamel.ordereddict
 wheel
-pywin32
