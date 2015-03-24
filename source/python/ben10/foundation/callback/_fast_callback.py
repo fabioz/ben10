@@ -1,7 +1,9 @@
 from __future__ import unicode_literals
 from _callback_wrapper import _CallbackWrapper
+from ben10.foundation.is_frozen import IsDevelopment
 from ben10.foundation.odict import odict
 from ben10.foundation.reraise import Reraise
+import inspect
 import new
 import weakref
 
@@ -214,8 +216,6 @@ class Callback(object):
         return to_call
 
 
-    #Should be OK using a mutable object here as it'll only be accessed internally and
-    #should never have anything appended.
     _EXTRA_ARGS_CONSTANT = tuple()
 
 
@@ -229,6 +229,11 @@ class Callback(object):
         :param list(object) extra_args:
             A list with the objects to be used
         '''
+        if IsDevelopment() and hasattr(func, 'im_class'):
+            if not inspect.isclass(func.im_class):
+                msg = '%r object has inconsistent internal attributes and is not compatible with ' \
+                    'Callback.\nim_class = %r\n(If using a MagicMock, remember to pass spec=lambda:None).'
+                raise RuntimeError(msg % (func, func.im_class))
         if extra_args is not self._EXTRA_ARGS_CONSTANT:
             extra_args = tuple(extra_args)
 

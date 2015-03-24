@@ -1,5 +1,6 @@
 from __future__ import unicode_literals
-from ben10.filesystem import CanonicalPath, CreateDirectory, CreateFile, DeleteFile, GetFileContents
+from ben10.filesystem import CanonicalPath, CreateDirectory, CreateFile, DeleteFile, GetFileContents, \
+    DeleteDirectory
 from gitit.git import (BranchAlreadyExistsError, DirtyRepositoryError, Git, GitExecuteError,
     GitRefDoesNotExistError, NotCurrentlyInAnyBranchError, RepositoryAccessError,
     SSHServerCantBeFoundError, TargetDirAlreadyExistsError)
@@ -188,6 +189,28 @@ class Test(object):
             with pytest.raises(RepositoryAccessError):
                 url = 'https://eden.esss.com.br/INEXISTENT'
                 git.Clone(url, 'any_dir')
+
+
+    def testCloneBranch(self, embed_data, git):
+        '''
+        Tests the branch selection for Clone method.
+
+        REMARKS: Clone method must remember to clear all methods' cache.
+        '''
+        complex_dir = embed_data['complex']
+
+        # By default, checkout the branch configured in the server, usually "master"
+        git.Clone(embed_data['complex.git'], complex_dir)
+        assert git.GetCurrentBranch(complex_dir) == 'master'
+        DeleteDirectory(complex_dir)
+
+        # Clone again, from scratch, in a specific branch.
+        git.Clone(embed_data['complex.git'], complex_dir, branch='branch_1')
+        assert git.GetCurrentBranch(complex_dir) == 'branch_1'
+
+        # Now no clone is done, but the branch is propertly switched.
+        git.Clone(embed_data['complex.git'], complex_dir, update_if_already_exists=True, branch='master')
+        assert git.GetCurrentBranch(complex_dir) == 'master'
 
 
     def testGetCommitRepr(self, git):
