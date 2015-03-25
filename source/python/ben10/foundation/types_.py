@@ -442,7 +442,7 @@ def IterFlattenedDictValues(dictionary):
 
     If the outer dictionary contains an inner dictionary the inner dictionary values are also flattened.
 
-    Other containers will be flattened too, not only the dicts.
+    Other inner values that are containers will be flattened too, not only the dicts.
 
     :param collections.Mapping dictionary:
     :return: sequence(object)
