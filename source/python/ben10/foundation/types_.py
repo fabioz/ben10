@@ -2,6 +2,7 @@ from __future__ import unicode_literals
 from ben10.foundation.is_frozen import IsDevelopment
 from ben10.foundation.klass import IsInstance
 from ben10.foundation.weak_ref import WeakList
+import collections
 '''
 Extensions to python native types.
 '''
@@ -443,14 +444,14 @@ def IterFlattenedDictValues(dictionary):
 
     Other containers will be flattened too, not only the dicts.
 
-    :param dict dictionary:
+    :param collections.Mapping dictionary:
     :return: sequence(object)
     '''
-    if not isinstance(dictionary, dict):
+    if not isinstance(dictionary, collections.Mapping):
         raise ValueError('Parameter "dictionary" must be a dict')
-    values = IterFlattened(dictionary.itervalues(), skip_types=[dict])
+    values = IterFlattened(dictionary.itervalues(), skip_types=[collections.Mapping])
     for v in values:
-        if isinstance(v, dict):
+        if isinstance(v, collections.Mapping):
             for v2 in IterFlattenedDictValues(v):
                 yield v2
         else:
