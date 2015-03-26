@@ -172,7 +172,7 @@ class EnumMetaclass(type):
                 intval = attributes[attr]
                 if not isinstance(intval, (int, long)):
                     raise TypeError('Enum value is not an integer: %s=%r' % (attr, intval))
-                Enumvalue = Enumvalue_class(cls, intval, attr)
+                Enumvalue = Enumvalue_class(cls, intval, unicode(attr))
                 if intval in enums:
                     raise TypeError('Multiple enum values: %s' % intval)
                 # Store as an attribute on the class, and save the attr name

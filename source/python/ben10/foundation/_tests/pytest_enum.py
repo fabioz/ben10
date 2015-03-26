@@ -57,6 +57,7 @@ class Test:
         assert int(ducks.dewey) == 10
         assert int(ducks.louie) == 11
 
+        assert type(ducks(9).name) == unicode
         assert ducks(9).name == 'huey'
         assert ducks(10).name == 'dewey'
         assert ducks(11).name == 'louie'
@@ -87,6 +88,7 @@ class Test:
         assert repr(Colors.red) == '<Colors.red [0]>'
         assert repr(Colors.green) == '<Colors.green [1]>'
 
+        assert type(Colors.red.name) == unicode
         assert Colors.red.name == 'red'
         assert Colors.green.name == 'green'
 
