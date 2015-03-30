@@ -3,7 +3,6 @@ from ben10.filesystem import CreateFile, StandardizePath
 from ben10.fixtures import InstallFaultHandler, MultipleFilesNotFound, _EmbedDataFixture
 from ben10.foundation import handle_exception
 from ben10.foundation.handle_exception import IgnoringHandleException
-from ben10.foundation.is_frozen import IsFrozen, SetIsFrozen
 from ben10.foundation.string import Dedent
 import faulthandler
 import os
@@ -101,24 +100,6 @@ def testEmbedDataAssertEqualFiles(embed_data):
         == 'Files not found: '
         'missing.txt,data_fixtures__testEmbedDataAssertEqualFiles/missing.txt'
     )
-
-
-def testNotOnFrozen(monkeypatch, embed_data):
-    '''
-    We fail to create data directory IF we are inside a generated executable (IsFrozen).
-    '''
-    was_frozen = IsFrozen()
-    try:
-        SetIsFrozen(True)
-
-        with pytest.raises(RuntimeError) as exception:
-            embed_data.CreateDataDir()
-
-        assert \
-            '_EmbedDataFixture is not ready for execution inside an executable.' \
-            in unicode(exception)
-    finally:
-        SetIsFrozen(was_frozen)
 
 
 def testEmbedDataFixture(request):

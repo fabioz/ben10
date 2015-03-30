@@ -346,13 +346,15 @@ class Platform(object):
         :returns set(unicode):
         '''
         RESULT = {
+            self.WIN : set(),
+            self.DARWIN : set(),
             self.REDHAT : {self.REDHAT, 'centos5'},
             self.UBUNTU : {self.UBUNTU, 'ubuntu1404', 'new-linuxes'},
             self.DEBIAN : {self.DEBIAN, 'new-linuxes'},
             self.CENTOS : {self.CENTOS, 'centos7', 'new-linuxes'},
         }
         try:
-            return RESULT.get(self.name, set())
+            return RESULT[self.name]
         except KeyError:
             raise UnknownPlatform(self.name)
 

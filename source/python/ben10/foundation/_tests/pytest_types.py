@@ -3,8 +3,8 @@ from ben10.filesystem import CreateFile, GetFileContents
 from ben10.foundation.is_frozen import IsDevelopment, SetIsDevelopment
 from ben10.foundation.types_ import (AsList, Boolean, CheckBasicType, CheckEnum, CheckFormatString,
     CheckIsNumber, CheckType, CreateDevelopmentCheckType, Flatten, Intersection, IsBasicType,
-    IsNumber, MergeDictsRecursively, Null, OrderedIntersection, StringDictIO, _GetKnownNumberTypes,
-    StructMap)
+    IsNumber, MergeDictsRecursively, Null, OrderedIntersection, StringDictIO, StructMap,
+    _GetKnownNumberTypes)
 import copy
 import pytest
 
