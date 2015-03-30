@@ -6,7 +6,6 @@ import pytest
 
 
 
-@pytest.mark.xfail(reason='EDEN-1067')
 def testImportBlockZero(monkeypatch, embed_data):
 
     def TestIt(input, symbols, expected, import_blocks):
@@ -219,7 +218,6 @@ def testImportBlockZero(monkeypatch, embed_data):
     )
 
 
-@pytest.mark.xfail(reason='EDEN-1067')
 def testTerraFormer(monkeypatch, embed_data):
 
     terra_former = TerraFormer(
@@ -337,7 +335,6 @@ def testTerraFormer(monkeypatch, embed_data):
     )
 
 
-@pytest.mark.xfail(reason='EDEN-1067')
 def testReorganizeImports(embed_data, line_tester):
     from ben10.filesystem import GetFileContents
 
@@ -361,21 +358,18 @@ def testReorganizeImports(embed_data, line_tester):
     )
 
 
-@pytest.mark.xfail(reason='EDEN-1067')
 def testQuotedBlock():
     assert TerraFormer._QuotedBlock(
         'alpha\nbravo\ncharlie\n'
     ) == '> alpha\n> bravo\n> charlie\n'
 
 
-@pytest.mark.xfail(reason='EDEN-1067')
 def testParse():
     from lib2to3.pgen2.parse import ParseError
     with pytest.raises(ParseError):
         TerraFormer._Parse('class Class:\n')
 
 
-@pytest.mark.xfail(reason='EDEN-1067')
 def testLocalImports(monkeypatch, embed_data):
     from terraformer._symbol import ImportBlock
 
@@ -407,7 +401,6 @@ def testLocalImports(monkeypatch, embed_data):
             TestIt('quilo')
 
 
-@pytest.mark.xfail(reason='EDEN-1067')
 def testRename(embed_data, line_tester):
     from ben10.filesystem import GetFileContents
 
@@ -436,7 +429,6 @@ def testRename(embed_data, line_tester):
     )
 
 
-@pytest.mark.xfail(reason='EDEN-1067')
 def testSymbolVisitor():
 
     def PrintScopes(scopes):

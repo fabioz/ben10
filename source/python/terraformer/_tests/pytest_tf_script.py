@@ -34,7 +34,6 @@ def testDocs():
     )
 
 
-@pytest.mark.xfail(reason='EDEN-1067')
 def testSymbols(embed_data):
     '''
     Test tf symbols command.
@@ -67,7 +66,6 @@ def testSymbols(embed_data):
     )
 
 
-@pytest.mark.xfail(reason='EDEN-1067')
 def testFixFormat(embed_data):
     '''
     General test for tbe "tf fix-format" command.
@@ -120,7 +118,6 @@ def testFixFormat(embed_data):
     )
 
 
-@pytest.mark.xfail(reason='EDEN-1067')
 def testAddImportSymbol(embed_data):
     '''
     General test for the "tf add-import-symbol" command.
