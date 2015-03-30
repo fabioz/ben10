@@ -188,7 +188,7 @@ def handled_exceptions():
 #===================================================================================================
 # pytest_configure
 #===================================================================================================
-def pytest_configure():
+def pytest_configure(config):
     '''
     Enable fault handler directly into sys.stderr.
     '''
