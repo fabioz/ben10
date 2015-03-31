@@ -784,8 +784,8 @@ def ExecutePython(
     :param bool debug:
         If True uses the debug version of Python.
 
-    .. seealso:: ben10.execute.Execute
-        For param and return doc
+    :return tuple(unicode|str, int):
+        Returns the sub-process output (merging stdout and stderr) and the return code.
     '''
     import sys
 
