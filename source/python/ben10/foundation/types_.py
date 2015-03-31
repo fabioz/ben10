@@ -2,6 +2,7 @@ from __future__ import unicode_literals
 from ben10.foundation.is_frozen import IsDevelopment
 from ben10.foundation.klass import IsInstance
 from ben10.foundation.weak_ref import WeakList
+import collections
 '''
 Extensions to python native types.
 '''
@@ -431,6 +432,42 @@ def IterFlattened(iterable, skip_types=None):
             for x in IterFlattened(element_iter, skip_types):
                 yield x
 
+
+#===================================================================================================
+# IterFlattenedDictValues
+#===================================================================================================
+def IterFlattenedDictValues(dictionary):
+    '''
+    Flattens a dictionary values() recursively.
+
+    If the outer dictionary contains an inner dictionary the inner dictionary values are also flattened.
+
+    Other inner values that are containers will be flattened too, not only the dicts.
+
+    :param collections.Mapping dictionary:
+    :return: sequence(object)
+    '''
+    if not isinstance(dictionary, collections.Mapping):
+        raise ValueError('Parameter "dictionary" must be a dict')
+    values = IterFlattened(dictionary.itervalues(), skip_types=[collections.Mapping])
+    for v in values:
+        if isinstance(v, collections.Mapping):
+            for v2 in IterFlattenedDictValues(v):
+                yield v2
+        else:
+            yield v
+
+
+#===================================================================================================
+# FlattenDictValues
+#===================================================================================================
+def FlattenDictValues(dictionary):
+    '''
+    :param dict dictionary:
+    :return: list(object)
+    :see: IterFlattenedDictValues
+    '''
+    return list(IterFlattenedDictValues(dictionary))
 
 
 #===================================================================================================
