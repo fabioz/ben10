@@ -1,5 +1,8 @@
 from __future__ import unicode_literals
 import io
+
+
+
 #===================================================================================================
 # DumpDirHashToStringIO
 #===================================================================================================
@@ -23,23 +26,25 @@ def DumpDirHashToStringIO(directory, stringio, base='', exclude=None, include=No
     :param unicode include:
         Pattern to match files to include in the hashing. E.g.: *.zip
     '''
-    from path import path
+    import os
     import fnmatch
-    p = path(directory)
-    for f in p.files():
+
+    files = [(os.path.join(directory, i), i) for i in os.listdir(directory)]
+    files = [i for i in files if os.path.isfile(i[0])]
+    for fullname, filename in files:
         if include is not None:
-            if not fnmatch.fnmatch(f, include):
+            if not fnmatch.fnmatch(fullname, include):
                 continue
 
         if exclude is not None:
-            if fnmatch.fnmatch(f, exclude):
+            if fnmatch.fnmatch(fullname, exclude):
                 continue
 
-        md5 = Md5Hex(f)
+        md5 = Md5Hex(fullname)
         if base:
-            stringio.write('%s/%s=%s\n' % (base, f.name, md5))
+            stringio.write('%s/%s=%s\n' % (base, filename, md5))
         else:
-            stringio.write('%s=%s\n' % (f.name, md5))
+            stringio.write('%s=%s\n' % (filename, md5))
 
 
 

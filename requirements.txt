@@ -3,7 +3,6 @@ cov_core==1.15
 coverage==3.7.1
 faulthandler
 ftputil==3.0
-path.py==7.0
 py==1.4.26
 pyftpdlib==1.4.0
 pytest-cov==1.8.1
