@@ -274,7 +274,7 @@ def FixStringio(console_, *sources):
 
     :param sources: List of directories or files to process.
     '''
-    from terraformer import TerraFormer, FileTooBigError
+    from terraformer import FileTooBigError, TerraFormer
 
     for i_filename in _GetFilenames(sources, [PYTHON_EXT]):
         try:

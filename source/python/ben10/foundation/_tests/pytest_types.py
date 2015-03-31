@@ -115,7 +115,6 @@ class Test:
 
     def testCheckEnum(self):
         for i in xrange(10):
-            # self.assertNotRaises(ValueError,
             CheckEnum(i, range(10))
 
         with pytest.raises(ValueError):
@@ -332,7 +331,7 @@ class Test:
     def testIntersection(self):
         alpha = [3, 2, 1]
         bravo = [2, 3, 4]
-        assert Intersection(alpha, bravo) == set([2, 3])
+        assert Intersection(alpha, bravo) == {2, 3}
 
         assert Intersection() == set()
 

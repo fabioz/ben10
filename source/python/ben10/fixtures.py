@@ -190,7 +190,7 @@ def handled_exceptions():
 #===================================================================================================
 def pytest_configure(config):
     '''
-    Enable faulthandler during pytest_configure (before sys.stderr is redirected)
+    Enable fault handler directly into sys.stderr.
     '''
     InstallFaultHandler(config)
 
@@ -320,7 +320,6 @@ class _EmbedDataFixture(object):
             Path to created data dir
         '''
         from ben10.filesystem import CopyDirectory, CreateDirectory, DeleteDirectory, IsDir
-        from ben10.foundation.is_frozen import IsFrozen
 
         assert not self._finalized, "Oops. Finalizer has been called in the middle. Something is wrong."
         if self._created:
@@ -328,9 +327,6 @@ class _EmbedDataFixture(object):
 
         if os.path.isdir(self._data_dir):
             DeleteDirectory(self._data_dir)
-
-        if IsFrozen():
-            raise RuntimeError("_EmbedDataFixture is not ready for execution inside an executable.")
 
         if IsDir(self._source_dir):
             CopyDirectory(self._source_dir, self._data_dir)
