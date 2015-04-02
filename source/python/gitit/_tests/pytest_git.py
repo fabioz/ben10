@@ -1,6 +1,6 @@
 from __future__ import unicode_literals
-from ben10.filesystem import CanonicalPath, CreateDirectory, CreateFile, DeleteFile, GetFileContents, \
-    DeleteDirectory
+from ben10.filesystem import (CanonicalPath, CreateDirectory, CreateFile, DeleteDirectory,
+    DeleteFile, GetFileContents)
 from gitit.git import (BranchAlreadyExistsError, DirtyRepositoryError, Git, GitExecuteError,
     GitRefDoesNotExistError, NotCurrentlyInAnyBranchError, RepositoryAccessError,
     SSHServerCantBeFoundError, TargetDirAlreadyExistsError)
