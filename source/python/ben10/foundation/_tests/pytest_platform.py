@@ -1,6 +1,6 @@
 from __future__ import unicode_literals
 from ben10.foundation.platform_ import Platform, UnknownPlatform
-import os
+import mock
 import platform
 import pytest
 import sys
@@ -134,14 +134,24 @@ class Test(object):
 
 
     def testGetOSPlatform(self, monkeypatch):
+        original_platform = sys.platform
+
         monkeypatch.setattr(sys, 'platform', 'win32')
         monkeypatch.setattr(platform, 'python_compiler', lambda:'WINDOWS')
 
-        monkeypatch.setattr(os, 'environ', {})
-        assert unicode(Platform.GetOSPlatform()) == 'win32'
+        if original_platform == 'win32':
+            with mock.patch('ctypes.windll.kernel32.IsWow64Process', autospec=True) as mock_wow_process:
+                # Mock kernel32 to pretend we are in a 32bit machine
+                def MockWow64Process32(process, byref):
+                    byref._obj.value = 0
+                mock_wow_process.side_effect = MockWow64Process32
+                assert unicode(Platform.GetOSPlatform()) == 'win32'
 
-        monkeypatch.setattr(os, 'environ', {'PROGRAMFILES(X86)':''})
-        assert unicode(Platform.GetOSPlatform()) == 'win64'
+                # Mock kernel32 to pretend we are in a 64bit machine
+                def MockWow64Process64(process, byref):
+                    byref._obj.value = 1
+                mock_wow_process.side_effect = MockWow64Process64
+                assert unicode(Platform.GetOSPlatform()) == 'win64'
 
         monkeypatch.setattr(sys, 'platform', 'linux2')
         monkeypatch.setattr(platform, 'dist', lambda:['fedora'])

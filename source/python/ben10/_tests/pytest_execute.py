@@ -243,18 +243,12 @@ class Test(object):
         '''
         A spawned python process should be able to access the arguments as unicode.
         '''
-        python_script = embed_data['unicode_argv_test.py']
+        python_script = embed_data['testIfAPythonProgramReceivesUnicodeArgv.py']
         input_file = embed_data['input_file_latin1_ação.txt']
 
-        output = Execute(
-            [
-                'python',
-                python_script,
-                input_file,
-            ]
-        )
+        output, retcode = ExecutePython(python_script, (input_file,))
 
-        assert output == ['OK']
+        assert output == 'OK\n', "Unexpected output:\n%s" % output
 
 
     def testPythonExecute(self, embed_data):

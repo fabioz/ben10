@@ -250,10 +250,16 @@ class Platform(object):
 
         # We have to find out if we are running Python32 in a 64bit machine
         if unicode(current_platform) == 'win32':
-            # In Windows, we can check environment variables to do this
-            import os
-            if 'PROGRAMFILES(X86)' in os.environ:
+            import ctypes
+            i = ctypes.c_int()
+            kernel32 = ctypes.windll.kernel32
+            process = kernel32.GetCurrentProcess()
+            kernel32.IsWow64Process(process, ctypes.byref(i))
+            is64bit = (i.value != 0)
+
+            if is64bit:
                 return cls(cls.WIN, '64')
+
             return cls(cls.WIN, '32')
 
         # Otherwise, return whatever GetCurrentPlatform gave us
