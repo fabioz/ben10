@@ -28,6 +28,7 @@ class Test(object):
             factory.GetContents(xml_header=True)
             == Dedent(self.testSimplest.__doc__)
         )
+        assert factory.AsJson() == '{"login": "Bravo", "name": "Alpha"}'
 
 
     def testSimple(self):
@@ -49,6 +50,7 @@ class Test(object):
             factory.GetContents()
             == Dedent(self.testSimple.__doc__)
         )
+        assert factory.AsJson() == '{"login": "Bravo", "name": "Alpha", "location": {"city": "Charlie"}}'
 
 
     def testAttributes(self):
@@ -70,6 +72,8 @@ class Test(object):
             factory.GetContents()
             == Dedent(self.testAttributes.__doc__)
         )
+        # We're ignoring attributes and empty tags for now.
+        assert factory.AsJson() == '{"alpha": "Alpha", "bravo": {"charlie": null}}'
 
 
     def testRepeatingTags(self):
@@ -106,6 +110,7 @@ class Test(object):
             factory.GetContents()
             == Dedent(self.testRepeatingTags.__doc__)
         )
+        assert factory.AsJson() == '{"elements": {"name": ["Alpha", "Bravo", "Charlie"]}, "components": {"component": [{"name": "Alpha"}, {"name": "Bravo"}, {"name": "Charlie"}]}}'
 
 
     def testHudsonJob(self):
