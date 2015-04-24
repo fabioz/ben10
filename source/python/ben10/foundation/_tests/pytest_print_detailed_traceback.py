@@ -4,6 +4,7 @@ from ben10.filesystem import CreateFile
 from ben10.foundation.print_detailed_traceback import PrintDetailedTraceback
 from ben10.foundation.string import Dedent
 from io import BytesIO, StringIO
+import itertools
 import pytest
 import re
 
@@ -124,25 +125,39 @@ def testPrintDetailedTracebackWithUnicode(exception_message):
     assert 'Exception: %s' % (exception_message) in stream.getvalue()
 
 
-@pytest.mark.parametrize(('exception_message',), [(u'fake unicode message',), (u'Сообщение об ошибке.',)])
-def testPrintDetailedTracebackToFakeStderr(exception_message):
+@pytest.mark.parametrize('exception_message, stream_encoding', itertools.product(
+    ['fake unicode message', 'Сообщение об ошибке.'],
+    [None, b'ascii', b'utf-8'],
+))
+def testPrintDetailedTracebackToFakeStderr(exception_message, monkeypatch, stream_encoding):
     '''
     Test PrintDetailedTraceback with 'plain' unicode arguments and an unicode argument with cyrillic
-    characters, written to a buffer similar to PrintDetailedTraceback()'s default stream, sys.std_err
+    characters, written to a buffer similar to PrintDetailedTraceback()'s default stream,
+    sys.std_err. Also, PrintDetailedTraceback must not rely on an encoding attribute being present
+    and use "ascii" instead, so one of our parametrizations makes sure to never set that attribute.
     '''
     import sys
 
     # Since we want to check the values written, create a 'fake_stderr' that is simple a BytesIO
     # with the same expected encoding as sys.std_err's encoding.
-    sys.stderr = fake_stderr = BytesIO()
-    sys.stderr.encoding = 'ascii'
+    fake_stderr = BytesIO()
+    monkeypatch.setattr(sys, 'stderr', fake_stderr)
+
+    if stream_encoding is None:
+        # stream will not have an "encoding" attribute and should encode in ascii, replacing
+        # invalid characters
+        stream_encoding = 'ascii'
+        assert not hasattr(fake_stderr, 'encoding')
+    else:
+        fake_stderr.encoding = stream_encoding
+
     try:
         raise Exception(exception_message)
     except:
         PrintDetailedTraceback(stream=fake_stderr)
 
     written_traceback = fake_stderr.getvalue()
-    encoded_message = exception_message.encode(sys.stderr.encoding, errors='replace')
+    encoded_message = exception_message.encode(stream_encoding, errors='replace')
     assert b'Exception: %s' % encoded_message in written_traceback
 
 
