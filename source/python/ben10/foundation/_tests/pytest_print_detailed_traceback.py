@@ -125,24 +125,27 @@ def testPrintDetailedTracebackWithUnicode(exception_message):
 
 
 @pytest.mark.parametrize(('exception_message',), [(u'fake unicode message',), (u'Сообщение об ошибке.',)])
-def testPrintDetailedTracebackToFakeStderr(exception_message):
+def testPrintDetailedTracebackToFakeStderr(exception_message, monkeypatch):
     '''
     Test PrintDetailedTraceback with 'plain' unicode arguments and an unicode argument with cyrillic
-    characters, written to a buffer similar to PrintDetailedTraceback()'s default stream, sys.std_err
+    characters, written to a buffer similar to PrintDetailedTraceback()'s default stream,
+    sys.std_err. Also, PrintDetailedTraceback must not rely on an encoding attribute being present
+    and use "ascii" instead if that's the case.
     '''
     import sys
 
     # Since we want to check the values written, create a 'fake_stderr' that is simple a BytesIO
     # with the same expected encoding as sys.std_err's encoding.
-    sys.stderr = fake_stderr = BytesIO()
-    sys.stderr.encoding = 'ascii'
+    fake_stderr = BytesIO()
+    monkeypatch.setattr(sys, 'stderr', fake_stderr)
     try:
         raise Exception(exception_message)
     except:
         PrintDetailedTraceback(stream=fake_stderr)
 
     written_traceback = fake_stderr.getvalue()
-    encoded_message = exception_message.encode(sys.stderr.encoding, errors='replace')
+    default_encoding = 'ascii'  # encoding used when the stream has no "encoding" attr
+    encoded_message = exception_message.encode(default_encoding, errors='replace')
     assert b'Exception: %s' % encoded_message in written_traceback
 
 
