@@ -4,6 +4,7 @@ from ben10.filesystem import CreateFile
 from ben10.foundation.print_detailed_traceback import PrintDetailedTraceback
 from ben10.foundation.string import Dedent
 from io import BytesIO, StringIO
+import itertools
 import pytest
 import re
 
@@ -124,13 +125,16 @@ def testPrintDetailedTracebackWithUnicode(exception_message):
     assert 'Exception: %s' % (exception_message) in stream.getvalue()
 
 
-@pytest.mark.parametrize(('exception_message',), [(u'fake unicode message',), (u'Сообщение об ошибке.',)])
-def testPrintDetailedTracebackToFakeStderr(exception_message, monkeypatch):
+@pytest.mark.parametrize('exception_message, stream_encoding', itertools.product(
+    ['fake unicode message', 'Сообщение об ошибке.'],
+    [None, b'ascii', b'utf-8'],
+))
+def testPrintDetailedTracebackToFakeStderr(exception_message, monkeypatch, stream_encoding):
     '''
     Test PrintDetailedTraceback with 'plain' unicode arguments and an unicode argument with cyrillic
     characters, written to a buffer similar to PrintDetailedTraceback()'s default stream,
     sys.std_err. Also, PrintDetailedTraceback must not rely on an encoding attribute being present
-    and use "ascii" instead if that's the case.
+    and use "ascii" instead, so one of our parametrizations makes sure to never set that attribute.
     '''
     import sys
 
@@ -138,14 +142,22 @@ def testPrintDetailedTracebackToFakeStderr(exception_message, monkeypatch):
     # with the same expected encoding as sys.std_err's encoding.
     fake_stderr = BytesIO()
     monkeypatch.setattr(sys, 'stderr', fake_stderr)
+
+    if stream_encoding is None:
+        # stream will not have an "encoding" attribute and should encode in ascii, replacing
+        # invalid characters
+        stream_encoding = 'ascii'
+        assert not hasattr(fake_stderr, 'encoding')
+    else:
+        fake_stderr.encoding = stream_encoding
+
     try:
         raise Exception(exception_message)
     except:
         PrintDetailedTraceback(stream=fake_stderr)
 
     written_traceback = fake_stderr.getvalue()
-    default_encoding = 'ascii'  # encoding used when the stream has no "encoding" attr
-    encoded_message = exception_message.encode(default_encoding, errors='replace')
+    encoded_message = exception_message.encode(stream_encoding, errors='replace')
     assert b'Exception: %s' % encoded_message in written_traceback
 
 
