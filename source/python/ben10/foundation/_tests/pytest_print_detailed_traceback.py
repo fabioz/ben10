@@ -144,9 +144,9 @@ def testPrintDetailedTracebackToFakeStderr(exception_message, monkeypatch, strea
     monkeypatch.setattr(sys, 'stderr', fake_stderr)
 
     if stream_encoding is None:
-        # stream will not have an "encoding" attribute and should encode in ascii, replacing
+        # stream will not have an "encoding" attribute and should encode in utf-8, replacing
         # invalid characters
-        stream_encoding = 'ascii'
+        stream_encoding = 'utf-8'
         assert not hasattr(fake_stderr, 'encoding')
     else:
         fake_stderr.encoding = stream_encoding
