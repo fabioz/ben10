@@ -401,7 +401,6 @@ def testLocalImports(monkeypatch, embed_data):
             TestIt('quilo')
 
 
-
 def testRename(embed_data, line_tester):
     from ben10.filesystem import GetFileContents
 
@@ -428,7 +427,6 @@ def testRename(embed_data, line_tester):
         GetFileContents(embed_data['testRename.txt'], encoding='UTF-8'),
         Doit,
     )
-
 
 
 def testSymbolVisitor():

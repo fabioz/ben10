@@ -184,12 +184,13 @@ class Platform(object):
             Raises if the simple_platform (parameter) is an unknown platform.
         '''
         RESULT = {
-            'i686.win32' : (cls.WIN, '32'),
-            'amd64.win32' : (cls.WIN, '64'),
+            'amd64.centos' : (cls.CENTOS, '64'),
+            'amd64.debian' : (cls.DEBIAN, '64'),
             'amd64.redhat' : (cls.REDHAT, '64'),
             'amd64.ubuntu' : (cls.UBUNTU, '64'),
-            'amd64.debian' : (cls.DEBIAN, '64'),
+            'amd64.win32' : (cls.WIN, '64'),
             'i686.darwin' : (cls.DARWIN, '32'),
+            'i686.win32' : (cls.WIN, '32'),
         }
         try:
             params = RESULT[simple_platform]

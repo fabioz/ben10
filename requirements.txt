@@ -1,3 +1,4 @@
+cogapp==2.3
 colorama==0.3.3
 cov_core==1.15
 coverage==3.7.1

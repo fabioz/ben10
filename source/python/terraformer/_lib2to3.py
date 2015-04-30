@@ -236,8 +236,13 @@ def LoadGrammar(gt="Grammar.txt", gp=None, save=True, force=False, logger=None):
 
 
 
-import lib2to3.pgen2.driver
-lib2to3.pgen2.driver.load_grammar = LoadGrammar
+import sys
+if sys.version_info[3:] == (2,7,7):
+    # Only replace the LoadGrammar on Python 2.7.7, which matches with our stored grammar.
+    # On other version (CentOS 7) uses the system algorithm. Remeber that without this algorithm
+    # we can't create executables that uses lib2to3.
+    import lib2to3.pgen2.driver
+    lib2to3.pgen2.driver.load_grammar = LoadGrammar
 
 
 

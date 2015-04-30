@@ -531,6 +531,27 @@ class UnicodeSamples(object):
         locale.getpreferredencoding(), 'replace').decode(locale.getpreferredencoding()).replace('?', '-')
 
 
+    def IsUCS2Build(self):
+        """
+        If Python has been compiled with UCS-2 unicode support ("narrow unicode build").
+
+        http://stackoverflow.com/questions/1446347/how-to-find-out-if-python-is-compiled-with-ucs-2-or-ucs-4
+
+        :return: bool
+        """
+        return sys.maxunicode == 65535
+
+
+    def IsUCS4Build(self):
+        """
+        If Python has been compiled with UCS-4 unicode support ("wide unicode build").
+
+        http://stackoverflow.com/questions/1446347/how-to-find-out-if-python-is-compiled-with-ucs-2-or-ucs-4
+
+        :return: bool
+        """
+        return sys.maxunicode == 1114111
+
 
 @pytest.fixture
 def unicode_samples():
