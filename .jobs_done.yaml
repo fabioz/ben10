@@ -47,5 +47,4 @@ slack:
     url: https://eden.esss.com.br/jenkins
   
 notification:
-    url: http://188.226.245.90/webhook/jenkins
-
+    url: http://45.55.243.17/webhook/jenkins
