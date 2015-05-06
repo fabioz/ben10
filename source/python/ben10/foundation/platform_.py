@@ -383,6 +383,29 @@ class Platform(object):
         return unicode(self).endswith('d')
 
 
+    @classmethod
+    def IsCurrent(cls, platform, ignore_debug=True):
+        '''
+        :param unicode platform:
+            Platform being compared with the current platform.
+
+        :param bool ignore_debug:
+            If true, ignores the debug flag in `platform` and the current platform.
+            i.e., these cases will return True:
+                platform=win32, current_platform=win32d
+                platform=win32d, current_platform=win32
+                platform=win32d, current_platform=win32d
+
+        :return bool:
+            True if `platform` matches the current platform.
+        '''
+        if platform.endswith('d') and ignore_debug:
+            platform = platform[:-1]
+
+        current = cls.GetCurrentPlatform()
+        return current.AsString(ignore_debug=ignore_debug) == platform
+
+
     def GetBaseName(self):
         '''
         :rtype: unicode

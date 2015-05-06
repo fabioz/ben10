@@ -133,6 +133,27 @@ class Test(object):
         assert unicode(Platform.GetDefaultPlatform()) == 'redhat64'
 
 
+    def testIsGetCurrentPlatform(self, monkeypatch):
+        monkeypatch.setattr(sys, 'platform', 'win32')
+        monkeypatch.setattr(platform, 'python_compiler', lambda:'WINDOWS')
+        assert Platform.IsCurrent('win32')
+        assert not Platform.IsCurrent('win64')
+
+        monkeypatch.setattr(platform, 'python_compiler', lambda:'AMD64')
+        assert Platform.IsCurrent('win64')
+        assert not Platform.IsCurrent('win32')
+
+        monkeypatch.setattr(sys, 'platform', 'darwin')
+        assert Platform.IsCurrent('darwin64')
+        assert not Platform.IsCurrent('win64')
+
+        monkeypatch.setattr(sys, 'platform', 'linux2')
+        monkeypatch.setattr(platform, 'dist', lambda:['fedora'])
+        monkeypatch.setattr(platform, 'machine', lambda:'x86_64')
+        assert Platform.IsCurrent('redhat64')
+        assert not Platform.IsCurrent('win64')
+
+
     def testGetOSPlatform(self, monkeypatch):
         original_platform = sys.platform
 
