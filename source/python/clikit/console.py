@@ -261,7 +261,7 @@ class Console(object):
         text = Indent(out, indent=indent) + ('\n' * newlines)
         if self.color and self.colorama:
             from colorama import AnsiToWin32
-            AnsiToWin32(stream).write(text)
+            AnsiToWin32(stream, strip=False, convert=True).write(text)
         else:
             stream.write(text)
             stream.flush()
