@@ -259,12 +259,18 @@ class Console(object):
         assert isinstance(newlines, int)
         from ben10.foundation.string import Indent
         text = Indent(out, indent=indent) + ('\n' * newlines)
+
+        # Encode text to the target (console) encoding.
+        if isinstance(text, unicode) and stream.encoding is None:
+            text = text.encode('ascii', 'replace')
+
         if self.color and self.colorama:
             from colorama import AnsiToWin32
-            AnsiToWin32(stream, strip=False, convert=True).write(text)
+            ansi_to_win32 = AnsiToWin32(stream, strip=False, convert=True)
+            ansi_to_win32.write(text)
         else:
             stream.write(text)
-            stream.flush()
+        stream.flush()
 
 
     def PrintError(self, message, newlines=1, indent=0):
