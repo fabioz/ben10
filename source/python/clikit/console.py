@@ -261,7 +261,7 @@ class Console(object):
         text = Indent(out, indent=indent) + ('\n' * newlines)
 
         # Encode text to the target (console) encoding.
-        if isinstance(text, unicode) and stream.encoding is None:
+        if isinstance(text, unicode) and (hasattr(stream, 'encoding') and stream.encoding is None):
             text = text.encode('ascii', 'replace')
 
         if self.color and self.colorama:
