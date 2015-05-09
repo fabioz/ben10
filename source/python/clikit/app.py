@@ -114,7 +114,7 @@ class ConfPlugin():
         '''
         self.__name = name
         self.conf_defaults = conf_defaults or {}
-        self.conf_filename = conf_filename or '~/.%(name)s'
+        self.conf_filename = conf_filename or '~/.%(name)s.conf'
 
 
     def ConfigureOptions(self, parser):
