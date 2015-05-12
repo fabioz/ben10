@@ -23,6 +23,7 @@ def _CreateColorMap():
         'bold':      '01m',
         'faint':     '02m',
         'standout':  '03m',
+        'standout':  '03m',
         'underline': '04m',
         'blink':     '05m',
     }
