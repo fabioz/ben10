@@ -446,21 +446,14 @@ class App(object):
         :return dict:
             Returns a dictionary mapping each available fixture to its implementation callable.
         '''
-        def IsGenerator(func):
-            import py
-            try:
-                return py.code.getrawcode(func).co_flags & 32 # generator function
-            except AttributeError: # builtin functions have no bytecode
-                # assume them to not be generators
-                return False
-
         def GetFixtureAndFinalizer(func):
             '''
             Handles fixture function with yield.
 
             Returns the fixture and finalizer callables.
             '''
-            if IsGenerator(func):
+            import inspect
+            if inspect.isgeneratorfunction(func):
                 func_iter = func()
                 next = getattr(func_iter, "__next__", None)
                 if next is None:
