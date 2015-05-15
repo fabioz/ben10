@@ -26,8 +26,8 @@ def DumpDirHashToStringIO(directory, stringio, base='', exclude=None, include=No
     :param unicode include:
         Pattern to match files to include in the hashing. E.g.: *.zip
     '''
-    import os
     import fnmatch
+    import os
 
     files = [(os.path.join(directory, i), i) for i in os.listdir(directory)]
     files = [i for i in files if os.path.isfile(i[0])]

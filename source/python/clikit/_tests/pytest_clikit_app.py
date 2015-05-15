@@ -2,8 +2,8 @@ from __future__ import unicode_literals
 from ben10.foundation.string import Dedent
 from clikit.app import App, UnknownApp
 from clikit.console import BufferedConsole, Console
-import inspect
 from mock import Mock
+import inspect
 import pytest
 import sys
 

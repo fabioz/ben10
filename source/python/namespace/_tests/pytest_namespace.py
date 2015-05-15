@@ -1,9 +1,8 @@
 from __future__ import unicode_literals
 from io import StringIO
-from namespace import (CantFindBestMatchException, InvalidNamespaceKeyName,
-    Namespace, NamespaceKeyError, NamespaceValue, UnknowFlagError)
-from namespace.namespace_types import (LIST, MergedTypesDontMatchException, PATH,
-    PATHLIST, STRING)
+from namespace import (CantFindBestMatchException, InvalidNamespaceKeyName, Namespace,
+    NamespaceKeyError, NamespaceValue, UnknowFlagError)
+from namespace.namespace_types import LIST, MergedTypesDontMatchException, PATH, PATHLIST, STRING
 import os
 import pytest
 import sys

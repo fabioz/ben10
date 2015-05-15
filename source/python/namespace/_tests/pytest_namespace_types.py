@@ -1,9 +1,8 @@
 from __future__ import unicode_literals
 from ben10.filesystem import NormalizePath
 from ben10.foundation.exceptions import ExceptionToUnicode
-from namespace.namespace_types import (ENVIRON, INamespaceType, LIST,
-    MIXED_PRIORITY, NamespaceTypeFactory, NamespaceTypeMergeException, OVERRIDE, PATH, PATHLIST,
-    RAW, STRING)
+from namespace.namespace_types import (ENVIRON, INamespaceType, LIST, MIXED_PRIORITY,
+    NamespaceTypeFactory, NamespaceTypeMergeException, OVERRIDE, PATH, PATHLIST, RAW, STRING)
 import os
 import pytest
 
