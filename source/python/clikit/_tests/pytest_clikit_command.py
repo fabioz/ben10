@@ -85,7 +85,7 @@ class Test:
 
         console = BufferedConsole()
         cmd.Call(
-            fixtures={'console_' : console},
+            fixtures={'console_' : (lambda:console, lambda:None)},
             argd={'filename' : 'alpha.txt', 'config' : ['one', 'two', 'three']}
         )
         assert console.GetOutput() == 'alpha.txt - yes\n- one\n- two\n- three\n'
@@ -93,7 +93,7 @@ class Test:
         # Ignores all invalid arguments passed to Call.
         console = BufferedConsole()
         cmd.Call(
-            fixtures={'console_' : console},
+            fixtures={'console_' : (lambda:console, lambda:None)},
             argd={'filename' : 'bravo.txt', 'INVALID' : 'INVALID'}
         )
         assert console.GetOutput() == 'bravo.txt - yes\n'
@@ -202,14 +202,14 @@ class Test:
 
         console = BufferedConsole()
         cmd.Call(
-            fixtures={'console_' : console},
+            fixtures={'console_' : (lambda:console, lambda:None)},
             argd={}
         )
         assert console.GetOutput() == 'one\n'
 
         console = BufferedConsole()
         cmd.Call(
-            fixtures={'console_' : console},
+            fixtures={'console_' : (lambda:console, lambda:None)},
             argd={'first' : 'two'}
         )
         assert console.GetOutput() == 'two\n'
