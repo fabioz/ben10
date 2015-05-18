@@ -257,6 +257,8 @@ class MultipleFilesNotFound(RuntimeError):
         return 'Files not found: %s' % ','.join(self._filenames)
 
 
+UPDATE_ORIGINAL_FILES = True
+
 
 #===================================================================================================
 # embed_data
@@ -329,7 +331,10 @@ class _EmbedDataFixture(object):
             DeleteDirectory(self._data_dir)
 
         if IsDir(self._source_dir):
-            CopyDirectory(self._source_dir, self._data_dir)
+            if UPDATE_ORIGINAL_FILES:
+                self._data_dir = self._source_dir
+            else:
+                CopyDirectory(self._source_dir, self._data_dir)
         else:
             CreateDirectory(self._data_dir)
 
@@ -401,8 +406,9 @@ class _EmbedDataFixture(object):
         '''
         from ben10.filesystem._filesystem import DeleteDirectory
 
-        if self.delete_dir:
-            DeleteDirectory(self._data_dir, skip_on_error=True)
+        if not UPDATE_ORIGINAL_FILES:
+            if self.delete_dir:
+                DeleteDirectory(self._data_dir, skip_on_error=True)
         self._finalized = True
 
 
