@@ -32,7 +32,6 @@ class Ben10(EsssProject):
         # Packages associated only to test code or test fixtures.
         'faulthandler',
         'mock',
-        'pylint',
         'pytest',
         'pytest_cov',
         'pytest_localserver',
