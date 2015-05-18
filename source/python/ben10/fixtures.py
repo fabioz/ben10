@@ -257,7 +257,7 @@ class MultipleFilesNotFound(RuntimeError):
         return 'Files not found: %s' % ','.join(self._filenames)
 
 
-UPDATE_ORIGINAL_FILES = True
+UPDATE_ORIGINAL_FILES = False
 
 
 #===================================================================================================
