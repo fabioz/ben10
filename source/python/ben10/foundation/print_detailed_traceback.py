@@ -64,7 +64,8 @@ def PrintDetailedTraceback(exc_info=None, stream=None, max_levels=None, max_line
     # For sys.stderr and sys.stdout, we should encode the unicode objects before writing.
     def _WriteToEncodedStream(message):
         assert type(message) is unicode
-        stream.write(message.encode(getattr(stream, 'encoding', 'utf-8'), errors='replace'))
+        encoding = getattr(stream, 'encoding', None)
+        stream.write(message.encode(encoding or 'utf-8', errors='replace'))
 
     def _WriteToUnicodeStream(message):
         assert type(message) is unicode

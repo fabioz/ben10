@@ -5,8 +5,10 @@ from ben10.foundation.print_detailed_traceback import PrintDetailedTraceback
 from ben10.foundation.string import Dedent
 from io import BytesIO, StringIO
 import itertools
+import mock
 import pytest
 import re
+import sys
 
 
 
@@ -129,36 +131,46 @@ def testPrintDetailedTracebackWithUnicode(exception_message):
     ['fake unicode message', 'Сообщение об ошибке.'],
     [None, b'ascii', b'utf-8'],
 ))
-def testPrintDetailedTracebackToFakeStderr(exception_message, monkeypatch, stream_encoding):
+def testPrintDetailedTracebackToFakeStderr(exception_message, stream_encoding, fake_stderr):
     '''
     Test PrintDetailedTraceback with 'plain' unicode arguments and an unicode argument with cyrillic
     characters, written to a buffer similar to PrintDetailedTraceback()'s default stream,
-    sys.std_err. Also, PrintDetailedTraceback must not rely on an encoding attribute being present
-    and use "ascii" instead, so one of our parametrizations makes sure to never set that attribute.
+    sys.std_err.
     '''
-    import sys
-
-    # Since we want to check the values written, create a 'fake_stderr' that is simple a BytesIO
-    # with the same expected encoding as sys.std_err's encoding.
-    fake_stderr = BytesIO()
-    monkeypatch.setattr(sys, 'stderr', fake_stderr)
-
-    if stream_encoding is None:
-        # stream will not have an "encoding" attribute and should encode in utf-8, replacing
-        # invalid characters
-        stream_encoding = 'utf-8'
-        assert not hasattr(fake_stderr, 'encoding')
-    else:
-        fake_stderr.encoding = stream_encoding
+    fake_stderr.encoding = stream_encoding
 
     try:
         raise Exception(exception_message)
     except:
-        PrintDetailedTraceback(stream=fake_stderr)
+        with mock.patch.object(sys, 'stderr', new=fake_stderr):
+            PrintDetailedTraceback(stream=fake_stderr)
 
-    written_traceback = fake_stderr.getvalue()
+    if stream_encoding is None:
+        # std streams may have None as encoding. PrintDetailedTraceback should use utf-8 as default.
+        stream_encoding = 'utf-8'
+    _AssertEncodedMessageIsInStreamOutput(fake_stderr, exception_message, stream_encoding)
+
+
+def _AssertEncodedMessageIsInStreamOutput(stream, exception_message, stream_encoding):
+    written_traceback = stream.getvalue()
     encoded_message = exception_message.encode(stream_encoding, errors='replace')
     assert b'Exception: %s' % encoded_message in written_traceback
+
+
+@pytest.mark.parametrize(('exception_message',), [(u'fake unicode message',), (u'Сообщение об ошибке.',)])
+def testPrintDetailedTracebackToFakeStderrWhenStreamHasNoEncodingAttribute(exception_message, fake_stderr):
+    '''
+    PrintDetailedTraceback must not rely on an encoding attribute being present.
+    '''
+    assert not hasattr(fake_stderr, 'encoding')
+
+    try:
+        raise Exception(exception_message)
+    except:
+        with mock.patch.object(sys, 'stderr', new=fake_stderr):
+            PrintDetailedTraceback(stream=fake_stderr)
+
+    _AssertEncodedMessageIsInStreamOutput(fake_stderr, exception_message, 'utf-8')
 
 
 @pytest.mark.parametrize(('exception_message',), [(u'fake unicode message',), (u'Сообщение об ошибке.',)])
@@ -193,3 +205,14 @@ def testOmitLocals():
     assert 'bar' not in stream_value
     assert 'arthur' not in stream_value
     assert 'dent' not in stream_value
+
+
+@pytest.fixture
+def fake_stderr(monkeypatch):
+    '''
+    Create a stream to replace stderr.
+    '''
+    # Since we want to check the values written, create a 'fake_stderr' that is simple a BytesIO
+    # with the same expected encoding as sys.std_err's encoding.
+    fake_stderr = BytesIO()
+    return fake_stderr
