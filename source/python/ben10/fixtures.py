@@ -257,6 +257,9 @@ class MultipleFilesNotFound(RuntimeError):
         return 'Files not found: %s' % ','.join(self._filenames)
 
 
+# By setting UPDATE_ORIGINAL_FILES to True, the data dir will not be copied (and some additional
+# places should also use this flag to overwrite files instead of creating them in a different place
+# for comparison -- such as the method which compares a snapshot with an existing file in sci20).
 UPDATE_ORIGINAL_FILES = False
 
 
