@@ -28,6 +28,7 @@ class Test(object):
             factory.GetContents(xml_header=True)
             == Dedent(self.testSimplest.__doc__)
         )
+        assert factory.AsDict() == {"login": "Bravo", "name": "Alpha"}
         assert factory.AsJson() == '{"login": "Bravo", "name": "Alpha"}'
 
 
@@ -50,6 +51,7 @@ class Test(object):
             factory.GetContents()
             == Dedent(self.testSimple.__doc__)
         )
+        assert factory.AsDict() == {"login": "Bravo", "name": "Alpha", "location": {"city": "Charlie"}}
         assert factory.AsJson() == '{"login": "Bravo", "name": "Alpha", "location": {"city": "Charlie"}}'
 
 
@@ -73,6 +75,7 @@ class Test(object):
             == Dedent(self.testAttributes.__doc__)
         )
         # We're ignoring attributes and empty tags for now.
+        assert factory.AsDict() == {"alpha": "Alpha", "bravo": {"charlie": None}}
         assert factory.AsJson() == '{"alpha": "Alpha", "bravo": {"charlie": null}}'
 
 
@@ -110,6 +113,7 @@ class Test(object):
             factory.GetContents()
             == Dedent(self.testRepeatingTags.__doc__)
         )
+        assert factory.AsDict() == {"elements": {"name": ["Alpha", "Bravo", "Charlie"]}, "components": {"component": [{"name": "Alpha"}, {"name": "Bravo"}, {"name": "Charlie"}]}}
         assert factory.AsJson() == '{"elements": {"name": ["Alpha", "Bravo", "Charlie"]}, "components": {"component": [{"name": "Alpha"}, {"name": "Bravo"}, {"name": "Charlie"}]}}'
 
 
