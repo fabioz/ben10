@@ -136,8 +136,7 @@ class Test(object):
     def testStatus(self, git):
         working_dir = git.cloned_remote
 
-        r = git.Status(working_dir)
-        r = r.split('\n')
+        r = git.Status(working_dir, flat_output=False)
         assert len(r) == 1
         assert r[0] in (
             '## master...origin/master',
@@ -146,8 +145,7 @@ class Test(object):
 
         CreateFile(working_dir + '/zulu.txt', 'zulu')
 
-        r = git.Status(working_dir)
-        r = r.split('\n')
+        r = git.Status(working_dir, flat_output=False)
         assert len(r) == 2
         assert r[0] in (
             '## master...origin/master',
