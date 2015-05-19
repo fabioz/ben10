@@ -34,10 +34,10 @@ def Dedent(text, ignore_first_linebreak=True, ignore_last_linebreak=True):
         Text to be dedented (see examples above)
 
     :param bool ignore_first_linebreak:
-        If True, everything up to the first '\n' is ignored
+        If True, blank characters (\r\n\t ) up to the first '\n' is ignored
 
     :param bool ignore_last_linebreak:
-        If True, everything after the last '\n' is ignored
+        If True, black characters (\r\n\t ) after the last '\n' is ignored
 
 
     Original docs:
@@ -52,9 +52,13 @@ def Dedent(text, ignore_first_linebreak=True, ignore_last_linebreak=True):
         before searching for common leading whitespace.)
     '''
     if ignore_first_linebreak and '\n' in text:
-        text = text.split('\n', 1)[1]
+        first, others = text.split('\n', 1)
+        if first.strip('\n\r\t ') == '':
+            text = others
     if ignore_last_linebreak and '\n' in text:
-        text = text.rsplit('\n', 1)[0]
+        others, last = text.rsplit('\n', 1)
+        if last.strip('\n\r\t ') == '':
+            text = others
 
     import re
     _leading_whitespace_re = re.compile('(^[ ]*)(?:[^ \n])', re.MULTILINE)
