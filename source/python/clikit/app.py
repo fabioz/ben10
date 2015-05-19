@@ -648,7 +648,9 @@ class App(object):
 
         def Execute(cmd, expected_output, expected_retcode):
             obtained_retcode, obtained = self.TestCall(cmd)
-            assert obtained.rstrip('\n') + '\n' == expected_output.rstrip('\n') + '\n'
+            obtained_string = obtained.rstrip('\n') + '\n'
+            expected_string = expected_output.rstrip('\n') + '\n'
+            assert obtained_string == expected_string
             assert expected_retcode == obtained_retcode, Dedent(
                 '''
                 >>> %(cmd)s
@@ -683,6 +685,7 @@ class App(object):
         cmd = None
         expected_output = ''
         expected_retcode = 0
+        script = Dedent(script)
         for i_line in script.splitlines():
             if i_line.startswith('###'):
                 continue
