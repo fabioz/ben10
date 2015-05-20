@@ -23,9 +23,9 @@ def ReplaceEnvironWithWrapper():
 class BytesOnlyEnvironWrapper():
     '''
     This is used to avoid unicode strings being set to os.environ.
-    When setting an unicode variable, encode to utf-8. This seems to work on Linux and Windows.
+    When setting an unicode variable, encode it to locale preferred encoding. This seems to work on
+    Linux and Windows.
     On Windows it works even when setting a variable to a russian name on portuguese systems.
-
     '''
 
     def __init__(self, original_environ):
@@ -114,6 +114,13 @@ class BytesOnlyEnvironWrapper():
 
 
     def get_as_unicode(self, key, default=None):
+        '''
+        :rtype: unicode
+        :returns:
+            Value set under the given ``key`` as unicode.
+
+        .. seealso:: :meth:`.get`
+        '''
         result = self.get(key, default)
         return result.decode(locale.getpreferredencoding())
 
