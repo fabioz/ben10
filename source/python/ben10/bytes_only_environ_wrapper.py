@@ -1,4 +1,5 @@
 from __future__ import unicode_literals
+import locale
 import os
 
 
@@ -29,6 +30,7 @@ class BytesOnlyEnvironWrapper():
 
     def __init__(self, original_environ):
         self.original_environ = original_environ
+        self._local_encoding = locale.getpreferredencoding()
 
 
     def __iter__(self):
@@ -73,9 +75,9 @@ class BytesOnlyEnvironWrapper():
 
     def setdefault(self, key, default=None):
         if isinstance(key, unicode):
-            key = key.encode('utf-8')
+            key = key.encode(self._local_encoding)
         if isinstance(default, unicode):
-            default = default.encode('utf-8')
+            default = default.encode(self._local_encoding)
         return self.original_environ.setdefault(key, default)
 
 
@@ -111,15 +113,20 @@ class BytesOnlyEnvironWrapper():
         return self.original_environ.get(key, default)
 
 
+    def get_as_unicode(self, key, default=None):
+        result = self.get(key, default)
+        return result.decode(locale.getpreferredencoding())
+
+
     def __getitem__(self, key):
         return self.original_environ.__getitem__(key)
 
 
     def __setitem__(self, key, item):
         if isinstance(key, unicode):
-            key = key.encode('utf-8')
+            key = key.encode(self._local_encoding)
         if isinstance(item, unicode):
-            item = item.encode('utf-8')
+            item = item.encode(self._local_encoding)
         return self.original_environ.__setitem__(key, item)
 
 
