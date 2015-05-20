@@ -14,7 +14,7 @@ class Ben10BuildCommand(BuildCommand):
     @Override(BuildCommand.EvBuild)
     def EvBuild(self, args):
         self.Clean()
-        self.Install()
+        self.Install(no_spawn=True)
         self.IsClean()
         self.RunTests(
             jobs=self.shared_script['hudson_test_jobs'],

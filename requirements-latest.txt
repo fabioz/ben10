@@ -1,4 +1,5 @@
 colorama
+cogapp
 cov_core
 coverage
 faulthandler

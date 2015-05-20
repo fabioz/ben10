@@ -2,6 +2,7 @@ from __future__ import unicode_literals
 from ben10.foundation.string import Dedent
 from clikit.app import App, UnknownApp
 from clikit.console import BufferedConsole, Console
+from mock import Mock
 import inspect
 import pytest
 import sys
@@ -509,6 +510,30 @@ class Test:
             'cmd',
             'This is rubles.\n'
         )
+
+
+    def testFixtureWithFinalizer(self):
+
+        finalizer = Mock()
+
+        def MyFix():
+            yield 'This is rubles.'
+            finalizer()
+
+        def Cmd(console_, rubles_):
+            console_.Print(rubles_)
+
+        app = App('test', color=True, buffered_console=True)
+        app.Fixture(MyFix, name='rubles')
+        app.Add(Cmd)
+
+        self._TestMain(
+            app,
+            'cmd',
+            'This is rubles.\n'
+        )
+
+        finalizer.assert_called_once_with()
 
 
     def testExecuteCommand(self):

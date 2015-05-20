@@ -59,7 +59,23 @@ setup(
     package_dir = {'' : 'source/python'},
     packages=find_packages('source/python'),
 
-    # tests
-    tests_require=['pytest'],
+    install_requires=[
+        'colorama',
+        'cov_core',
+        'coverage',
+        'faulthandler',
+        'ftputil',
+        'py',
+        'pyftpdlib',
+        'pytest-cov',
+        'pytest-localserver',
+        'pytest-timeout',
+        'pytest-xdist',
+        'pytest',
+        'rarfile',
+        'ruamel.ordereddict',
+        'wheel',
+        'mock',
+    ],
     cmdclass={'test': PyTest},
 )

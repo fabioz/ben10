@@ -149,3 +149,68 @@ class XmlFactory(object):
         oss = StringIO()
         self.Print(oss, xml_header=xml_header)
         return oss.getvalue()
+
+
+    def AsDict(self):
+        '''
+        Returns the data-structure as dict.
+
+        :return dict:
+        '''
+
+        def _elem2list(elem, return_children=False):
+            '''
+            Copied from:
+                https://github.com/knadh/xmlutils.py/blob/master/xmlutils/xml2json.py
+            '''
+            block = {}
+
+            # get the element's children
+            children = elem.getchildren()
+
+            if children:
+                cur = map(_elem2list, children)
+
+                # create meaningful lists
+                scalar = False
+                try:
+                    if elem[0].tag != elem[1].tag:  # [{a: 1}, {b: 2}, {c: 3}] => {a: 1, b: 2, c: 3}
+                        cur = dict(zip(
+                            map(lambda e: e.keys()[0], cur),
+                            map(lambda e: e.values()[0], cur)
+                        ))
+                    else:
+                        scalar = True
+                except Exception as e:  # [{a: 1}, {a: 2}, {a: 3}] => {a: [1, 2, 3]}
+                    scalar = True
+
+                if scalar:
+                    if len(cur) > 1:
+                        cur = {elem[0].tag: [e.values()[0] for e in cur if e.values()[0] is not None]}
+                    else:
+                        cur = {elem[0].tag: cur[0].values()[0] }
+
+                block[elem.tag] = cur
+                if return_children:
+                    return cur
+            else:
+                val = None
+                if elem.text:
+                    val = elem.text.strip()
+                    val = val if len(val) > 0 else None
+
+                block[elem.tag] = val
+
+            return block
+
+        return _elem2list(self.root, return_children=True)
+
+
+    def AsJson(self):
+        '''
+        Returns the data-structure as a JSON.
+
+        :return unicode:
+        '''
+        import json
+        return json.dumps(self.AsDict())

@@ -259,12 +259,18 @@ class Console(object):
         assert isinstance(newlines, int)
         from ben10.foundation.string import Indent
         text = Indent(out, indent=indent) + ('\n' * newlines)
+
+        # Encode text to the target (console) encoding.
+        if isinstance(text, unicode) and (hasattr(stream, 'encoding') and stream.encoding is None):
+            text = text.encode('ascii', 'replace')
+
         if self.color and self.colorama:
             from colorama import AnsiToWin32
-            AnsiToWin32(stream).write(text)
+            ansi_to_win32 = AnsiToWin32(stream, strip=False, convert=True)
+            ansi_to_win32.write(text)
         else:
             stream.write(text)
-            stream.flush()
+        stream.flush()
 
 
     def PrintError(self, message, newlines=1, indent=0):
@@ -325,31 +331,31 @@ class Console(object):
         self.Print(format_ % message, verbosity=verbosity, newlines=0, indent=indent)
 
 
-    def ProgressOk(self, message='OK', verbosity=DEFAULT_VERBOSITY, format_='<green>%s</>'):
+    def ProgressOk(self, message='OK', verbosity=DEFAULT_VERBOSITY, indent=0, format_='<green>%s</>'):
         '''
         Ends a progress "successfully" with a message
 
         :param unicode message: Message to finish the progress. Default to "OK"
         '''
-        self.Print(format_ % message, verbosity=verbosity)
+        self.Print(format_ % message, verbosity=verbosity, indent=indent)
 
 
-    def ProgressError(self, message, verbosity=DEFAULT_VERBOSITY, format_='<red>%s</>'):
+    def ProgressError(self, message, verbosity=DEFAULT_VERBOSITY, indent=0, format_='<red>%s</>'):
         '''
         Ends a progress "with failure" message
 
         :param unicode message: (Error) message to finish the progress.
         '''
-        self.Print(format_ % message, verbosity=verbosity)
+        self.Print(format_ % message, verbosity=verbosity, indent=indent)
 
 
-    def ProgressWarning(self, message, verbosity=DEFAULT_VERBOSITY, format_='<yellow>%s</>'):
+    def ProgressWarning(self, message, verbosity=DEFAULT_VERBOSITY, indent=0, format_='<yellow>%s</>'):
         '''
         Ends a progress "with a warning" message
 
         :param unicode message: (Warning) message to finish the progress.
         '''
-        self.Print(format_ % message, verbosity=verbosity)
+        self.Print(format_ % message, verbosity=verbosity, indent=indent)
 
 
     def Item(self, message, verbosity=DEFAULT_VERBOSITY, newlines=1, indent=0, stderr=False, format_='- %s'):

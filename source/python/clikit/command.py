@@ -329,7 +329,7 @@ class Command:
         '''
         Executes the function filling the fixtures and options parameters.
 
-        :param fixtures:
+        :param dict(unicode : tuple(callable, callable)) fixtures:
             Map of fixtures to pass to the function as requested.
 
         :param argd:
@@ -339,13 +339,15 @@ class Command:
             Returns the command function result.
         '''
         args = []
+        finalizers = []
         for i_arg in self.args.itervalues():
             if i_arg.arg_type == i_arg.ARG_TYPE_FIXTURE:
                 try:
-                    arg = fixtures[i_arg.name]
+                    fixture, finalizer = fixtures[i_arg.name]
                 except KeyError as exception:
                     raise InvalidFixture(unicode(exception))
-                args.append(arg)
+                args.append(fixture())
+                finalizers.append(finalizer)
                 continue
 
             if i_arg.arg_type == i_arg.ARG_TYPE_TRAIL:
@@ -365,7 +367,12 @@ class Command:
                 args.append(arg)
                 continue
 
-        return self.func(*args)
+        result = self.func(*args)
+
+        for i_finalizer in finalizers:
+            i_finalizer()
+
+        return result
 
 
     def __call__(self, *args, **kwargs):
