@@ -4,6 +4,8 @@ from ben10.execute import ExecutePython
 import os
 
 
+VAR_NAME = 'MY_UNICODE_VAR'
+
 
 def testIfOsEnvironIsReplacedByWrapper():
     '''
@@ -13,13 +15,13 @@ def testIfOsEnvironIsReplacedByWrapper():
 
 
 def testIfWrapperEncodesUnicodeVariableWhenSettingDefault(unicode_samples):
-    os.environ.setdefault('MY_UNICODE_VAR', unicode_samples.UNICODE_MULTIPLE_LANGUAGES)
-    _CheckIfEnvVarTypeIsBytes('MY_UNICODE_VAR', unicode_samples.UNICODE_MULTIPLE_LANGUAGES)
+    os.environ.setdefault(VAR_NAME, unicode_samples.UNICODE_MULTIPLE_LANGUAGES)
+    _CheckIfEnvVarTypeIsBytes(VAR_NAME, unicode_samples.UNICODE_MULTIPLE_LANGUAGES)
 
 
 def testIfWrapperEncodesUnicodeVariableWhenSettingVariable(unicode_samples):
-    os.environ['MY_UNICODE_VAR'] = unicode_samples.UNICODE_MULTIPLE_LANGUAGES
-    _CheckIfEnvVarTypeIsBytes('MY_UNICODE_VAR', unicode_samples.UNICODE_MULTIPLE_LANGUAGES)
+    os.environ[VAR_NAME] = unicode_samples.UNICODE_MULTIPLE_LANGUAGES
+    _CheckIfEnvVarTypeIsBytes(VAR_NAME, unicode_samples.UNICODE_MULTIPLE_LANGUAGES)
 
 
 def _CheckIfEnvVarTypeIsBytes(name, value):
@@ -37,3 +39,20 @@ def testIfAPythonProgramCanDecodeUtf8EnvVar(embed_data):
     output, _retcode = ExecutePython(python_script)
 
     assert output == 'OK\n', "Unexpected output:\n%s" % output
+
+
+def testIfWrapperEncodesWhenUpdatingWithOtherDict(unicode_samples):
+    extra_env = {VAR_NAME: unicode_samples.UNICODE_MULTIPLE_LANGUAGES}
+    os.environ.update(extra_env)
+    _CheckIfEnvVarTypeIsBytes(VAR_NAME, unicode_samples.UNICODE_MULTIPLE_LANGUAGES)
+
+
+def testIfWrapperEncodesWhenUpdatingWithKwargs(unicode_samples):
+    os.environ.update(MY_UNICODE_VAR=unicode_samples.UNICODE_MULTIPLE_LANGUAGES)
+    _CheckIfEnvVarTypeIsBytes(VAR_NAME, unicode_samples.UNICODE_MULTIPLE_LANGUAGES)
+
+
+def testIfAWrapperCopyIsEqualToOriginal():
+    environ_copy = os.environ.copy()
+
+    assert os.environ == environ_copy

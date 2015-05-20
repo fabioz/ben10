@@ -88,7 +88,23 @@ class BytesOnlyEnvironWrapper():
 
 
     def update(self, other=None, **kwargs):
-        return self.original_environ.update(other)
+        if other:
+            try:
+                keys = other.keys()
+            except AttributeError:
+                # List of (key, value)
+                for k, v in other:
+                    self[k] = v
+            else:
+                # got keys
+                # cannot use items(), since mappings
+                # may not have them.
+                for k in keys:
+                    self[k] = other[k]
+        if kwargs:
+            # To enforce encode
+            for k, v in kwargs.items():
+                self[k] = v
 
 
     def get(self, key, default=None):
@@ -124,5 +140,5 @@ class BytesOnlyEnvironWrapper():
 
 
     def copy(self):
-        return BytesOnlyEnvironWrapper(self.original_environ.copy())
+        return self.original_environ.copy()
 
