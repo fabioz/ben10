@@ -570,6 +570,8 @@ def ProcessOpen(
     def EnvStr(env):
         result = ''
         for i, j in sorted(env.items()):
+            i = i.decode('utf-8')
+            j = j.decode('utf-8')
             if os.sep in j:
                 j = '\n    * ' + '\n    * '.join(sorted(j.split(os.pathsep)))
             result += '  - %s = %s\n' % (i, j)

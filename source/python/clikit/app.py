@@ -114,7 +114,7 @@ class ConfPlugin():
         '''
         self.__name = name
         self.conf_defaults = conf_defaults or {}
-        self.conf_filename = conf_filename or '~/.%(name)s'
+        self.conf_filename = conf_filename or '~/.%(name)s.conf'
 
 
     def ConfigureOptions(self, parser):
@@ -444,15 +444,46 @@ class App(object):
     def GetFixtures(self, argv):
         '''
         :return dict:
-            Returns a dictionary mapping each available fixture to its implementation.
+            Returns a dictionary mapping each available fixture to its implementation callable.
         '''
+        def GetFixtureAndFinalizer(func):
+            '''
+            Handles fixture function with yield.
+
+            Returns the fixture and finalizer callables.
+            '''
+            import inspect
+            if inspect.isgeneratorfunction(func):
+                func_iter = func()
+                next = getattr(func_iter, "__next__", None)
+                if next is None:
+                    next = getattr(func_iter, "next")
+                result = next
+                def finalizer():
+                    try:
+                        next()
+                    except StopIteration:
+                        pass
+                    else:
+                        raise RuntimeError("Yield fixture function has more than one 'yield'")
+            else:
+                result = func
+                finalizer = lambda:None
+            return result, finalizer
+
         result = {
-            'argv_' : argv,
+            'argv_' : (lambda:argv, lambda:None),
         }
         for i_fixture_name, i_fixture_func in self.__custom_fixtures.iteritems():
-            result[i_fixture_name] = i_fixture_func()
+            fixture, finalizer = GetFixtureAndFinalizer(i_fixture_func)
+            result[i_fixture_name] = (fixture, finalizer)
         for i_plugin in self.plugins.itervalues():
-            result.update(i_plugin.GetFixtures())
+            result.update(
+                {
+                    i : (lambda:j, lambda:None)
+                    for (i,j) in i_plugin.GetFixtures().iteritems()
+                }
+            )
 
         return result
 
@@ -617,7 +648,9 @@ class App(object):
 
         def Execute(cmd, expected_output, expected_retcode):
             obtained_retcode, obtained = self.TestCall(cmd)
-            assert obtained.rstrip('\n') + '\n' == expected_output.rstrip('\n') + '\n'
+            obtained_string = obtained.rstrip('\n') + '\n'
+            expected_string = expected_output.rstrip('\n') + '\n'
+            assert obtained_string == expected_string
             assert expected_retcode == obtained_retcode, Dedent(
                 '''
                 >>> %(cmd)s
@@ -652,6 +685,7 @@ class App(object):
         cmd = None
         expected_output = ''
         expected_retcode = 0
+        script = Dedent(script)
         for i_line in script.splitlines():
             if i_line.startswith('###'):
                 continue

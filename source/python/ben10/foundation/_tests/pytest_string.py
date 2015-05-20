@@ -146,6 +146,24 @@ class Test:
         assert string == 'alpha\n\n'
 
 
+    def testDedent11(self):
+        '''
+        Check calling Dedent more than once.
+        '''
+        string = Dedent(
+            '''
+            alpha
+            bravo
+            charlie
+            '''
+        )
+        assert string == 'alpha\nbravo\ncharlie'
+        string = Dedent(string)
+        assert string == 'alpha\nbravo\ncharlie'
+        string = Dedent(string)
+        assert string == 'alpha\nbravo\ncharlie'
+
+
     def testIndent(self):
         assert Indent('alpha') == '    alpha'
 

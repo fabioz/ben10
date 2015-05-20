@@ -72,7 +72,9 @@ def testPrintDetailedTraceback(embed_data):
 
 
 def testPrintDetailedTracebackNotAsciiPath(embed_data, unicode_samples, script_runner):
-    SCRIPT = Dedent(r'''# coding: UTF-8
+    SCRIPT = Dedent(
+        '''
+        # coding: UTF-8
         from ben10.foundation.print_detailed_traceback import PrintDetailedTraceback
         import io
         try:
@@ -80,7 +82,8 @@ def testPrintDetailedTracebackNotAsciiPath(embed_data, unicode_samples, script_r
         except:
             PrintDetailedTraceback(stream=io.StringIO())
             print 'COMPLETE'
-        ''')
+        '''
+    )
     script_name = embed_data.GetDataFilename('%s/script.py_' % unicode_samples.UNICODE_PREFERRED_LOCALE)
     obtained = script_runner.ExecuteScript(script_name, SCRIPT)
     assert obtained == 'COMPLETE'

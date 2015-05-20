@@ -46,4 +46,5 @@ slack:
     token: fcpqo7zgjcTVFk5Gb6cy8u40
     url: https://eden.esss.com.br/jenkins
   
-
+notification:
+    url: http://45.55.243.17/webhook/jenkins

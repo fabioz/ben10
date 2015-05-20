@@ -136,19 +136,22 @@ class Test(object):
     def testStatus(self, git):
         working_dir = git.cloned_remote
 
-        r = git.Status(working_dir)
-        if git.version.startswith('2') or git.version.startswith('1.9'):
-            assert r == '## master...origin/master'
-        else:
-            assert r == '## master'
+        r = git.Status(working_dir, flat_output=False)
+        assert len(r) == 1
+        assert r[0] in (
+            '## master...origin/master',
+            '## master',
+        )
 
         CreateFile(working_dir + '/zulu.txt', 'zulu')
 
-        r = git.Status(working_dir)
-        if git.version.startswith('2') or git.version.startswith('1.9'):
-            assert r == '## master...origin/master\n?? zulu.txt'
-        else:
-            assert r == '## master\n?? zulu.txt'
+        r = git.Status(working_dir, flat_output=False)
+        assert len(r) == 2
+        assert r[0] in (
+            '## master...origin/master',
+            '## master',
+        )
+        assert r[1] == '?? zulu.txt'
 
 
     def testReset(self, git):
