@@ -257,6 +257,11 @@ class MultipleFilesNotFound(RuntimeError):
         return 'Files not found: %s' % ','.join(self._filenames)
 
 
+# By setting UPDATE_ORIGINAL_FILES to True, the data dir will not be copied (and some additional
+# places should also use this flag to overwrite files instead of creating them in a different place
+# for comparison -- such as the method which compares a snapshot with an existing file in sci20).
+UPDATE_ORIGINAL_FILES = False
+
 
 #===================================================================================================
 # embed_data
@@ -329,7 +334,10 @@ class _EmbedDataFixture(object):
             DeleteDirectory(self._data_dir)
 
         if IsDir(self._source_dir):
-            CopyDirectory(self._source_dir, self._data_dir)
+            if UPDATE_ORIGINAL_FILES:
+                self._data_dir = self._source_dir
+            else:
+                CopyDirectory(self._source_dir, self._data_dir)
         else:
             CreateDirectory(self._data_dir)
 
@@ -401,8 +409,9 @@ class _EmbedDataFixture(object):
         '''
         from ben10.filesystem._filesystem import DeleteDirectory
 
-        if self.delete_dir:
-            DeleteDirectory(self._data_dir, skip_on_error=True)
+        if not UPDATE_ORIGINAL_FILES:
+            if self.delete_dir:
+                DeleteDirectory(self._data_dir, skip_on_error=True)
         self._finalized = True
 
 
