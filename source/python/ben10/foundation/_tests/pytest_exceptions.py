@@ -42,6 +42,9 @@ def testExceptionToUnicodeBadEncoding(exception_message, lpe_exception_message, 
     assert ExceptionToUnicode(Exception(b'random \x90\xa1\xa2')) == 'random \ufffd\ufffd\ufffd'
 
 
+def testExceptionToUnicodeUTF8():
+    assert ExceptionToUnicode(Exception(b'Ação')) == 'Ação'
+
 
 #===================================================================================================
 # Fixtures
