@@ -28,7 +28,7 @@ dependencies:
   - werkzeug==0.10.4
 
 activate:
-  - activate.sh
+  - conda/activate.sh
 
 deactivate:
-  - deactivate.sh
+  - conda/deactivate.sh
