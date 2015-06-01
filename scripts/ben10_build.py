@@ -26,4 +26,5 @@ class Ben10BuildCommand(BuildCommand):
 
     @Override(BuildCommand.EvPublish)
     def EvPublish(self, args):
-        self.CiPublish(installer=False, all_platforms='win32,win64,redhat64', force=True)
+        if self.shared_script.Evaluate('`system.platform`') != 'centos64':
+            self.CiPublish(installer=False, all_platforms='win32,win64,redhat64', force=True)
