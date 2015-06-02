@@ -770,3 +770,29 @@ class Test:
         stub = IBar(bar)
         with pytest.raises(AttributeError):
             stub(stuff=None)
+
+
+    def testImplementsInterfaceAsBoolError(self):
+        '''
+        Test if the common erroneous use of interface.ImplementsInterface() instead of
+        interface.IsImplementation() to test if an object implements an interface correctly
+        raises a RuntimeError.
+        '''
+        class I1(Interface):
+            def M1(self):
+                pass
+
+        class C1(object):
+
+            ImplementsInterface(I1)
+
+            def M1(self):
+                pass
+
+        obj = C1()
+
+        assert IsImplementation(obj, I1)
+
+        with pytest.raises(RuntimeError):
+            if ImplementsInterface(obj, I1):
+                pytest.fail('Managed to test "if ImplementsInterface(obj, I1):"')
