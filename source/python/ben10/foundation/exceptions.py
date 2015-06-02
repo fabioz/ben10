@@ -15,6 +15,7 @@ def ExceptionToUnicode(exception):
 
     Steps used:
         * Try to obtain Exception.__unicode__
+        * Try to obtain Exception.__str__ and decode with utf-8
         * Try to obtain Exception.__str__ and decode with locale.getpreferredencoding
         * If all fails, return Exception.__str__ and decode with (ascii, errors='replace')
 
@@ -28,12 +29,15 @@ def ExceptionToUnicode(exception):
         return unicode(exception)
     except UnicodeDecodeError:
         try:
-            # If that fails, try obtaining bytes repr and decoding with locale
-            return bytes(exception).decode(locale.getpreferredencoding())
+            # If that fails, try decoding with utf-8 which is the strictest and will complain loudly.
+            return bytes(exception).decode('utf-8')
         except UnicodeDecodeError:
-            # If all failed, give up and decode with ascii replacing errors.
-            return bytes(exception).decode(errors='replace')
-
+            try:
+                # If that fails, try obtaining bytes repr and decoding with locale
+                return bytes(exception).decode(locale.getpreferredencoding())
+            except UnicodeDecodeError:
+                # If all failed, give up and decode with ascii replacing errors.
+                return bytes(exception).decode(errors='replace')
     except UnicodeEncodeError:
         # Some exception contain unicode messages, but try to convert them to bytes when calling
         # unicode() (such as IOError). In these cases, we do our best to fix Python 2.7's poor
