@@ -7,7 +7,6 @@ pytest_plugins = [b'pytester']
 def testSlowMark(testdir):
     source = '''
     import pytest
-    from ben10.debug import IsPythonDebug
 
     pytest_plugins = [b'ben10.fixtures']
 
@@ -20,17 +19,11 @@ def testSlowMark(testdir):
 
     @pytest.mark.slow
     def test_slow(request):
-        if not IsPythonDebug():
-            assert request.node.get_marker('timeout').args[0] == 5.0
-        else:
-            assert request.node.get_marker('timeout').args[0] == 10.0
+        assert request.node.get_marker('timeout').args[0] == 5.0
 
     @pytest.mark.extra_slow
     def test_extra_slow(request):
-        if not IsPythonDebug():
-            assert request.node.get_marker('timeout').args[0] == 20.0
-        else:
-            assert request.node.get_marker('timeout').args[0] == 40.0
+        assert request.node.get_marker('timeout').args[0] == 20.0
 '''
     testdir.makepyfile(test_slow_mark=source)
     result = testdir.runpytest('-v', '--timeout=1')
