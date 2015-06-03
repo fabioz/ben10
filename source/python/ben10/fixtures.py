@@ -15,6 +15,32 @@ import sys
 
 
 #===================================================================================================
+# pytest_collection_modifyitems
+#===================================================================================================
+def pytest_collection_modifyitems(session, config, items):
+    '''
+    Multiplies the timeout by a factor when the test is marked as `slow` or `extra_slow`.
+    '''
+    from _pytest.mark import MarkDecorator
+    from ben10.debug import IsPythonDebug
+    for item in items:
+        if item.get_marker('slow'):
+            factor = 5.0
+        elif item.get_marker('extra_slow'):
+            factor = 20.0
+        else:
+            continue
+
+        if IsPythonDebug():
+            factor *= 2
+
+        timeout_value = config.getoption('timeout')
+        timeout_value *= factor
+        item.add_marker(MarkDecorator('timeout', (timeout_value,), {}))
+
+
+
+#===================================================================================================
 # global_settings_fixture
 #===================================================================================================
 @pytest.yield_fixture(autouse=True, scope='session')
