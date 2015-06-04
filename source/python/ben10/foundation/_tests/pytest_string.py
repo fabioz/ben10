@@ -204,6 +204,12 @@ class Test:
         assert SafeSplit('alpha bravo', ' ', 2) == ['alpha', 'bravo', '']
         assert SafeSplit('alpha bravo charlie', ' ', 2) == ['alpha', 'bravo', 'charlie']
 
+        assert SafeSplit('alpha:bravo:charlie', ':', 1) == ['alpha', 'bravo:charlie']
+        assert SafeSplit('alpha:bravo:charlie', ':', 1, reversed=True) == ['alpha:bravo', 'charlie']
+
+        assert SafeSplit('alpha', ':', 1, []) == ['alpha', []]
+        assert SafeSplit('alpha', ':', 1, [], reversed=True) == [[], 'alpha']
+
 
     def testFormatIterable(self):
         from ben10.foundation.string import FormatIterable

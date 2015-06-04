@@ -135,7 +135,7 @@ def Indent(text, indent=1, indentation='    '):
 #===================================================================================================
 # SafeSplit
 #===================================================================================================
-def SafeSplit(s, sep, maxsplit=None, default=''):
+def SafeSplit(s, sep, maxsplit=None, default='', reversed=False):
     '''
     Perform a string split granting the size of the resulting list.
 
@@ -147,14 +147,25 @@ def SafeSplit(s, sep, maxsplit=None, default=''):
     :return list(unicode):
         Returns a list with fixed size of maxsplit + 1.
     '''
-    if maxsplit is None:
-        result = s.split(sep)
+    # NOTE: Can't import "string" module for string.split/string.rsplit because of module name
+    # clashing with this module.
+    if reversed:
+        split = lambda s,*args: s.rsplit(*args)
     else:
-        result = s.split(sep, maxsplit)
+        split = lambda s,*args: s.split(*args)
+
+    if maxsplit is None:
+        result = split(s, sep)
+    else:
+        result = split(s, sep, maxsplit)
         result_len = maxsplit + 1
         diff_len = result_len - len(result)
         if diff_len > 0:
-            result += [default] * diff_len
+            defaults = [default] * diff_len
+            if reversed:
+                result = defaults + result
+            else:
+                result = result + defaults
     return result
 
 
