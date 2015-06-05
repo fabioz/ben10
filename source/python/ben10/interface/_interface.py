@@ -702,6 +702,17 @@ def _AssertImplementsFullChecking(class_or_instance, interface, check_attr=True)
 #===================================================================================================
 
 
+class _IfGuard(object):
+    '''
+    Guard that raises an error if an attempt to convert it to a boolean value is made.
+    '''
+
+    def __nonzero__(self):
+        raise RuntimeError('Invalid attempt to test interface.ImplementsInterface(). Did you mean interface.IsImplementation()?')
+
+
+__IF_GUARD = _IfGuard()
+
 
 #===================================================================================================
 # ImplementsInterface
@@ -750,6 +761,8 @@ def ImplementsInterface(*interfaces, **kwargs):
 
     finally:
         del frame
+        # Return a guard object to keep users from testing 'if ImplementsInterface(...)'
+        return __IF_GUARD
 
 
 #===================================================================================================
