@@ -21,18 +21,31 @@ def pytest_collection_modifyitems(session, config, items):
     '''
     Multiplies the timeout by a factor when the test is marked as `slow` or `extra_slow`.
     '''
+    timeout_value = config.getoption('timeout')
+
+    if timeout_value is None:
+        return
+
     from _pytest.mark import MarkDecorator
+    from ben10 import debug
+
     for item in items:
+        item_timeout = timeout_value
+
+        timeout_marker = item.get_marker('timeout')
+        if timeout_marker is not None:
+            item_timeout = timeout_marker.args[0]
+
+        factor = 1.0
         if item.get_marker('slow'):
             factor = 5.0
-        elif item.get_marker('extra_slow'):
-            factor = 20.0
-        else:
-            continue
 
-        timeout_value = config.getoption('timeout')
-        timeout_value *= factor
-        item.add_marker(MarkDecorator('timeout', (timeout_value,), {}))
+        if debug.IsPythonDebug():
+            factor *= 3
+
+        item_timeout *= factor
+
+        item.add_marker(MarkDecorator('timeout', (item_timeout,), {}))
 
 
 
