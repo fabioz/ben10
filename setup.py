@@ -25,14 +25,18 @@ class PyTest(TestCommand):
 
 setup(
     name='ben10',
-    version='0.1.0',
+    version='0.1.1',
 
     author='Alexandre Andrade',
     author_email='ama@esss.com.br',
 
-    url='https://eden.esss.com.br/stash/projects/ESSS/repos/ben10',
+    url='https://github.com/ESSS/ben10',
 
     description = 'Basic ESSS Namespace',
+    long_description = '''BEN10 name is a collection of python utilities from ESSS (www.esss.com.br) development team.
+
+This is a draft effort to publish a Open Source library with our base code, developed during the last 10 year using Python.
+''',
 
     classifiers=[
         # How mature is this project? Common values are
