@@ -218,13 +218,18 @@ def ImportModule(p_import_path):
         * Returns the "final" module, so importing "coilib50.subject.visu" return the "visu"
         module, not the "coilib50" as returned by __import__
     '''
+    from ben10.foundation.reraise import Reraise
     try:
         result = __import__(p_import_path)
         for i in p_import_path.split('.')[1:]:
-            result = getattr(result, i)
+            try:
+                result = getattr(result, i)
+            except AttributeError as e:
+                Reraise(
+                    e,
+                    'AttributeError:  p_import_path: %s, %s has no %s' % (p_import_path, result, i))
         return result
     except ImportError, e:
-        from ben10.foundation.reraise import Reraise
         Reraise(
             e,
             'Error importing module %s' % p_import_path)
