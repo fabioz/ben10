@@ -7,3 +7,4 @@ encoding//source/python/ben10/foundation/_tests/pytest_print_detailed_traceback.
 encoding//source/python/ben10/foundation/_tests/pytest_reraise.py=utf-8
 encoding//source/python/ben10/foundation/_tests/pytest_string.py=UTF-8
 encoding//source/python/ben10/foundation/_tests/pytest_uname.py=UTF-8
+encoding//source/python/ben10/foundation/_tests/test_reraise.py=utf-8

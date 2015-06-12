@@ -335,7 +335,9 @@ class _EmbedDataFixture(object):
         # The data directory name
         # This name is created based on the module_name
         # Adding the function name to enable parallel run of tests in the same module (pytest_xdist)
+        # Add compatibility for 'test_.*' and 'pytest_.*' (old naming standard)
         self._data_dir = module_name.replace('pytest_', 'data_')
+        self._data_dir = module_name.replace('test_', 'data_')
         self._data_dir += '__' + node_name
 
         # @ivar _created: boolean
