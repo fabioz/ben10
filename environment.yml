@@ -1,5 +1,8 @@
 name: ben10
 
+includes:
+  - {{ root }}/../aasimar/environment.yml
+
 dependencies:
   - cogapp==2.4
   - colorama==0.3.3
@@ -17,7 +20,7 @@ dependencies:
   - path.py==7.3
   - pyftpdlib==1.4.0
   - pyopenssl==0.15.1
-  - pytest==2.7.1
+  - pytest==2.7.0
   - pytest-cov==1.8.1
   - pytest-localserver==0.3.3
   - pytest-timeout==0.4
@@ -27,8 +30,7 @@ dependencies:
   - setuptools==12.2
   - werkzeug==0.10.4
 
-activate:
-  - conda/activate.sh
+environment:
+  - PYTHONPATH:
+    - {{ root }}/source/python
 
-deactivate:
-  - conda/deactivate.sh
