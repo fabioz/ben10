@@ -21,7 +21,7 @@ def pytest_collection_modifyitems(session, config, items):
     '''
     Multiplies the timeout by a factor when the test is marked as `slow`.
     '''
-    timeout_value = config.getoption('timeout')
+    timeout_value = config.getoption('timeout', default=None)
 
     if timeout_value is None:
         return
