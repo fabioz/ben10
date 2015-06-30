@@ -262,7 +262,7 @@ class TerraForming(object):
         Sometimes, after we replace exiting code with our code we need to fix the indentation of the
         new code.
 
-        TODO: EDEN-334: Fix indentation after "to_pytest" refactoring
+        TODO: BEN-73: Fix indentation after "to_pytest" refactoring
         This is a work in progress. Currently we are not correctly generating indented code when the
         original code has multi-lines.
 
@@ -467,7 +467,7 @@ class TerraForming(object):
                 # * Note that funcdef is matched AFTER all internal code is matched, so this is
                 #   called AFTER all method calls were processed.
                 if results == self.syms.funcdef:
-                    # TODO: EDEN-335: [refactor.to_pytest] Handle the addition of needed fixtures
+                    # TODO: BEN-74: [refactor.to_pytest] Handle the addition of needed fixtures
                     # args = [i.value for i in WalkLeafs(node.children[2])]
                     return
 
