@@ -13,6 +13,7 @@ dependencies:
   - faulthandler==2.3
   - ftputil==3.2
   - futures==2.2.0
+  - git==2.4.4
   - gprof2dot==2015.02.03
   - logilab-astng==0.24.3
   - logilab-common==0.60.0
