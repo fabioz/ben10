@@ -507,7 +507,7 @@ class _EmbedDataFixture(object):
 
             if obtained != expected:
                 import difflib
-                diff = ['*** FILENAME: ' + filename1]
+                diff = ['FILES DIFFER:', filename1, filename2]
                 diff += difflib.context_diff(obtained, expected)
                 diff = '\n'.join(diff)
                 raise AssertionError(diff)

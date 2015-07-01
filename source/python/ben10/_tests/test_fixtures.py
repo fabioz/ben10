@@ -72,7 +72,9 @@ def testEmbedDataAssertEqualFiles(embed_data):
         )
     assert unicode(e.value) == Dedent(
         '''
-        *** FILENAME: data_fixtures__testEmbedDataAssertEqualFiles/alpha.txt
+        FILES DIFFER:
+        data_fixtures__testEmbedDataAssertEqualFiles/alpha.txt
+        data_fixtures__testEmbedDataAssertEqualFiles/different.txt
         ***\w
 
         ---\w
