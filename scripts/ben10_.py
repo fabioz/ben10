@@ -37,6 +37,7 @@ class Ben10(EsssProject):
         'pytest_localserver',
         'pytest_xdist',
         'pytest_timeout',
+        'pytest_cache',
     ]
 
     NAMESPACE_VARIABLES = {
