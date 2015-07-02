@@ -228,6 +228,7 @@ def pytest_configure(config):
     Enable fault handler directly into sys.stderr.
     '''
     InstallFaultHandler(config)
+    CreateSessionDataDir(config)
 
 
 def InstallFaultHandler(config):
@@ -274,6 +275,22 @@ def pytest_addoption(parser):
         default=False,
         help='Disable Windows Error dialog boxes during tests'
     )
+
+    parser.addoption(
+        '--session-data-dir',
+        default=None,
+        help='Specify the session data directory to be used.',
+    )
+    parser.addoption(
+        '--last-session-data-dir',
+        action='store_true',
+        default=False,
+        help='When enabled the last session data dir created will be used.',
+    )
+
+
+def pytest_report_header(config):
+    return ['session-data-dir: %s' % config.session_data_dir]
 
 
 #===================================================================================================
@@ -645,26 +662,6 @@ def script_runner():
 #===================================================================================================
 # Session Data Directory
 #===================================================================================================
-pytest_addoption
-def pytest_addoption(parser):
-    '''
-    Add extra options to pytest to configure session_data_dir fixture.
-
-    :param optparse.OptionParser parser:
-    '''
-    parser.addoption(
-        '--session-data-dir',
-        default=None,
-        help='Specify the session data directory to be used.',
-    )
-    parser.addoption(
-        '--last-session-data-dir',
-        action='store_true',
-        default=False,
-        help='When enabled the last session data dir created will be used.',
-    )
-
-
 @pytest.fixture(scope=b'session')
 def session_data_dir(request):
     '''
@@ -675,27 +672,34 @@ def session_data_dir(request):
         '--session-data-dir': Specify the session data directory to be used.
         '--last-session-data-dir': the last session data dir created will be used.',
     '''
+    return request.config.session_data_dir
+
+
+def CreateSessionDataDir(config):
+    '''
+    :see: session_data_dir
+    '''
     from py.path import local
 
-    root_dir = request.config.rootdir.join('tmp')
+    root_dir = config.rootdir.join('tmp')
     root_dir.ensure(dir=1)
 
-    data_dir = request.config.getoption('session_data_dir', None)
+    data_dir = config.getoption('session_data_dir', None)
     if data_dir is not None:
         if not os.path.abspath(data_dir):
             data_dir = root_dir.join(data_dir)
 
     else:
-        use_last_data_dir = request.config.getoption('last_session_data_dir', False)
+        use_last_data_dir = config.getoption('last_session_data_dir', False)
         data_dir = None
         if use_last_data_dir:
-            last_session_data_dir = request.config.cache.get("session_data_dir/last_session_data_dir", None)
+            last_session_data_dir = config.cache.get("session_data_dir/last_session_data_dir", None)
             if last_session_data_dir is not None:
                 data_dir = last_session_data_dir
 
         if data_dir is None:
             data_dir = local.make_numbered_dir(prefix='session-data-dir-', rootdir=root_dir)
 
-    request.config.cache.set("session_data_dir/last_session_data_dir", str(data_dir))
-    return str(data_dir)
+    config.cache.set("session_data_dir/last_session_data_dir", str(data_dir))
+    config.session_data_dir = str(data_dir)
 

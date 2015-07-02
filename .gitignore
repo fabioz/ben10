@@ -1,6 +1,7 @@
 *.pickle
 *.pyc
 .coverage
+/.cache/
 /.idea/
 /.venv/
 /artifacts
