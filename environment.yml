@@ -29,6 +29,7 @@ dependencies:
   - rarfile==2.7
   - ruamel.ordereddict==0.4.6
   - setuptools==12.2
+  - unrar==5.2.7
   - werkzeug==0.10.4
 
 environment:
