@@ -65,7 +65,7 @@ def global_settings_fixture(request):
         '''
         Makes the system hide the Windows Error Reporting dialog.
         '''
-        if request.config.getoption('no_dialogs') and sys.platform.startswith('win'):
+        if request.config.getoption('no_dialogs', None) and sys.platform.startswith('win'):
             # http://msdn.microsoft.com/en-us/library/windows/desktop/ms680621%28v=vs.85%29.aspx
             import ctypes
             SEM_NOGPFAULTERRORBOX = 0x0002
@@ -640,3 +640,62 @@ def script_runner():
     Component to create and execute python scripts.
     '''
     return _ScriptRunner()
+
+
+#===================================================================================================
+# Session Data Directory
+#===================================================================================================
+pytest_addoption
+def pytest_addoption(parser):
+    '''
+    Add extra options to pytest to configure session_data_dir fixture.
+
+    :param optparse.OptionParser parser:
+    '''
+    parser.addoption(
+        '--session-data-dir',
+        default=None,
+        help='Specify the session data directory to be used.',
+    )
+    parser.addoption(
+        '--last-session-data-dir',
+        action='store_true',
+        default=False,
+        help='When enabled the last session data dir created will be used.',
+    )
+
+
+@pytest.fixture(scope=b'session')
+def session_data_dir(request):
+    '''
+    Creates a root directory to be used as a root directory for a pytest session.
+    The last 3 session data dir will be kept, older ones will be deleted.
+
+    It's default configuration can be change by:
+        '--session-data-dir': Specify the session data directory to be used.
+        '--last-session-data-dir': the last session data dir created will be used.',
+    '''
+    from py.path import local
+
+    root_dir = request.config.rootdir.join('tmp')
+    root_dir.ensure(dir=1)
+
+    data_dir = request.config.getoption('session_data_dir', None)
+    if data_dir is not None:
+        if not os.path.abspath(data_dir):
+            data_dir = root_dir.join(data_dir)
+
+    else:
+        use_last_data_dir = request.config.getoption('last_session_data_dir', False)
+        data_dir = None
+        if use_last_data_dir:
+            last_session_data_dir = request.config.cache.get("session_data_dir/last_session_data_dir", None)
+            if last_session_data_dir is not None:
+                data_dir = last_session_data_dir
+
+        if data_dir is None:
+            data_dir = local.make_numbered_dir(prefix='session-data-dir-', rootdir=root_dir)
+
+    request.config.cache.set("session_data_dir/last_session_data_dir", str(data_dir))
+    return str(data_dir)
+

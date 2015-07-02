@@ -9,6 +9,8 @@ import os
 import pytest
 
 
+pytest_plugins = b'pytester'
+
 
 def testEmbedData(embed_data):
     assert not os.path.isdir('data_fixtures__testEmbedData')
@@ -165,3 +167,55 @@ def testHandledExceptions(handled_exceptions):
     handled_exceptions.ClearHandledExceptions()
 
 
+def testSessionDataDir(testdir):
+
+    testdir.makeini('''
+        [pytest]
+        addopts = -p ben10.fixtures
+    ''')
+
+    source = '''
+        import os
+        def test_1(session_data_dir):
+            assert os.path.exists(session_data_dir)
+            for i in xrange(10):
+                filename = os.path.join(session_data_dir, 'file%d.txt' % i)
+                if not os.path.exists(filename):
+                    file(filename, 'w')
+                    break
+    '''
+    testdir.makepyfile(test_file=source)
+
+    result = testdir.inline_run()
+    result.assertoutcome(passed=1)
+
+    # Check directories created
+    tmp_dir = testdir.tmpdir.join('tmp')
+    assert tmp_dir.exists()
+
+    session_0_dir = tmp_dir.join('session-data-dir-0')
+    assert session_0_dir.exists()
+    # .lock, and file0.txt
+    assert len(session_0_dir.listdir()) == 2
+
+    # New run, new session data dir
+    result = testdir.inline_run()
+    result.assertoutcome(passed=1)
+
+    session_1_dir = tmp_dir.join('session-data-dir-1')
+    assert session_1_dir.exists()
+    assert len(session_1_dir.listdir()) == 2
+
+    # Check if we can re-use the last session data dir
+    result = testdir.inline_run('--last-session-data-dir')
+    result.assertoutcome(passed=1)
+
+    # Make sure the test created a new file
+    assert len(session_1_dir.listdir()) == 3
+
+    # Check if we can re-use a previous existing data dir
+    result = testdir.inline_run('--session-data-dir=%s' % unicode(session_0_dir))
+    result.assertoutcome(passed=1)
+
+    # Make sure the test created a new file
+    assert len(session_0_dir.listdir()) == 3
