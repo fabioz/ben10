@@ -218,3 +218,30 @@ def testSessionTmpDir(testdir):
     result.assertoutcome(passed=1)
     # Make sure the test created a new file
     CheckSessionDir(session_0_dir, {'.lock', 'file0.txt', 'file1.txt'})
+
+
+def testSessionTmpDirXDist(testdir):
+    testdir.makeini('''
+        [pytest]
+        addopts = -p ben10.fixtures
+    ''')
+
+    source = '''
+        import os
+        import pytest
+
+        @pytest.mark.parametrize('i', range(4))
+        def test_foo(i, session_tmp_dir):
+            assert os.path.isdir(session_tmp_dir)
+    '''
+    testdir.makepyfile(test_file=source)
+
+    result = testdir.inline_run('-n2')
+    result.assertoutcome(passed=4)
+    assert set(os.listdir(str(testdir.tmpdir.join('tmp')))) == {'session-tmp-dir-0'}
+
+    result = testdir.inline_run('-n4')
+    result.assertoutcome(passed=4)
+    assert set(os.listdir(str(testdir.tmpdir.join('tmp')))) == \
+           {'session-tmp-dir-0', 'session-tmp-dir-1'}
+

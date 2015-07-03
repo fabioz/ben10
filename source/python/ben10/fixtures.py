@@ -219,7 +219,6 @@ def handled_exceptions():
     show_handled_exceptions_error.RaiseFoundExceptions()
 
 
-
 #===================================================================================================
 # pytest_configure
 #===================================================================================================
@@ -228,7 +227,9 @@ def pytest_configure(config):
     Enable fault handler directly into sys.stderr.
     '''
     InstallFaultHandler(config)
-    CreateSessionTmpDir(config)
+    if IsMasterNode(config):
+        CreateSessionTmpDir(config)
+        config.pluginmanager.register(_XDistTmpDirPlugin(), 'xdist-tmp-dir')
 
 
 def InstallFaultHandler(config):
@@ -279,16 +280,19 @@ def pytest_addoption(parser):
     parser.addoption(
         '--session-tmp-dir',
         default=None,
-        help='Specify the session temporary directory to be used.',
+        help='Specify the session temporary directory to be used (use in DEV only).',
     )
     parser.addoption(
         '--last-session-tmp-dir',
         action='store_true',
         default=False,
-        help='When enabled the last session temporary directory created will be used.',
+        help='When enabled the last session temporary directory created will be used (use in DEV only).',
     )
 
 
+#===================================================================================================
+# pytest_report_header
+#===================================================================================================
 def pytest_report_header(config):
     return ['session-tmp-dir: %s' % config.session_tmp_dir]
 
@@ -672,7 +676,10 @@ def session_tmp_dir(request):
         '--session-tmp-dir': Specify the session temporary directory to be used.
         '--last-session-tmp-dir': the last session temporary dir created will be used.',
     '''
-    return request.config.session_tmp_dir
+    if IsMasterNode(request.config):
+        return request.config.session_tmp_dir
+    else:
+        return request.config.slaveinput['session-tmp-dir']
 
 
 def CreateSessionTmpDir(config):
@@ -703,3 +710,35 @@ def CreateSessionTmpDir(config):
     config.cache.set("session_tmp_dir/last_session_tmp_dir", str(tmp_dir))
     config.session_tmp_dir = str(tmp_dir)
 
+
+
+class _XDistTmpDirPlugin(object):
+    """
+    Dummy plugin that is registered inside the pytest_configure in this module.
+
+    This will install a hook called by pytest_xdist when it is about to setup a slave, and
+    is used to send the created session-tmp-dir from the master to the slave.
+
+    We can't just declare this plugin directly at the module level because pytest validates hooks
+    (any function which starts with "pytest_" is checked), and depending on the command line
+    options when ben10.fixtures is seen by pytest xdist might not be loaded yet, hence the
+    new hook is not registered then the validation fails.
+    """
+
+    def pytest_configure_node(self, node):
+        """xdist plugin hook"""
+        node.slaveinput['session-tmp-dir'] = node.config.session_tmp_dir
+
+
+def IsSlaveNode(config):
+    """Return True if the code running the given pytest.config object is running in a xdist slave
+    node.
+    """
+    return hasattr(config, 'slaveinput')
+
+
+def IsMasterNode(config):
+    """Return True if the code running the given pytest.config object is running in a xdist master
+    node or not running xdist at all.
+    """
+    return not IsSlaveNode(config)
