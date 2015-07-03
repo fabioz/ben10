@@ -228,7 +228,7 @@ def pytest_configure(config):
     Enable fault handler directly into sys.stderr.
     '''
     InstallFaultHandler(config)
-    CreateSessionDataDir(config)
+    CreateSessionTmpDir(config)
 
 
 def InstallFaultHandler(config):
@@ -277,20 +277,20 @@ def pytest_addoption(parser):
     )
 
     parser.addoption(
-        '--session-data-dir',
+        '--session-tmp-dir',
         default=None,
-        help='Specify the session data directory to be used.',
+        help='Specify the session temporary directory to be used.',
     )
     parser.addoption(
-        '--last-session-data-dir',
+        '--last-session-tmp-dir',
         action='store_true',
         default=False,
-        help='When enabled the last session data dir created will be used.',
+        help='When enabled the last session temporary directory created will be used.',
     )
 
 
 def pytest_report_header(config):
-    return ['session-data-dir: %s' % config.session_data_dir]
+    return ['session-tmp-dir: %s' % config.session_tmp_dir]
 
 
 #===================================================================================================
@@ -660,46 +660,46 @@ def script_runner():
 
 
 #===================================================================================================
-# Session Data Directory
+# Session Temporary Directory
 #===================================================================================================
 @pytest.fixture(scope=b'session')
-def session_data_dir(request):
+def session_tmp_dir(request):
     '''
     Creates a root directory to be used as a root directory for a pytest session.
-    The last 3 session data dir will be kept, older ones will be deleted.
+    The last 3 session temporary direrctory will be kept, older ones will be deleted.
 
     It's default configuration can be change by:
-        '--session-data-dir': Specify the session data directory to be used.
-        '--last-session-data-dir': the last session data dir created will be used.',
+        '--session-tmp-dir': Specify the session temporary directory to be used.
+        '--last-session-tmp-dir': the last session temporary dir created will be used.',
     '''
-    return request.config.session_data_dir
+    return request.config.session_tmp_dir
 
 
-def CreateSessionDataDir(config):
+def CreateSessionTmpDir(config):
     '''
-    :see: session_data_dir
+    :see: session_tmp_dir
     '''
     from py.path import local
 
     root_dir = config.rootdir.join('tmp')
     root_dir.ensure(dir=1)
 
-    data_dir = config.getoption('session_data_dir', None)
-    if data_dir is not None:
-        if not os.path.abspath(data_dir):
-            data_dir = root_dir.join(data_dir)
+    tmp_dir = config.getoption('session_tmp_dir', None)
+    if tmp_dir is not None:
+        if not os.path.abspath(tmp_dir):
+            tmp_dir = root_dir.join(tmp_dir)
 
     else:
-        use_last_data_dir = config.getoption('last_session_data_dir', False)
-        data_dir = None
-        if use_last_data_dir:
-            last_session_data_dir = config.cache.get("session_data_dir/last_session_data_dir", None)
-            if last_session_data_dir is not None:
-                data_dir = last_session_data_dir
+        use_last_tmp_dir = config.getoption('last_session_tmp_dir', False)
+        tmp_dir = None
+        if use_last_tmp_dir:
+            last_session_tmp_dir = config.cache.get("session_tmp_dir/last_session_tmp_dir", None)
+            if last_session_tmp_dir is not None:
+                tmp_dir = last_session_tmp_dir
 
-        if data_dir is None:
-            data_dir = local.make_numbered_dir(prefix='session-data-dir-', rootdir=root_dir)
+        if tmp_dir is None:
+            tmp_dir = local.make_numbered_dir(prefix='session-tmp-dir-', rootdir=root_dir)
 
-    config.cache.set("session_data_dir/last_session_data_dir", str(data_dir))
-    config.session_data_dir = str(data_dir)
+    config.cache.set("session_tmp_dir/last_session_tmp_dir", str(tmp_dir))
+    config.session_tmp_dir = str(tmp_dir)
 

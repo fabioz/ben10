@@ -167,7 +167,7 @@ def testHandledExceptions(handled_exceptions):
     handled_exceptions.ClearHandledExceptions()
 
 
-def testSessionDataDir(testdir):
+def testSessionTmpDir(testdir):
 
     testdir.makeini('''
         [pytest]
@@ -176,15 +176,19 @@ def testSessionDataDir(testdir):
 
     source = '''
         import os
-        def test_1(session_data_dir):
-            assert os.path.exists(session_data_dir)
+        def test_1(session_tmp_dir):
+            assert os.path.exists(session_tmp_dir)
             for i in xrange(10):
-                filename = os.path.join(session_data_dir, 'file%d.txt' % i)
+                filename = os.path.join(session_tmp_dir, 'file%d.txt' % i)
                 if not os.path.exists(filename):
                     file(filename, 'w')
                     break
     '''
     testdir.makepyfile(test_file=source)
+
+    def CheckSessionDir(session_dir, contents):
+        assert session_dir.exists()
+        assert set(os.listdir(unicode(session_dir))) == contents
 
     result = testdir.inline_run()
     result.assertoutcome(passed=1)
@@ -193,29 +197,24 @@ def testSessionDataDir(testdir):
     tmp_dir = testdir.tmpdir.join('tmp')
     assert tmp_dir.exists()
 
-    session_0_dir = tmp_dir.join('session-data-dir-0')
-    assert session_0_dir.exists()
-    # .lock, and file0.txt
-    assert len(session_0_dir.listdir()) == 2
+    session_0_dir = tmp_dir.join('session-tmp-dir-0')
+    CheckSessionDir(session_0_dir, {'.lock', 'file0.txt'})
 
-    # New run, new session data dir
+    # New run, new session tmp dir
     result = testdir.inline_run()
     result.assertoutcome(passed=1)
 
-    session_1_dir = tmp_dir.join('session-data-dir-1')
-    assert session_1_dir.exists()
-    assert len(session_1_dir.listdir()) == 2
+    session_1_dir = tmp_dir.join('session-tmp-dir-1')
+    CheckSessionDir(session_1_dir, {'.lock', 'file0.txt'})
 
-    # Check if we can re-use the last session data dir
-    result = testdir.inline_run('--last-session-data-dir')
+    # Check if we can re-use the last session tmp dir
+    result = testdir.inline_run('--last-session-tmp-dir')
     result.assertoutcome(passed=1)
-
     # Make sure the test created a new file
-    assert len(session_1_dir.listdir()) == 3
+    CheckSessionDir(session_1_dir, {'.lock', 'file0.txt', 'file1.txt'})
 
-    # Check if we can re-use a previous existing data dir
-    result = testdir.inline_run('--session-data-dir=%s' % unicode(session_0_dir))
+    # Check if we can re-use a previous existing tmp dir
+    result = testdir.inline_run('--session-tmp-dir=%s' % unicode(session_0_dir))
     result.assertoutcome(passed=1)
-
     # Make sure the test created a new file
-    assert len(session_0_dir.listdir()) == 3
+    CheckSessionDir(session_0_dir, {'.lock', 'file0.txt', 'file1.txt'})
