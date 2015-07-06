@@ -546,7 +546,7 @@ class Git(Singleton):
             repo_path,
         )
 
-        stats = stats[1]
+        stats = stats[-1]
         changed = ExtractValue(stats, '(\d+) file[s]? changed')
         insertions = ExtractValue(stats, '(\d+) insertion[s]?')
         deletions = ExtractValue(stats, '(\d+) deletion')
@@ -869,7 +869,9 @@ class Git(Singleton):
             raise RuntimeError('Error parsing output from git branch')
 
         # The comment differs depending on Git version. The text "(no branch)' was used before version 1.8.3
-        if current_branch == '(no branch)' or current_branch.startswith('(detached from'):
+        if (current_branch == '(no branch)' or 
+            current_branch.startswith('(detached from') or
+            'detached at' in current_branch):
             raise NotCurrentlyInAnyBranchError(repo_path)
 
         return current_branch

@@ -275,6 +275,13 @@ def pytest_addoption(parser):
         help='Disable Windows Error dialog boxes during tests'
     )
 
+    parser.addoption(
+        '--force-regen',
+        action='store_true',
+        default=False,
+        help='Re-generate all data_regression fixture data files.',
+    )
+
 
 #===================================================================================================
 # MultipleFilesNotFound
@@ -507,7 +514,7 @@ class _EmbedDataFixture(object):
 
             if obtained != expected:
                 import difflib
-                diff = ['*** FILENAME: ' + filename1]
+                diff = ['FILES DIFFER:', filename1, filename2]
                 diff += difflib.context_diff(obtained, expected)
                 diff = '\n'.join(diff)
                 raise AssertionError(diff)
@@ -640,3 +647,114 @@ def script_runner():
     Component to create and execute python scripts.
     '''
     return _ScriptRunner()
+
+
+@pytest.fixture
+def data_regression(embed_data, request):
+    """
+    :param embed_data:
+    :param request:
+    :return:
+    """
+    return DataRegressionFixture(embed_data, request)
+
+
+class DataRegressionFixture(object):
+    """
+    Fixture used to test arbitrary data against known versions previously
+    recorded by this same fixture. Useful to test 3rd party APIs or where testing directly
+    generated data from other sources.
+
+    Create a dict in your test containing a arbitrary data you want to test, and
+    call the `Check` function. The first time it will fail but will generate a file in your
+    data directory.
+
+    Subsequent runs against the same data will now compare against the generated file and pass
+    if the dicts are equal, or fail showing a diff otherwise. To regenerate the data,
+    either set `force_regen` attribute to True or pass the `--force-regen` flag to pytest
+    which will regenerate the data files for all tests. Make sure to diff the files to ensure
+    the new changes are expected and not regressions.
+
+    The dict may be anything serializable by the `yaml` library.
+
+    :type embed_data: ben10.fixtures._EmbedDataFixture
+    """
+
+    def __init__(self, embed_data, request):
+        """
+        :param embed_data: embed_data fixture
+        :type request: SubRequest
+        """
+        self.request = request
+        self.embed_data = embed_data
+        self.force_regen = False
+
+
+    def Check(self, data_dict, basename=None, fullpath=None):
+        """
+        Checks the given dict against a previously recorded version, or generate a new file.
+
+        :param dict data_dict: any yaml serializable dict.
+
+        :param unicode basename: basename of the file to test/record. If not given the name
+            of the test is used.
+        :param unicode fullpath: complete path to use as a reference file. This option
+            will ignore embed_data completely, being useful if a reference file is located
+            in the session data dir for example.
+
+        basename and fullpath are exclusive.
+        """
+        __tracebackhide__ = True
+
+        import io
+        import re
+
+        def DumpToFile(data_dict, filename):
+            """Dump dict contents to the given filename"""
+            import yaml
+            with io.open(filename, 'wb') as f:
+                yaml.safe_dump(
+                    data_dict,
+                    f,
+                    default_flow_style=False,
+                    allow_unicode=True,
+                    indent=2,
+                    encoding='utf-8',
+                )
+
+        assert not (basename and fullpath), "pass either basename or fullpath, but not both"
+
+        if fullpath:
+            filename = source_filename = os.path.abspath(fullpath)
+            source_dir = os.path.dirname(filename)
+        else:
+            dump_ext = '.yml'
+            if basename is None:
+                basename = re.sub("[\W]", "_", self.request.node.name)
+            filename = self.embed_data.GetDataFilename(basename, absolute=True) + dump_ext
+            source_dir = self.embed_data._source_dir
+            source_filename = os.path.join(source_dir, basename + dump_ext)
+
+        force_regen = self.force_regen or self.request.config.getoption('force_regen')
+        if force_regen or not os.path.isfile(filename):
+            if not os.path.isdir(source_dir):
+                os.makedirs(source_dir)
+
+            DumpToFile(data_dict, source_filename)
+
+            if not os.path.isfile(filename):
+                msg = 'File not found in data directory, created one at: {}'
+                pytest.fail(msg.format(source_filename))
+            else:
+                msg = '--force-regen set, regenerating file at: {} '
+                pytest.fail(msg.format(source_filename))
+        else:
+            path, ext = os.path.splitext(filename)
+            new_filename = path + '.obtained' + ext
+
+            DumpToFile(data_dict, new_filename)
+
+            self.embed_data.AssertEqualFiles(
+                os.path.abspath(filename), os.path.abspath(new_filename))
+
+
