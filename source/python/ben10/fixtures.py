@@ -286,7 +286,7 @@ def pytest_addoption(parser):
         '--last-session-tmp-dir',
         action='store_true',
         default=False,
-        help='When enabled the last session temporary directory created will be used (use in DEV only).',
+        help='When enabled the last session temporary directory will be used (use in DEV only).',
     )
 
 
@@ -691,25 +691,26 @@ def CreateSessionTmpDir(config):
     root_dir = config.rootdir.join('tmp')
     root_dir.ensure(dir=1)
 
+    def SetTmpDir(tmp_dir):
+        config.cache.set("session_tmp_dir/last_session_tmp_dir", str(tmp_dir))
+        config.session_tmp_dir = str(tmp_dir)
+
+    # Use specified directory
     tmp_dir = config.getoption('session_tmp_dir', None)
     if tmp_dir is not None:
         if not os.path.abspath(tmp_dir):
             tmp_dir = root_dir.join(tmp_dir)
+        return SetTmpDir(tmp_dir)
 
-    else:
-        use_last_tmp_dir = config.getoption('last_session_tmp_dir', False)
-        tmp_dir = None
-        if use_last_tmp_dir:
-            last_session_tmp_dir = config.cache.get("session_tmp_dir/last_session_tmp_dir", None)
-            if last_session_tmp_dir is not None:
-                tmp_dir = last_session_tmp_dir
+    # Use last session directory
+    if config.getoption('last_session_tmp_dir', False):
+        last_session_tmp_dir = config.cache.get("session_tmp_dir/last_session_tmp_dir", None)
+        if last_session_tmp_dir and os.path.exists(last_session_tmp_dir):
+            return SetTmpDir(last_session_tmp_dir)
 
-        if tmp_dir is None:
-            tmp_dir = local.make_numbered_dir(prefix='session-tmp-dir-', rootdir=root_dir)
-
-    config.cache.set("session_tmp_dir/last_session_tmp_dir", str(tmp_dir))
-    config.session_tmp_dir = str(tmp_dir)
-
+    # Create new tmp directory
+    tmp_dir = local.make_numbered_dir(prefix='session-tmp-dir-', rootdir=root_dir)
+    return SetTmpDir(tmp_dir)
 
 
 class _XDistTmpDirPlugin(object):
