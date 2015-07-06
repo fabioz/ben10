@@ -231,6 +231,10 @@ def pytest_configure(config):
         CreateSessionTmpDir(config)
         config.pluginmanager.register(_XDistTmpDirPlugin(), 'xdist-tmp-dir')
 
+    import pytest_cache
+    if not config.pluginmanager.isregistered(pytest_cache, 'pytest-cache'):
+        config.pluginmanager.register(pytest_cache, 'pytest-cache')
+
 
 def InstallFaultHandler(config):
     """
