@@ -21,6 +21,7 @@ class Ben10(EsssProject):
         'gprof2dot',
         'ordereddict',
         'path_py',
+        'pyyaml',
         'pyftpdlib',
         'rarfile',
         'windows:pywin32',

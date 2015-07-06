@@ -53,7 +53,8 @@ def testSlowMark(testdir, is_debug):
     ])
 
 
-def testNoTimeoutParameter(testdir):
+@pytest.mark.parametrize('disable_timeout_plugin', [True, False])
+def testNoTimeoutParameter(testdir, disable_timeout_plugin):
     source = '''
         import pytest
 
@@ -70,8 +71,12 @@ def testNoTimeoutParameter(testdir):
         def test_slow(request):
             assert request.node.get_marker('timeout') is None
     '''
-
     testdir.makepyfile(test_slow_mark=source)
+    if disable_timeout_plugin:
+        testdir.makeini('''
+            [pytest]
+            addopts = -p no:timeout
+        ''')
     result = testdir.runpytest('-v')
     result.stdout.fnmatch_lines([
         '*::test_no_mark PASSED*',
