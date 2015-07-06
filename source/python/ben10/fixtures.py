@@ -231,10 +231,6 @@ def pytest_configure(config):
         CreateSessionTmpDir(config)
         config.pluginmanager.register(_XDistTmpDirPlugin(), 'xdist-tmp-dir')
 
-    import pytest_cache
-    if not config.pluginmanager.isregistered(pytest_cache, 'pytest-cache'):
-        config.pluginmanager.register(pytest_cache, 'pytest-cache')
-
 
 def InstallFaultHandler(config):
     """
@@ -696,7 +692,9 @@ def CreateSessionTmpDir(config):
     root_dir.ensure(dir=1)
 
     def SetTmpDir(tmp_dir):
-        config.cache.set("session_tmp_dir/last_session_tmp_dir", str(tmp_dir))
+        # Just in case there is no cache plugin
+        if hasattr(config, 'cache'):
+            config.cache.set("session_tmp_dir/last_session_tmp_dir", str(tmp_dir))
         config.session_tmp_dir = str(tmp_dir)
 
     # Use specified directory
@@ -708,7 +706,10 @@ def CreateSessionTmpDir(config):
 
     # Use last session directory
     if config.getoption('last_session_tmp_dir', False):
-        last_session_tmp_dir = config.cache.get("session_tmp_dir/last_session_tmp_dir", None)
+        last_session_tmp_dir = None
+        # Just in case there is no cache plugin
+        if hasattr(config, 'cache'):
+            last_session_tmp_dir = config.cache.get("session_tmp_dir/last_session_tmp_dir", None)
         if last_session_tmp_dir and os.path.exists(last_session_tmp_dir):
             return SetTmpDir(last_session_tmp_dir)
 
