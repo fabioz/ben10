@@ -260,9 +260,7 @@ def IterEnumValues(enum_class):
     Helper function to iterate on enumerate values for a given class, that should work identically
     with both Enum and with C++ enums exported with Boost.Python.
     '''
-    base = enum_class.__bases__[0]
-
-    if _IsBoostPythonEnum(enum_class):
+    if isinstance(enum_class, type) and _IsBoostPythonEnum(enum_class):
         return (enum_value for _integer_value, enum_value in sorted(enum_class.values.iteritems()))
     else:
         return iter(enum_class)
