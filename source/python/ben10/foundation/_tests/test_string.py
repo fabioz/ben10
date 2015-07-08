@@ -1,6 +1,6 @@
 # coding: UTF-8
 from __future__ import unicode_literals
-from ben10.foundation.string import Dedent, Indent, SafeSplit, ToUnicode
+from ben10.foundation.string import Dedent, Indent, SafeSplit, ToUnicode, MatchAny
 from mock import patch
 import locale
 import pytest
@@ -236,3 +236,11 @@ class Test:
 
         result = ToUnicode(value, 'cp1252')
         assert result == 'Não'
+
+
+    def testMatchAny(self):
+        assert MatchAny('alpha', ['alpha', 'bravo']) == True
+        assert MatchAny('bravo', ['alpha', 'bravo']) == True
+        assert MatchAny('charlie', ['alpha', 'bravo']) == False
+        assert MatchAny('one:alpha', ['one:.*',]) == True
+        assert MatchAny('two:alpha', ['one:.*',]) == False

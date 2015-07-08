@@ -185,9 +185,9 @@ def ToByteString(arg):
     return arg
 
 
-#===============================================================================
+#===================================================================================================
 # FormatIterable
-#===============================================================================
+#===================================================================================================
 def FormatIterable(iterable, format_expr="'%s'"):
     '''
     Formats an iterable into a string by applying format_expr to each item.
@@ -248,3 +248,23 @@ def ToUnicode(value, encoding=None, error_strategy='replace'):
             return value.decode(encoding)
         except UnicodeDecodeError:
             return value.decode('ascii', error_strategy)
+
+
+
+#===================================================================================================
+# MatchAny
+#===================================================================================================
+def MatchAny(text, regexes):
+    '''
+    Returns whether the given text matches any of the given regular expressions.
+
+    :param unicode text: The text to check for match.
+    :param list(unicode) regexes: List of regular expressions.
+    :return boolean:
+        Return True if the given text matches any of the given regular expressions.
+    '''
+    import re
+    for i_regex in regexes:
+        if re.match(i_regex, text) != None:
+            return True
+    return False
