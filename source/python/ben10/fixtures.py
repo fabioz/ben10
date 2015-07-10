@@ -700,7 +700,7 @@ def CreateSessionTmpDir(config):
     # Use specified directory
     tmp_dir = config.getoption('session_tmp_dir', None)
     if tmp_dir is not None:
-        if not os.path.abspath(tmp_dir):
+        if not os.path.isabs(tmp_dir):
             tmp_dir = root_dir.join(tmp_dir)
         return SetTmpDir(tmp_dir)
 
