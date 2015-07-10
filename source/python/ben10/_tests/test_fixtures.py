@@ -324,10 +324,10 @@ def testSessionTmpDirXDist(testdir):
 
     result = testdir.inline_run('-n2')
     result.assertoutcome(passed=4)
-    assert set(os.listdir(str(testdir.tmpdir.join('tmp')))) == {'session-tmp-dir-0'}
+    assert {'session-tmp-dir-0'}.issubset(os.listdir(str(testdir.tmpdir.join('tmp'))))
 
     result = testdir.inline_run('-n4')
     result.assertoutcome(passed=4)
-    assert set(os.listdir(str(testdir.tmpdir.join('tmp')))) == \
-           {'session-tmp-dir-0', 'session-tmp-dir-1'}
+    assert {'session-tmp-dir-0', 'session-tmp-dir-1'}.issubset(os.listdir(str(testdir.tmpdir.join('tmp'))))
+           
 
