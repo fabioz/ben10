@@ -36,4 +36,5 @@ dependencies:
 environment:
   - PYTHONPATH:
     - {{ root }}/source/python
-
+  - LD_LIBRARY_PATH:
+    - $CONDA_ENV_PATH/lib
