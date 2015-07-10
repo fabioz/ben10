@@ -252,3 +252,82 @@ def testDataRegressionFixtureFullPath(testdir, tmpdir):
     result = testdir.inline_run()
     result.assertoutcome(passed=1)
 
+
+def testSessionTmpDir(testdir):
+
+    testdir.makeini('''
+        [pytest]
+        addopts = -p ben10.fixtures
+    ''')
+
+    source = '''
+        import os
+        def test_1(session_tmp_dir):
+            assert os.path.exists(session_tmp_dir)
+            for i in xrange(10):
+                filename = os.path.join(session_tmp_dir, 'file%d.txt' % i)
+                if not os.path.exists(filename):
+                    file(filename, 'w')
+                    break
+    '''
+    testdir.makepyfile(test_file=source)
+
+    def CheckSessionDir(session_dir, contents):
+        assert session_dir.exists()
+        assert set(os.listdir(unicode(session_dir))) == contents
+
+    result = testdir.inline_run()
+    result.assertoutcome(passed=1)
+
+    # Check directories created
+    tmp_dir = testdir.tmpdir.join('tmp')
+    assert tmp_dir.exists()
+
+    session_0_dir = tmp_dir.join('session-tmp-dir-0')
+    CheckSessionDir(session_0_dir, {'.lock', 'file0.txt'})
+
+    # New run, new session tmp dir
+    result = testdir.inline_run()
+    result.assertoutcome(passed=1)
+
+    session_1_dir = tmp_dir.join('session-tmp-dir-1')
+    CheckSessionDir(session_1_dir, {'.lock', 'file0.txt'})
+
+    # Check if we can re-use the last session tmp dir
+    result = testdir.inline_run('--last-session-tmp-dir')
+    result.assertoutcome(passed=1)
+    # Make sure the test created a new file
+    CheckSessionDir(session_1_dir, {'.lock', 'file0.txt', 'file1.txt'})
+
+    # Check if we can re-use a previous existing tmp dir
+    result = testdir.inline_run('--session-tmp-dir=%s' % unicode(session_0_dir))
+    result.assertoutcome(passed=1)
+    # Make sure the test created a new file
+    CheckSessionDir(session_0_dir, {'.lock', 'file0.txt', 'file1.txt'})
+
+
+def testSessionTmpDirXDist(testdir):
+    testdir.makeini('''
+        [pytest]
+        addopts = -p ben10.fixtures
+    ''')
+
+    source = '''
+        import os
+        import pytest
+
+        @pytest.mark.parametrize('i', range(4))
+        def test_foo(i, session_tmp_dir):
+            assert os.path.isdir(session_tmp_dir)
+    '''
+    testdir.makepyfile(test_file=source)
+
+    result = testdir.inline_run('-n2')
+    result.assertoutcome(passed=4)
+    assert set(os.listdir(str(testdir.tmpdir.join('tmp')))) == {'session-tmp-dir-0'}
+
+    result = testdir.inline_run('-n4')
+    result.assertoutcome(passed=4)
+    assert set(os.listdir(str(testdir.tmpdir.join('tmp')))) == \
+           {'session-tmp-dir-0', 'session-tmp-dir-1'}
+
