@@ -9,6 +9,8 @@ import os
 import pytest
 
 
+pytest_plugins = b'pytester'
+
 
 def testEmbedData(embed_data):
     assert not os.path.isdir('data_fixtures__testEmbedData')
@@ -72,7 +74,9 @@ def testEmbedDataAssertEqualFiles(embed_data):
         )
     assert unicode(e.value) == Dedent(
         '''
-        *** FILENAME: data_fixtures__testEmbedDataAssertEqualFiles/alpha.txt
+        FILES DIFFER:
+        data_fixtures__testEmbedDataAssertEqualFiles/alpha.txt
+        data_fixtures__testEmbedDataAssertEqualFiles/different.txt
         ***\w
 
         ---\w
@@ -164,4 +168,87 @@ def testHandledExceptions(handled_exceptions):
 
     handled_exceptions.ClearHandledExceptions()
 
+
+def testDataRegressionFixture(testdir, monkeypatch):
+    """
+    :type testdir: _pytest.pytester.TmpTestdir
+
+    :type monkeypatch: _pytest.monkeypatch.monkeypatch
+    """
+    import sys
+    import yaml
+
+    testdir.makeini('''
+        [pytest]
+        addopts = -p ben10.fixtures
+    ''')
+
+    monkeypatch.setattr(sys, 'GetData', lambda: {'contents': 'Foo', 'value': 10}, raising=False)
+    source = '''
+        import sys
+        def test_1(data_regression):
+            contents = sys.GetData()
+            data_regression.Check(contents)
+    '''
+    testdir.makepyfile(test_file=source)
+
+    # First run fails because there's no yml file yet
+    result = testdir.inline_run()
+    result.assertoutcome(failed=1)
+
+    def GetYmlContents():
+        yaml_filename = str(testdir.tmpdir / 'test_file' / 'test_1.yml')
+        assert os.path.isfile(yaml_filename)
+        with open(yaml_filename) as f:
+            return yaml.load(f)
+
+    # ensure now that the file was generated and the test passes
+    assert GetYmlContents() == {'contents': 'Foo', 'value': 10}
+    result = testdir.inline_run()
+    result.assertoutcome(passed=1)
+
+    # changing the regression data makes the test fail (file remains unchanged)
+    monkeypatch.setattr(sys, 'GetData', lambda: {'contents': 'Bar', 'value': 20}, raising=False)
+    result = testdir.inline_run()
+    result.assertoutcome(failed=1)
+    assert GetYmlContents() == {'contents': 'Foo', 'value': 10}
+
+    # force regeneration (test fails again)
+    result = testdir.inline_run('--force-regen')
+    result.assertoutcome(failed=1)
+    assert GetYmlContents() == {'contents': 'Bar', 'value': 20}
+
+    # test should pass again
+    result = testdir.inline_run()
+    result.assertoutcome(passed=1)
+
+
+def testDataRegressionFixtureFullPath(testdir, tmpdir):
+    """
+    Test data_regression with ``fullpath`` parameter.
+
+    :type testdir: _pytest.pytester.TmpTestdir
+    """
+    fullpath = tmpdir.join('full/path/to').ensure(dir=1).join('contents.yaml')
+    assert not fullpath.isfile()
+
+    testdir.makeini('''
+        [pytest]
+        addopts = -p ben10.fixtures
+    ''')
+
+    source = '''
+        def test(data_regression):
+            contents = {'data': [1, 2]}
+            data_regression.Check(contents, fullpath=%s)
+    ''' % (repr(str(fullpath)))
+    testdir.makepyfile(test_foo=source)
+    # First run fails because there's no yml file yet
+    result = testdir.inline_run()
+    result.assertoutcome(failed=1)
+
+    # ensure now that the file was generated and the test passes
+    assert fullpath.isfile()
+    result = testdir.inline_run()
+    result.assertoutcome(passed=1)
 

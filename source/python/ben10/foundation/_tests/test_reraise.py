@@ -154,9 +154,9 @@ def testReraiseKeepsTraceback(exception_configuration):
 
     crash_entry = e.traceback.getcrashentry()
     if isinstance(crash_entry.path, basestring):
-        assert traceback_filenames == [b'pytest_reraise.py'] * (len(traceback_filenames) - 1) + [b'<string>']
+        assert traceback_filenames == [b'test_reraise.py'] * (len(traceback_filenames) - 1) + [b'<string>']
     else:
-        assert traceback_filenames == [b'pytest_reraise.py'] * len(traceback_filenames)
+        assert traceback_filenames == [b'test_reraise.py'] * len(traceback_filenames)
 
     assert crash_entry.locals['code'] == exception_configuration.string_statement
 

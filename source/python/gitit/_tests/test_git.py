@@ -20,7 +20,7 @@ class Test(object):
 
     def testVersion(self, git):
         import re
-        assert re.match('^git version 1\.[89].*\.\d+$', git('--version')[0]) is not None
+        assert re.match('^git version \d\.\d\.\d(\.msysgit\.\d)?$', git('--version')[0]) is not None
 
 
     def testFetch(self, git, embed_data):
