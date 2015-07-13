@@ -4,6 +4,7 @@ includes:
   - {{ root }}/../aasimar/environment.yml
 
 dependencies:
+  - python==2.7.10
   - cogapp==2.4
   - colorama==0.3.3
   - cov-core==1.15.0
@@ -35,4 +36,5 @@ dependencies:
 environment:
   - PYTHONPATH:
     - {{ root }}/source/python
-
+  - LD_LIBRARY_PATH:
+    - $CONDA_ENV_PATH/lib
