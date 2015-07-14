@@ -825,9 +825,7 @@ def CreateSessionTmpDir(config):
     # Use last session directory
     if config.getoption('last_session_tmp_dir', False):
         last_session_tmp_dir = None
-        # Just in case there is no cache plugin
-        if hasattr(config, 'cache'):
-            last_session_tmp_dir = config.cache.get("session_tmp_dir/last_session_tmp_dir", None)
+        last_session_tmp_dir = config.cache.get("session_tmp_dir/last_session_tmp_dir", None)
         if last_session_tmp_dir and os.path.exists(last_session_tmp_dir):
             return SetTmpDir(last_session_tmp_dir)
 
