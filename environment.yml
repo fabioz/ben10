@@ -4,7 +4,6 @@ includes:
   - {{ root }}/../aasimar/environment.yml
 
 dependencies:
-  - python==2.7.10
   - cogapp==2.4
   - colorama==0.3.3
   - cov-core==1.15.0
@@ -14,7 +13,7 @@ dependencies:
   - faulthandler==2.3
   - ftputil==3.2
   - futures==2.2.0
-  - git==2.4.4
+  - git
   - gprof2dot==2015.02.03
   - logilab-astng==0.24.3
   - logilab-common==0.60.0
@@ -28,14 +27,28 @@ dependencies:
   - pytest-localserver==0.3.3
   - pytest-timeout==0.4
   - pytest-xdist==1.12
+  - python==2.7.7
+  - pyyaml==3.11
   - rarfile==2.7
   - ruamel.ordereddict==0.4.6
   - setuptools==12.2
-  - unrar==5.2.7
   - werkzeug==0.10.4
+
+  {% if os.sys.platform != 'win32' %}
+  - unrar==5.2.7
+  {% else %}
+  - gnuwin32=0.6.3
+  - openssl=1.0.0e
+  - pywin32==217
+  {% endif %}
 
 environment:
   - PYTHONPATH:
-    - {{ root }}/source/python
+    - {{ os.path.join(root, 'source', 'python') }}
+  {% if os.sys.platform != 'win32' %}
   - LD_LIBRARY_PATH:
     - $CONDA_ENV_PATH/lib
+  {% else %}
+  - PATH:
+    - "%CONDA_ENV_PATH%\\Library\\lib"
+  {% endif %}
