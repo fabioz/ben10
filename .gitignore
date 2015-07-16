@@ -1,6 +1,7 @@
 *.pickle
 *.pyc
 .coverage
+/.cache/
 /.idea/
 /.venv/
 /artifacts
@@ -8,6 +9,7 @@
 /dist/
 /docs/build/
 /source/python/ben10.egg-info/
+/tmp/
 __pycache__
 coverage.xml
 pylint.out
