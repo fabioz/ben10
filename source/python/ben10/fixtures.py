@@ -735,8 +735,6 @@ class DataRegressionFixture(object):
             """
             Check if dict contents dumped to a file match the contents in expected file.
             """
-            DumpFn(obtained_filename)
-
             self.embed_data.AssertEqualFiles(
                 os.path.abspath(obtained_filename), os.path.abspath(expected_filename))
 
@@ -784,12 +782,14 @@ def FileRegressionCheck(
     :param _EmbedDataFixture embed_data: Fixture embed_data.
     :param SubRequest request: Pytest request object.
     :param function check_fn: A function that receives as arguments, respectively, absolute path to
-    obtained file and absolute path to expected file. It must assert if contents of file match.
+        obtained file and absolute path to expected file. It must assert if contents of file match.
+        Function can safely assume that obtained file is already dumped and only care about
+        comparison.
     :param function dump_fn: A function that receive an absolute file path as argument. Implementor
-    must dump file in this path.
+        must dump file in this path.
     :param unicode extension: Extension of files compared by this check.
     :param unicode basename: basename of the file to test/record. If not given the name
-            of the test is used.
+        of the test is used.
     :param unicode fullpath: complete path to use as a reference file. This option
         will ignore `embed_data` fixture completely, being useful if a reference file is located
         in the session data dir for example.
@@ -826,6 +826,9 @@ def FileRegressionCheck(
     else:
         path, ext = os.path.splitext(filename)
         obtained_filename = path + '.obtained' + ext
+
+        dump_fn(obtained_filename)
+
         check_fn(os.path.abspath(obtained_filename), filename)
 
 
