@@ -51,4 +51,7 @@ environment:
   {% else %}
   - PATH:
     - "%CONDA_ENV_PATH%\\Library\\lib"
+
+  # Git needs us to set this
+  - HOME: "%HOMEDRIVE%\\%HOMEPATH%"
   {% endif %}
