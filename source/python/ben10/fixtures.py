@@ -730,9 +730,15 @@ class DataRegressionFixture(object):
         __tracebackhide__ = True
 
         import io
-        import re
 
-        def DumpToFile(data_dict, filename):
+        def CheckFn(obtained_filename, expected_filename):
+            """
+            Check if dict contents dumped to a file match the contents in expected file.
+            """
+            self.embed_data.AssertEqualFiles(
+                os.path.abspath(obtained_filename), os.path.abspath(expected_filename))
+
+        def DumpFn(filename):
             """Dump dict contents to the given filename"""
             import yaml
             with io.open(filename, 'wb') as f:
@@ -745,40 +751,85 @@ class DataRegressionFixture(object):
                     encoding='utf-8',
                 )
 
-        assert not (basename and fullpath), "pass either basename or fullpath, but not both"
+        FileRegressionCheck(
+            embed_data=self.embed_data,
+            request=self.request,
+            check_fn=CheckFn,
+            dump_fn=DumpFn,
+            extension='.yml',
+            basename=basename,
+            fullpath=fullpath,
+            force_regen=self.force_regen,
+        )
 
-        if fullpath:
-            filename = source_filename = os.path.abspath(fullpath)
-            source_dir = os.path.dirname(filename)
+
+def FileRegressionCheck(
+    embed_data,
+    request,
+    check_fn,
+    dump_fn,
+    extension,
+    basename=None,
+    fullpath=None,
+    force_regen=False,
+):
+    """
+    First run of this check will generate a expected file. Following attempts will always try to
+    match obtained files with that expected file.
+
+    If expected file needs to be updated, just enable `force_regen` argument.
+
+    :param _EmbedDataFixture embed_data: Fixture embed_data.
+    :param SubRequest request: Pytest request object.
+    :param function check_fn: A function that receives as arguments, respectively, absolute path to
+        obtained file and absolute path to expected file. It must assert if contents of file match.
+        Function can safely assume that obtained file is already dumped and only care about
+        comparison.
+    :param function dump_fn: A function that receive an absolute file path as argument. Implementor
+        must dump file in this path.
+    :param unicode extension: Extension of files compared by this check.
+    :param unicode basename: basename of the file to test/record. If not given the name
+        of the test is used.
+    :param unicode fullpath: complete path to use as a reference file. This option
+        will ignore `embed_data` fixture completely, being useful if a reference file is located
+        in the session data dir for example.
+    :param bool force_regen: if true it will regenerate expected file.
+    """
+    import re
+
+    assert not (basename and fullpath), "pass either basename or fullpath, but not both"
+
+    if fullpath:
+        filename = source_filename = os.path.abspath(fullpath)
+        source_dir = os.path.dirname(filename)
+    else:
+        dump_ext = extension
+        if basename is None:
+            basename = re.sub("[\W]", "_", request.node.name)
+        filename = embed_data.GetDataFilename(basename, absolute=True) + dump_ext
+        source_dir = embed_data._source_dir
+        source_filename = os.path.join(source_dir, basename + dump_ext)
+
+    force_regen = force_regen or request.config.getoption('force_regen')
+    if force_regen or not os.path.isfile(filename):
+        if not os.path.isdir(source_dir):
+            os.makedirs(source_dir)
+
+        dump_fn(source_filename)
+
+        if not os.path.isfile(filename):
+            msg = 'File not found in data directory, created one at: {}'
+            pytest.fail(msg.format(source_filename))
         else:
-            dump_ext = '.yml'
-            if basename is None:
-                basename = re.sub("[\W]", "_", self.request.node.name)
-            filename = self.embed_data.GetDataFilename(basename, absolute=True) + dump_ext
-            source_dir = self.embed_data._source_dir
-            source_filename = os.path.join(source_dir, basename + dump_ext)
+            msg = '--force-regen set, regenerating file at: {} '
+            pytest.fail(msg.format(source_filename))
+    else:
+        path, ext = os.path.splitext(filename)
+        obtained_filename = path + '.obtained' + ext
 
-        force_regen = self.force_regen or self.request.config.getoption('force_regen')
-        if force_regen or not os.path.isfile(filename):
-            if not os.path.isdir(source_dir):
-                os.makedirs(source_dir)
+        dump_fn(obtained_filename)
 
-            DumpToFile(data_dict, source_filename)
-
-            if not os.path.isfile(filename):
-                msg = 'File not found in data directory, created one at: {}'
-                pytest.fail(msg.format(source_filename))
-            else:
-                msg = '--force-regen set, regenerating file at: {} '
-                pytest.fail(msg.format(source_filename))
-        else:
-            path, ext = os.path.splitext(filename)
-            new_filename = path + '.obtained' + ext
-
-            DumpToFile(data_dict, new_filename)
-
-            self.embed_data.AssertEqualFiles(
-                os.path.abspath(filename), os.path.abspath(new_filename))
+        check_fn(os.path.abspath(obtained_filename), filename)
 
 
 #===================================================================================================
