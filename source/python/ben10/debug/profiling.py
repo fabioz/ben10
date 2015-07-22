@@ -150,7 +150,11 @@ def ShowGraph(filename):
     output_filename = filename + '.dot'
     sys.argv = ['', '-o', output_filename, '-f', 'pstats', filename]
     try:
-        gprof2dot.Main().main()
+        # Handle differences between versions
+        try:
+            gprof2dot.Main().main()  # @UndefinedVariable
+        except AttributeError:
+            gprof2dot.main()  # @UndefinedVariable
     finally:
         sys.argv = initial
 
