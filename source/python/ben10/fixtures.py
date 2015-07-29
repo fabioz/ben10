@@ -230,6 +230,7 @@ def pytest_configure(config):
     InstallFaultHandler(config)
     if IsMasterNode(config):
         CreateSessionTmpDir(config)
+    if config.pluginmanager.hasplugin('xdist'):
         config.pluginmanager.register(_XDistTmpDirPlugin(), 'xdist-tmp-dir')
 
 
