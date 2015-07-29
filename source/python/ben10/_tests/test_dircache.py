@@ -16,8 +16,8 @@ class Test(object):
         assert dir_cache.remote == embed_data['remotes/alpha.zip']
         assert dir_cache.remote_filename == 'alpha.zip'
         assert dir_cache.local_dir == embed_data['local/zulu']
-        assert dir_cache.cache_base_dir == embed_data.GetDataFilename('cache_dir', absolute=True)
-        assert dir_cache.cache_dir == embed_data.GetDataFilename('cache_dir/alpha', absolute=True)
+        assert dir_cache.cache_base_dir == embed_data.GetDataFilename('cache_dir')
+        assert dir_cache.cache_dir == embed_data.GetDataFilename('cache_dir/alpha')
         assert dir_cache.cache_name == 'alpha'
 
 
@@ -139,13 +139,13 @@ class Test(object):
         alpha, bravo, charlie = caches
 
         assert alpha.remote == embed_data['remotes/alpha.zip']
-        assert alpha.cache_dir == embed_data.GetDataFilename('cache/alpha', absolute=True)
+        assert alpha.cache_dir == embed_data.GetDataFilename('cache/alpha')
 
         assert bravo.remote == embed_data['remotes/bravo.zip']
-        assert bravo.cache_dir == embed_data.GetDataFilename('cache/bravo', absolute=True)
+        assert bravo.cache_dir == embed_data.GetDataFilename('cache/bravo')
 
         assert charlie.remote == embed_data['remotes/charlie.zip']
-        assert charlie.cache_dir == embed_data.GetDataFilename('cache/charlie', absolute=True)
+        assert charlie.cache_dir == embed_data.GetDataFilename('cache/charlie')
 
 
 

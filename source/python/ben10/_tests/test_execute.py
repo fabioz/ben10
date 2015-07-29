@@ -101,7 +101,7 @@ class Test(object):
     def testExecuteBat(self, embed_data):
 
         def DoTest(slash):
-            python_filename = os.path.normcase(embed_data.GetDataFilename('testExecute.py_', absolute=True))
+            python_filename = os.path.normcase(embed_data.GetDataFilename('testExecute.py_'))
             cmd_filename = embed_data.GetDataDirectory() + slash + 'testExecute.bat'
             self._AssertExecute(
                 Dedent(

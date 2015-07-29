@@ -81,7 +81,6 @@ class Test():
     def testGetUserHomeDirNonAscii(self, embed_data, unicode_samples, script_runner):
         dir_name = embed_data.GetDataFilename(
             unicode_samples.UNICODE_PREFERRED_LOCALE,
-            absolute=True
         )
         home_dir = script_runner.ExecuteScript(
             os.path.join(dir_name, 'script.py_'),
