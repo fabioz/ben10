@@ -1,15 +1,27 @@
 language: python
+
 python:
 - 2.7
+
+#sudo: false
+#addons:
+#  apt:
+#    packages:
+#    - unrar
+
 install:
 - sudo apt-get install -qq unrar
 - pip install --use-wheel -r requirements.txt
 - pip install --use-wheel coveralls
-- sudo rm -rf /dev/shm && sudo ln -s /run/shm /dev/shm
+#- sudo rm -rf /dev/shm && sudo ln -s /run/shm /dev/shm
+
 script:
-- coverage run --source=source setup.py test
+- python setup.py develop
+- coverage run --source=source/python setup.py test
+
 after_success:
 - coveralls
+
 notifications:
   slack:
     secure: J16JHZ51SAAqNAJZYVkislScicGew2zqVdjnjfktFO4LAQ/Y3jHja4FdXEhcNkfcJY5PwZCd5cmsUGPh6D8FvWCG5mHPyN99El9SAUKPH4Gz/4GrZuhTessQy3ZHs3fVO9v9UGG2nNkkQ1Iz/VwuVcZhYKyhdL4roN8agRi9siM=

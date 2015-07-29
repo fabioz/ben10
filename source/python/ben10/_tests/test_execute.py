@@ -265,11 +265,6 @@ class Test(object):
             'testPythonExecuteAndEnviron: PYTHONIOENCODING: %s' % DEFAULT_ENCODING,
         ]
 
-        if 'TRAVIS_BUILD_DIR' in os.environ:
-            expected_output.append(
-                os.path.expandvars('testPythonExecuteAndEnviron: PYTHONPATH: $TRAVIS_BUILD_DIR/source/python')
-            )
-
         if sys.platform != 'win32' and b'LD_LIBRARY_PATH' in os.environ:
             expected_output.append(
                 'testPythonExecuteAndEnviron: LD_LIBRARY_PATH: %s' % os.environ[b'LD_LIBRARY_PATH']

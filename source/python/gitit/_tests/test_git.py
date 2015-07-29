@@ -18,11 +18,6 @@ class Test(object):
         assert git.__call__ == git.Execute
 
 
-    def testVersion(self, git):
-        import re
-        assert re.match('^git version \d\.\d\.\d(\.msysgit\.\d)?$', git('--version')[0]) is not None
-
-
     def testFetch(self, git, embed_data):
         # Create a remote branch
         clone_1 = git.cloned_remote

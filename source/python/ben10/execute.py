@@ -807,10 +807,6 @@ def ExecutePython(
     if sys.platform != 'win32' and environ is not None:
         environ.setdefault('LD_LIBRARY_PATH', COPY_FROM_ENVIRONMENT)
 
-    # TODO: BEN-70: Find a better way to find ben10's python dir on travis-ci.
-    if 'TRAVIS_BUILD_DIR' in os.environ:
-        extra_environ['PYTHONPATH'] = os.path.expandvars(b'$TRAVIS_BUILD_DIR/source/python')
-
     return GetSubprocessOutput(
         command_line,
         cwd=cwd,
