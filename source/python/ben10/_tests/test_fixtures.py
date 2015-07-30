@@ -61,6 +61,7 @@ def testEmbedDataAssertEqualFiles(embed_data):
         FILES DIFFER:
         {alpha}
         {different}
+        HTML DIFF: {html}
         ***\w
 
         ---\w
@@ -76,6 +77,7 @@ def testEmbedDataAssertEqualFiles(embed_data):
         '''.replace('\w', ' ').format(
             alpha=embed_data.GetDataFilename('alpha.txt'),
             different=embed_data.GetDataFilename('different.txt'),
+            html=embed_data.GetDataFilename('alpha.diff.html'),
         )
     )
 

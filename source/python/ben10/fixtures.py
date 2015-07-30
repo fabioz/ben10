@@ -450,15 +450,16 @@ class _EmbedDataFixture(object):
         return self.GetDataFilename(index)
 
 
-    def AssertEqualFiles(self, filename1, filename2, fix_callback=lambda x:x, binary=False, encoding=None):
+    def AssertEqualFiles(self, obtained_fn, expected_fn, fix_callback=lambda x:x, binary=False, encoding=None):
         '''
-        Compare two files contents, showing a nice diff view if the files differs.
+        Compare two files contents. If the files differ, show the diff and write a nice HTML
+        diff file into the data directory.
 
         Searches for the filenames both inside and outside the data directory (in that order).
 
-        :param unicode filename1:
+        :param unicode obtained_fn: basename to obtained file into the data directory, or full path.
 
-        :param unicode filename2:
+        :param unicode expected_fn: basename to expected file into the data directory, or full path.
 
         :param bool binary:
             Thread both files as binary files.
@@ -471,13 +472,14 @@ class _EmbedDataFixture(object):
             A callback to "fix" the contents of the obtained (first) file.
             This callback receives a list of strings (lines) and must also return a list of lines,
             changed as needed.
-            The resulting lines will be used to compare with the contents of filename2.
+            The resulting lines will be used to compare with the contents of expected_fn.
 
         :param bool binary:
             .. seealso:: ben10.filesystem.GetFileContents
         '''
         __tracebackhide__ = True
         from ben10.filesystem import GetFileContents, GetFileLines
+        import io
 
         def FindFile(filename):
             # See if this path exists in the data dir
@@ -492,23 +494,44 @@ class _EmbedDataFixture(object):
             # If we didn't find anything, raise an error
             raise MultipleFilesNotFound([filename, data_filename])
 
-        filename1 = FindFile(filename1)
-        filename2 = FindFile(filename2)
+        obtained_fn = FindFile(obtained_fn)
+        expected_fn = FindFile(expected_fn)
 
         if binary:
-            obtained = GetFileContents(filename1, binary=True)
-            expected = GetFileContents(filename2, binary=True)
-            assert obtained == expected
+            obtained_lines = GetFileContents(obtained_fn, binary=True)
+            expected_lines = GetFileContents(expected_fn, binary=True)
+            assert obtained_lines == expected_lines
         else:
-            obtained = fix_callback(GetFileLines(filename1, encoding=encoding))
-            expected = GetFileLines(filename2, encoding=encoding)
+            obtained_lines = fix_callback(GetFileLines(obtained_fn, encoding=encoding))
+            expected_lines = GetFileLines(expected_fn, encoding=encoding)
 
-            if obtained != expected:
+            if obtained_lines != expected_lines:
+                html_fn = os.path.splitext(obtained_fn)[0] + '.diff.html'
+                html_diff = self._GenerateHTMLDiff(
+                    expected_fn, expected_lines, obtained_fn, obtained_lines)
+                with io.open(html_fn, 'w') as f:
+                    f.write(html_diff)
+
                 import difflib
-                diff = ['FILES DIFFER:', filename1, filename2]
-                diff += difflib.context_diff(obtained, expected)
-                diff = '\n'.join(diff)
-                raise AssertionError(diff)
+                diff = ['FILES DIFFER:', obtained_fn, expected_fn]
+                diff += ['HTML DIFF: %s' % html_fn]
+                diff += difflib.context_diff(obtained_lines, expected_lines)
+                raise AssertionError('\n'.join(diff))
+
+
+    def _GenerateHTMLDiff(self, expected_fn, expected_lines, obtained_fn, obtained_lines):
+        """
+        Returns a nice side-by-side diff of the given files, as a string.
+
+        """
+        import difflib
+        differ = difflib.HtmlDiff()
+        return differ.make_file(
+            fromlines=expected_lines,
+            fromdesc=expected_fn,
+            tolines=obtained_lines,
+            todesc=obtained_fn,
+        )
 
 
 @pytest.fixture  # pylint: disable=E1101
