@@ -12,12 +12,13 @@ import pytest
 pytest_plugins = b'pytester'
 
 
-def testEmbedData(embed_data):
-    assert not os.path.isdir('data_fixtures__testEmbedData')
+def testEmbedData(embed_data, session_tmp_dir):
+    expected_dir = StandardizePath(os.path.join(session_tmp_dir, 'data_fixtures__testEmbedData'))
+    assert not os.path.isdir(expected_dir)
 
     embed_data.CreateDataDir()
 
-    assert os.path.isdir('data_fixtures__testEmbedData')
+    assert os.path.isdir(expected_dir)
 
     # Checking if all contents of pytest_fixtures is present
     assert os.path.isfile(embed_data.GetDataFilename('alpha.txt'))
@@ -25,13 +26,8 @@ def testEmbedData(embed_data):
     assert os.path.isfile(embed_data.GetDataFilename('alpha.dist-12.0.txt'))
 
     # Checking auxiliary functions
-    assert embed_data.GetDataDirectory() == 'data_fixtures__testEmbedData'
-    assert embed_data.GetDataFilename('alpha.txt') == 'data_fixtures__testEmbedData/alpha.txt'
-
-    assert embed_data.GetDataDirectory(absolute=True) \
-        == StandardizePath(os.path.abspath('data_fixtures__testEmbedData'))
-    assert embed_data.GetDataFilename('alpha.txt', absolute=True) \
-        == StandardizePath(os.path.abspath('data_fixtures__testEmbedData/alpha.txt'))
+    assert embed_data.GetDataDirectory() == expected_dir
+    assert embed_data.GetDataFilename('alpha.txt') == expected_dir + '/alpha.txt'
 
 
 @pytest.mark.parametrize(('foo',), [('a',), ('b',), ('c',)])
@@ -40,23 +36,11 @@ def testEmbedDataParametrize(embed_data, foo):
     asserts that we get unique data directories when mixing embed_data with pytest.mark.parametrize
     '''
     if foo == 'a':
-        assert embed_data.GetDataDirectory() == 'data_fixtures__testEmbedDataParametrize_foo0_'
+        assert os.path.basename(embed_data.GetDataDirectory()) == 'data_fixtures__testEmbedDataParametrize_foo0_'
     if foo == 'b':
-        assert embed_data.GetDataDirectory() == 'data_fixtures__testEmbedDataParametrize_foo1_'
+        assert os.path.basename(embed_data.GetDataDirectory()) == 'data_fixtures__testEmbedDataParametrize_foo1_'
     if foo == 'c':
-        assert embed_data.GetDataDirectory() == 'data_fixtures__testEmbedDataParametrize_foo2_'
-
-
-def testEmbedDataExistingDataDir(embed_data):
-    # Create the directory manually (we must not use any embed_data functions or else the
-    # directory is created)
-    extra_txt = 'data_fixtures__testEmbedDataExistingDataDir/extra.txt'
-    CreateFile(extra_txt, 'This file will perish')
-    assert os.path.isfile(extra_txt)
-
-    # Calling CreateDataDir again will recreate the directory, deleting the old file
-    embed_data.CreateDataDir()
-    assert not os.path.isfile(extra_txt)
+        assert os.path.basename(embed_data.GetDataDirectory()) == 'data_fixtures__testEmbedDataParametrize_foo2_'
 
 
 def testEmbedDataAssertEqualFiles(embed_data):
@@ -75,8 +59,9 @@ def testEmbedDataAssertEqualFiles(embed_data):
     assert unicode(e.value) == Dedent(
         '''
         FILES DIFFER:
-        data_fixtures__testEmbedDataAssertEqualFiles/alpha.txt
-        data_fixtures__testEmbedDataAssertEqualFiles/different.txt
+        {alpha}
+        {different}
+        HTML DIFF: {html}
         ***\w
 
         ---\w
@@ -89,7 +74,11 @@ def testEmbedDataAssertEqualFiles(embed_data):
         --- 1 ----
 
         ! This is different.txt
-        '''.replace('\w', ' ')
+        '''.replace('\w', ' ').format(
+            alpha=embed_data.GetDataFilename('alpha.txt'),
+            different=embed_data.GetDataFilename('different.txt'),
+            html=embed_data.GetDataFilename('alpha.diff.html'),
+        )
     )
 
 
@@ -102,23 +91,29 @@ def testEmbedDataAssertEqualFiles(embed_data):
     assert (
         unicode(e.value)
         == 'Files not found: '
-        'missing.txt,data_fixtures__testEmbedDataAssertEqualFiles/missing.txt'
+        'missing.txt,%s' % (embed_data.GetDataFilename('missing.txt'))
     )
 
 
-def testEmbedDataFixture(request):
-    assert os.path.isdir('data_fixtures__testEmbedDataFixture') == False
+def testEmbedDataFixture(testdir):
+    """
+    Test that embed_data files are kept around in the session tmp dir.
+    """
+    testdir.makeini('''
+        [pytest]
+        addopts = -p ben10.fixtures
+    ''')
+    testdir.makepyfile(test_foo='''
+        def test_foo(embed_data):
+            with open(embed_data['file.txt'], 'w') as f:
+                f.write('contents')
+    ''')
+    result = testdir.runpytest()
+    result.stdout.fnmatch_lines(['*1 passed*'])
 
-    try:
-        embed_data = _EmbedDataFixture(request)
-        assert os.path.isdir('data_fixtures__testEmbedDataFixture') == False
-
-        assert embed_data.GetDataDirectory() == 'data_fixtures__testEmbedDataFixture'
-        assert os.path.isdir('data_fixtures__testEmbedDataFixture') == True
-    finally:
-        embed_data.Finalizer()
-
-    assert os.path.isdir('data_fixtures__testEmbedDataFixture') == False
+    tmp_dir = testdir.tmpdir.join('tmp')
+    assert tmp_dir.exists()
+    assert tmp_dir.join('session-tmp-dir-0/data_foo__test_foo/file.txt').read() == 'contents'
 
 
 _invalid_chars_for_paths = os.sep + os.pathsep
@@ -329,5 +324,5 @@ def testSessionTmpDirXDist(testdir):
     result = testdir.inline_run('-n4')
     result.assertoutcome(passed=4)
     assert {'session-tmp-dir-0', 'session-tmp-dir-1'}.issubset(os.listdir(str(testdir.tmpdir.join('tmp'))))
-           
+
 

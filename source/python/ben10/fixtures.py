@@ -338,14 +338,15 @@ class _EmbedDataFixture(object):
     The contents of the directory is a copy of a 'data-directory' with the same name of the module
     (without the .py extension).
 
-    :ivar boolean delete_dir:
-        Determines if the data-directory is deleted at finalization. Default to True.
-        This may be used for debugging purposes to examine the data-directory as left by the test.
-        Remember that each test recreates the entire data directory.
+    This directory is created in the ``session_tmp_dir`` using the name of the module + name
+    of the test (for example "x:/ben10/tmp/session-tmp-dir-0/test_fixtures__testEmbedData").
+    Differently from our implementation in xUnit, the directory *IS NOT* deleted at the end of the
+    test, we rely on ``session_tmp_dir`` automatic cleanup for that. This is intentional as makes
+    it easy to consult the directories to get at generated images, diffs, etc.
     '''
 
-    def __init__(self, request):
-
+    def __init__(self, request, session_tmp_dir):
+        from ben10.filesystem import StandardizePath
         # @ivar _module_dir: unicode
         # The module name.
         import re
@@ -365,22 +366,15 @@ class _EmbedDataFixture(object):
         # The data directory name
         # This name is created based on the module_name
         # Adding the function name to enable parallel run of tests in the same module (pytest_xdist)
-        # Add compatibility for 'test_.*' and 'pytest_.*' (old naming standard)
-        self._data_dir = module_name.replace('pytest_', 'data_')
-        self._data_dir = module_name.replace('test_', 'data_')
-        self._data_dir += '__' + node_name
+        data_dir_basename = module_name.replace('test_', 'data_')
+        data_dir_basename += '__' + node_name
+        self._data_dir = StandardizePath(os.path.join(session_tmp_dir, data_dir_basename))
 
         # @ivar _created: boolean
         # Internal flag that controls whether we created the data-directory or not.
         # - False: Initial state. The data-directory was not created yet
         # - True: The directory was created. The directory is created lazily, that is, when needed.
         self._created = False
-
-        # @ivar _finalize: boolean
-        # Whether we have finalized.
-        self._finalized = False
-
-        self.delete_dir = True
 
 
     def CreateDataDir(self):
@@ -393,7 +387,6 @@ class _EmbedDataFixture(object):
         '''
         from ben10.filesystem import CopyDirectory, CreateDirectory, DeleteDirectory, IsDir
 
-        assert not self._finalized, "Oops. Finalizer has been called in the middle. Something is wrong."
         if self._created:
             return self._data_dir
 
@@ -412,17 +405,14 @@ class _EmbedDataFixture(object):
         return self._data_dir
 
 
-    def GetDataDirectory(self, absolute=False, create_dir=True):
+    def GetDataDirectory(self, create_dir=True):
         '''
-        :param bool absolute:
-            If True, returns the path as an abspath
-
         :param bool create_dir:
             If True (default) creates the data directory.
 
         :rtype: unicode
         :returns:
-            Returns the data-directory name.
+            Returns the absolute path to data-directory name to use, standardized by StandardizePath.
 
         @remarks:
             This method triggers the data-directory creation.
@@ -430,22 +420,15 @@ class _EmbedDataFixture(object):
         if create_dir:
             self.CreateDataDir()
 
-        if absolute:
-            from ben10.filesystem import StandardizePath
-            return StandardizePath(os.path.abspath(self._data_dir))
-
         return self._data_dir
 
 
-    def GetDataFilename(self, *parts, **kwargs):
+    def GetDataFilename(self, *parts):
         '''
-        Returns a full filename in the data-directory.
+        Returns an absolute filename in the data-directory (standardized by StandardizePath).
 
         @params parts: list(unicode)
             Path parts. Each part is joined to form a path.
-
-        :keyword bool absolute:
-            If True, returns the filename as an abspath
 
         :rtype: unicode
         :returns:
@@ -454,43 +437,29 @@ class _EmbedDataFixture(object):
         @remarks:
             This method triggers the data-directory creation.
         '''
+        from ben10.filesystem import StandardizePath
         # Make sure the data-dir exists.
         self.CreateDataDir()
 
         result = [self._data_dir] + list(parts)
         result = '/'.join(result)
+        return StandardizePath(result)
 
-        if 'absolute' in kwargs and kwargs['absolute']:
-            from ben10.filesystem import StandardizePath
-            result = StandardizePath(os.path.abspath(result))
-
-        return result
 
     def __getitem__(self, index):
         return self.GetDataFilename(index)
 
 
-    def Finalizer(self):
+    def AssertEqualFiles(self, obtained_fn, expected_fn, fix_callback=lambda x:x, binary=False, encoding=None):
         '''
-        Deletes the data-directory upon finalizing (see FixtureRequest.addfinalizer)
-        '''
-        from ben10.filesystem._filesystem import DeleteDirectory
-
-        if not UPDATE_ORIGINAL_FILES:
-            if self.delete_dir:
-                DeleteDirectory(self._data_dir, skip_on_error=True)
-        self._finalized = True
-
-
-    def AssertEqualFiles(self, filename1, filename2, fix_callback=lambda x:x, binary=False, encoding=None):
-        '''
-        Compare two files contents, showing a nice diff view if the files differs.
+        Compare two files contents. If the files differ, show the diff and write a nice HTML
+        diff file into the data directory.
 
         Searches for the filenames both inside and outside the data directory (in that order).
 
-        :param unicode filename1:
+        :param unicode obtained_fn: basename to obtained file into the data directory, or full path.
 
-        :param unicode filename2:
+        :param unicode expected_fn: basename to expected file into the data directory, or full path.
 
         :param bool binary:
             Thread both files as binary files.
@@ -503,13 +472,14 @@ class _EmbedDataFixture(object):
             A callback to "fix" the contents of the obtained (first) file.
             This callback receives a list of strings (lines) and must also return a list of lines,
             changed as needed.
-            The resulting lines will be used to compare with the contents of filename2.
+            The resulting lines will be used to compare with the contents of expected_fn.
 
         :param bool binary:
             .. seealso:: ben10.filesystem.GetFileContents
         '''
         __tracebackhide__ = True
         from ben10.filesystem import GetFileContents, GetFileLines
+        import io
 
         def FindFile(filename):
             # See if this path exists in the data dir
@@ -524,34 +494,54 @@ class _EmbedDataFixture(object):
             # If we didn't find anything, raise an error
             raise MultipleFilesNotFound([filename, data_filename])
 
-        filename1 = FindFile(filename1)
-        filename2 = FindFile(filename2)
+        obtained_fn = FindFile(obtained_fn)
+        expected_fn = FindFile(expected_fn)
 
         if binary:
-            obtained = GetFileContents(filename1, binary=True)
-            expected = GetFileContents(filename2, binary=True)
-            assert obtained == expected
+            obtained_lines = GetFileContents(obtained_fn, binary=True)
+            expected_lines = GetFileContents(expected_fn, binary=True)
+            assert obtained_lines == expected_lines
         else:
-            obtained = fix_callback(GetFileLines(filename1, encoding=encoding))
-            expected = GetFileLines(filename2, encoding=encoding)
+            obtained_lines = fix_callback(GetFileLines(obtained_fn, encoding=encoding))
+            expected_lines = GetFileLines(expected_fn, encoding=encoding)
 
-            if obtained != expected:
+            if obtained_lines != expected_lines:
+                html_fn = os.path.splitext(obtained_fn)[0] + '.diff.html'
+                html_diff = self._GenerateHTMLDiff(
+                    expected_fn, expected_lines, obtained_fn, obtained_lines)
+                with io.open(html_fn, 'w') as f:
+                    f.write(html_diff)
+
                 import difflib
-                diff = ['FILES DIFFER:', filename1, filename2]
-                diff += difflib.context_diff(obtained, expected)
-                diff = '\n'.join(diff)
-                raise AssertionError(diff)
+                diff = ['FILES DIFFER:', obtained_fn, expected_fn]
+                diff += ['HTML DIFF: %s' % html_fn]
+                diff += difflib.context_diff(obtained_lines, expected_lines)
+                raise AssertionError('\n'.join(diff))
+
+
+    def _GenerateHTMLDiff(self, expected_fn, expected_lines, obtained_fn, obtained_lines):
+        """
+        Returns a nice side-by-side diff of the given files, as a string.
+
+        """
+        import difflib
+        differ = difflib.HtmlDiff()
+        return differ.make_file(
+            fromlines=expected_lines,
+            fromdesc=expected_fn,
+            tolines=obtained_lines,
+            todesc=obtained_fn,
+        )
 
 
 @pytest.fixture  # pylint: disable=E1101
-def embed_data(request):  # pylint: disable=C0103
+def embed_data(request, session_tmp_dir):  # pylint: disable=C0103
     '''
     Create a temporary directory with input data for the test.
     The directory contents is copied from a directory with the same name as the module located in
     the same directory of the test module.
     '''
-    result = _EmbedDataFixture(request)
-    request.addfinalizer(result.Finalizer)
+    result = _EmbedDataFixture(request, session_tmp_dir)
     return result
 
 
@@ -806,7 +796,7 @@ def FileRegressionCheck(
         dump_ext = extension
         if basename is None:
             basename = re.sub("[\W]", "_", request.node.name)
-        filename = embed_data.GetDataFilename(basename, absolute=True) + dump_ext
+        filename = embed_data.GetDataFilename(basename) + dump_ext
         source_dir = embed_data._source_dir
         source_filename = os.path.join(source_dir, basename + dump_ext)
 
@@ -875,7 +865,6 @@ def CreateSessionTmpDir(config):
 
     # Use last session directory
     if config.getoption('last_session_tmp_dir', False):
-        last_session_tmp_dir = None
         last_session_tmp_dir = config.cache.get("session_tmp_dir/last_session_tmp_dir", None)
         if last_session_tmp_dir and os.path.exists(last_session_tmp_dir):
             return SetTmpDir(last_session_tmp_dir)

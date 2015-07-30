@@ -92,7 +92,7 @@ class Test:
     def testCwd(self, embed_data):
         current_dir = StandardizePath(os.getcwdu())
 
-        data_dir = embed_data.GetDataDirectory(absolute=True)
+        data_dir = embed_data.GetDataDirectory()
 
         assert StandardizePath(os.getcwdu()) == current_dir
         with Cwd(data_dir) as obtained_dir:
