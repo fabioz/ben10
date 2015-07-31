@@ -708,7 +708,7 @@ class Test:
         assert IsFile(filename_2) == False
         assert IsFile(first_temp_dir) == False
 
-        base_dir = embed_data.CreateDataDir()
+        base_dir = embed_data.GetDataDirectory()
         # When a base directory is specified the temp dir should be created there
         with CreateTemporaryDirectory(prefix='my_prefix', suffix='my_suffix', base_dir=base_dir) as first_temp_dir:
             assert os.path.isdir(first_temp_dir) == True

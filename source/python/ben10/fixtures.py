@@ -396,22 +396,8 @@ class _EmbedDataFixture(object):
         self._data_dir = StandardizePath(self._data_dir)
 
 
-    def CreateDataDir(self):
+    def GetDataDirectory(self):
         '''
-        Creates the data-directory as a copy of the source directory.
-
-        :rtype: unicode
-        :returns:
-            Path to created data dir
-        '''
-        return self._data_dir
-
-
-    def GetDataDirectory(self, create_dir=True):
-        '''
-        :param bool create_dir:
-            If True (default) creates the data directory.
-
         :rtype: unicode
         :returns:
             Returns the absolute path to data-directory name to use, standardized by StandardizePath.
@@ -419,9 +405,6 @@ class _EmbedDataFixture(object):
         @remarks:
             This method triggers the data-directory creation.
         '''
-        if create_dir:
-            self.CreateDataDir()
-
         return self._data_dir
 
 
@@ -440,9 +423,6 @@ class _EmbedDataFixture(object):
             This method triggers the data-directory creation.
         '''
         from ben10.filesystem import StandardizePath
-        # Make sure the data-dir exists.
-        self.CreateDataDir()
-
         result = [self._data_dir] + list(parts)
         result = '/'.join(result)
         return StandardizePath(result)
