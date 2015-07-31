@@ -44,11 +44,18 @@ class Ben10(EsssProject):
     NAMESPACE_VARIABLES = {
         '$PYTHON3PATH' : PATHLIST('`self.python_dir`'),
 
+        # "session-tmp-dir" fixture  declares some hooks that must be loaded with xdist,
+        # so it must be loaded during startup. Proper solution would be to move that
+        # fixture to its own plugin, but this will have to do for now
+        '$PYTEST_PLUGINS' : 'ben10.fixtures',
+
+
         '>tf' : 'python `self.working_dir`/scripts/tf.py',
 
         'cx_freeze_expected_missing' : LIST(
             ('numpy', 'ben10.foundation.types_'),  # Optional dependency
         )
+
     }
 
 
