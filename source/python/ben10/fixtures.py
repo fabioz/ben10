@@ -230,7 +230,9 @@ def pytest_configure(config):
     InstallFaultHandler(config)
     if IsMasterNode(config):
         CreateSessionTmpDir(config)
-    if config.pluginmanager.hasplugin('xdist'):
+    # 'xdist' is the name of plugin in usual environments. 'xdist.plugin' is the name in frozen
+    # executables.
+    if config.pluginmanager.hasplugin('xdist') or config.pluginmanager.hasplugin('xdist.plugin'):
         config.pluginmanager.register(_XDistTmpDirPlugin(), 'xdist-tmp-dir')
 
 
