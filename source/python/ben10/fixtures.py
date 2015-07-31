@@ -351,70 +351,53 @@ class _EmbedDataFixture(object):
     '''
 
     def __init__(self, request, session_tmp_dir):
-        from ben10.filesystem import StandardizePath
-        # @ivar _module_dir: unicode
-        # The module name.
+        from ben10.filesystem import CopyDirectory, StandardizePath
+        import errno
         import re
+
         module_name = request.module.__name__.split('.')[-1]
 
-        # Use node_name to support pytest.mark.parametrize, and replace all non-word chars with '_'
+        # source directory: same name as the name of the test's module
+        self._source_dir = request.fspath.dirname + '/' + module_name
+        if UPDATE_ORIGINAL_FILES:
+            self._data_dir = self._source_dir
+            return
+
+        # replace all non-word chars with '_' in the node name to support parametrize
         # Inspired by builtin 'tmpdir' fixture
         node_name = re.sub("[\W]", "_", request.node.name)
+        node_name = node_name[:50]
 
-        # @ivar _source_dir: unicode
-        # The source directory name.
-        # The contents of this directories populates the data-directory
-        # This name is create based on the module_name
-        self._source_dir = request.fspath.dirname + '/' + module_name
-
-        # @ivar _data_dir: unicode
-        # The data directory name
-        # This name is created based on the module_name
-        # Adding the function name to enable parallel run of tests in the same module (pytest_xdist)
+        # traditionally, we change the "test_" prefix to "data_"
         data_dir_basename = module_name.replace('test_', 'data_')
         data_dir_basename += '__' + node_name
-        self._data_dir = StandardizePath(os.path.join(session_tmp_dir, data_dir_basename))
 
-        # @ivar _created: boolean
-        # Internal flag that controls whether we created the data-directory or not.
-        # - False: Initial state. The data-directory was not created yet
-        # - True: The directory was created. The directory is created lazily, that is, when needed.
-        self._created = False
+        # ensure a unique directory, copying over the contents of the source directory if it exists
+        i = 1
+        basename = data_dir_basename
+        while True:
+            data_dir = os.path.join(session_tmp_dir, basename)
+            try:
+                if os.path.isdir(self._source_dir):
+                    CopyDirectory(self._source_dir, data_dir, override=False)
+                else:
+                    os.makedirs(data_dir)
+                self._data_dir = data_dir
+                break
+            except OSError as e:
+                if e.errno != errno.EEXIST:
+                    raise
+            basename = '{}-{}'.format(data_dir_basename, i)
+            i += 1
+            assert i < 999, 'give up trying to find unique dirs for: %s' % data_dir
+
+        # "standardize" the path: for some reason a lot of code on ben10' execute needs this to
+        # work.
+        self._data_dir = StandardizePath(self._data_dir)
 
 
-    def CreateDataDir(self):
+    def GetDataDirectory(self):
         '''
-        Creates the data-directory as a copy of the source directory.
-
-        :rtype: unicode
-        :returns:
-            Path to created data dir
-        '''
-        from ben10.filesystem import CopyDirectory, CreateDirectory, DeleteDirectory, IsDir
-
-        if self._created:
-            return self._data_dir
-
-        if os.path.isdir(self._data_dir):
-            DeleteDirectory(self._data_dir)
-
-        if IsDir(self._source_dir):
-            if UPDATE_ORIGINAL_FILES:
-                self._data_dir = self._source_dir
-            else:
-                CopyDirectory(self._source_dir, self._data_dir)
-        else:
-            CreateDirectory(self._data_dir)
-
-        self._created = True
-        return self._data_dir
-
-
-    def GetDataDirectory(self, create_dir=True):
-        '''
-        :param bool create_dir:
-            If True (default) creates the data directory.
-
         :rtype: unicode
         :returns:
             Returns the absolute path to data-directory name to use, standardized by StandardizePath.
@@ -422,9 +405,6 @@ class _EmbedDataFixture(object):
         @remarks:
             This method triggers the data-directory creation.
         '''
-        if create_dir:
-            self.CreateDataDir()
-
         return self._data_dir
 
 
@@ -443,9 +423,6 @@ class _EmbedDataFixture(object):
             This method triggers the data-directory creation.
         '''
         from ben10.filesystem import StandardizePath
-        # Make sure the data-dir exists.
-        self.CreateDataDir()
-
         result = [self._data_dir] + list(parts)
         result = '/'.join(result)
         return StandardizePath(result)
