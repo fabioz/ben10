@@ -387,7 +387,7 @@ class _EmbedDataFixture(object):
             except OSError as e:
                 if e.errno != errno.EEXIST:
                     raise
-            basename = data_dir_basename + unicode(i)
+            basename = '{}-{}'.format(data_dir_basename, i)
             i += 1
             assert i < 999, 'give up trying to find unique dirs for: %s' % data_dir
 

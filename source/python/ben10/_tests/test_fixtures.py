@@ -116,7 +116,7 @@ def testEmbedDataFixture(testdir):
 def testEmbedDataFixtureUnique(testdir):
     """
     Test that embed_data files always create a unique directory every time, even if a directory
-    with the same somehow already exists in the session-tmp-dir.
+    with the same name somehow already exists in the session-tmp-dir.
     """
     testdir.makeini('''
         [pytest]
@@ -142,7 +142,7 @@ def testEmbedDataFixtureUnique(testdir):
 
     session_dir = testdir.tmpdir.join('tmp/session-tmp-dir-0')
     dirs_created = [os.path.basename(unicode(x)) for x in session_dir.listdir()]
-    assert set(dirs_created) == {'data_m__test_foo', 'data_m__test_bar', 'data_m__test_bar1'}
+    assert set(dirs_created) == {'data_m__test_foo', 'data_m__test_bar', 'data_m__test_bar-1'}
 
 
 def testEmbedDataLongParametrize(testdir):
