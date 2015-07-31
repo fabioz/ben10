@@ -231,9 +231,11 @@ def pytest_configure(config):
     if IsMasterNode(config):
         CreateSessionTmpDir(config)
     # 'xdist' is the name of plugin in usual environments. 'xdist.plugin' is the name in frozen
-    # executables.
-    if config.pluginmanager.hasplugin('xdist') or config.pluginmanager.hasplugin('xdist.plugin'):
-        config.pluginmanager.register(_XDistTmpDirPlugin(), 'xdist-tmp-dir')
+    # executables: we require xdist otherwise some of the features on this module will not work
+    # properly
+    xdist = config.pluginmanager.hasplugin('xdist') or config.pluginmanager.hasplugin('xdist.plugin')
+    assert xdist, 'xdist plugin not available'
+    config.pluginmanager.register(_XDistTmpDirPlugin(), 'xdist-tmp-dir')
 
 
 def InstallFaultHandler(config):
