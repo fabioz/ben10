@@ -14,9 +14,6 @@ pytest_plugins = b'pytester'
 
 def testEmbedData(embed_data, session_tmp_dir):
     expected_dir = StandardizePath(os.path.join(session_tmp_dir, 'data_fixtures__testEmbedData'))
-    assert not os.path.isdir(expected_dir)
-
-    embed_data.CreateDataDir()
 
     assert os.path.isdir(expected_dir)
 
@@ -114,6 +111,65 @@ def testEmbedDataFixture(testdir):
     tmp_dir = testdir.tmpdir.join('tmp')
     assert tmp_dir.exists()
     assert tmp_dir.join('session-tmp-dir-0/data_foo__test_foo/file.txt').read() == 'contents'
+
+
+def testEmbedDataFixtureUnique(testdir):
+    """
+    Test that embed_data files always create a unique directory every time, even if a directory
+    with the same somehow already exists in the session-tmp-dir.
+    """
+    testdir.makeini('''
+        [pytest]
+        addopts = -p ben10.fixtures
+    ''')
+    testdir.makepyfile(test_m='''
+        import os
+
+        def test_foo(embed_data):
+            this_dir = embed_data.GetDataDirectory()
+            assert this_dir.endswith('_foo')
+            next_test_dir = this_dir.replace('_foo', '_bar')
+            os.mkdir(next_test_dir)
+
+        def test_bar(embed_data):
+            pass
+    ''')
+    result = testdir.runpytest('-v')
+    result.stdout.fnmatch_lines([
+        '*test_foo*PASSED',
+        '*test_bar*PASSED',
+    ])
+
+    session_dir = testdir.tmpdir.join('tmp/session-tmp-dir-0')
+    dirs_created = [os.path.basename(unicode(x)) for x in session_dir.listdir()]
+    assert set(dirs_created) == {'data_m__test_foo', 'data_m__test_bar', 'data_m__test_bar1'}
+
+
+def testEmbedDataLongParametrize(testdir):
+    """
+    Test that embed_data successfully truncates and generates unique directories for tests
+    with long parametrization parameters.
+    """
+    testdir.makeini('''
+        [pytest]
+        addopts = -p ben10.fixtures
+    ''')
+    testdir.makepyfile(test_m='''
+        import os
+        import pytest
+
+        xx = b'x' * 1000
+        yy = b'y' * 1000
+
+        # two parameters have the same prefix up until the first 1000 chars
+        @pytest.mark.parametrize('v', [xx + xx, xx + yy])
+        def test_foo(embed_data, v):
+            assert os.listdir(embed_data.GetDataDirectory()) == []
+            with open(embed_data['foo.txt'], 'w'):
+                pass
+    ''')
+    result = testdir.runpytest()
+    result.stdout.fnmatch_lines(['*2 passed*'])
 
 
 _invalid_chars_for_paths = os.sep + os.pathsep
