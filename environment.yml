@@ -55,3 +55,4 @@ environment:
   # Git needs us to set this
   - HOME: "%HOMEDRIVE%\\%HOMEPATH%"
   {% endif %}
+  - PYTEST_PLUGINS: ben10.fixtures
