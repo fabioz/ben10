@@ -239,6 +239,27 @@ class Test:
         assert d[my_hash2] is my_hash2
 
 
+    def testBunchClassmethod(self):
+
+        class Point(Bunch):
+            x = 0.0
+            y = 0.0
+
+            @classmethod
+            def Create(cls, x, y):
+                return cls(x=x, y=y)
+
+            @staticmethod
+            def Sum(x, y):
+                return x + y
+
+        assert Point.Create(1.0, 2.0) == Point(x=1.0, y=2.0)
+
+        p = Point.Create(1.0, 2.0)
+        assert unicode(p) == 'Point(x=1.0, y=2.0)'
+
+
+
 # TODO: BEN-18: Improve coverage.
 #       Not executed on tests, might as well be commented. Create a test for it.
 #     def probeBunchMemory(self):

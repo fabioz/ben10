@@ -386,7 +386,7 @@ def testLocalImports(monkeypatch, embed_data):
         )
 
     import sys
-    sys_path = [embed_data.GetDataFilename('testLocalImports', absolute=True)] + sys.path[:]
+    sys_path = [embed_data.GetDataFilename('testLocalImports')] + sys.path[:]
     with PushPop(sys, 'path', sys_path):
         TestIt('__init__')
         TestIt('_yankee')

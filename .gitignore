@@ -1,5 +1,7 @@
 *.pickle
 *.pyc
+*.swp
+*.*~
 .coverage
 /.cache/
 /.idea/

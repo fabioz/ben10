@@ -16,8 +16,6 @@ import sys
 class Test:
 
     def testProfile(self, embed_data):
-        embed_data.CreateDataDir()
-
         test_filename = embed_data.GetDataFilename('test.prof')
         test3_filename = embed_data.GetDataFilename('test3.prof')
 

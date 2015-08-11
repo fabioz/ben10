@@ -95,7 +95,7 @@ class Git(Singleton):
             **kwargs
         )
 
-        # TODO: EDEN-245: Refactor System.Execute and derivates (git, scons, etc)
+        # TODO: BEN-31: Refactor System.Execute and derivates (git, scons, etc)
         if clean_eol:
             output_joiner = '\n'
         else:

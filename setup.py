@@ -19,13 +19,13 @@ class PyTest(TestCommand):
 
     def run_tests(self):
         import pytest
-        errno = pytest.main(['source'] + self.pytest_args)
+        errno = pytest.main(['source/python'] + self.pytest_args)
         sys.exit(errno)
 
 
 setup(
     name='ben10',
-    version='0.1.1',
+    version='0.2.0',
 
     author='Alexandre Andrade',
     author_email='ama@esss.com.br',
@@ -43,7 +43,7 @@ This is a draft effort to publish a Open Source library with our base code, deve
         #   3 - Alpha
         #   4 - Beta
         #   5 - Production/Stable
-        'Development Status :: 3 - Alpha',
+        'Development Status :: 4 - Beta',
 
         # Indicate who your project is intended for
         'Intended Audience :: Developers',
@@ -64,22 +64,27 @@ This is a draft effort to publish a Open Source library with our base code, deve
     packages=find_packages('source/python'),
 
     install_requires=[
+        'cogapp',
         'colorama',
-        'cov_core',
+        'cov-core',
         'coverage',
         'faulthandler',
         'ftputil',
+        'funcsigs',
+        'mock',
+        'path.py',
         'py',
         'pyftpdlib',
+        'pytest',
+        'pytest-cache',
         'pytest-cov',
         'pytest-localserver',
         'pytest-timeout',
         'pytest-xdist',
-        'pytest',
         'rarfile',
         'ruamel.ordereddict',
+        'six',
         'wheel',
-        'mock',
     ],
     cmdclass={'test': PyTest},
 )

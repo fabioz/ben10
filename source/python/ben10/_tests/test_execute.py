@@ -101,7 +101,7 @@ class Test(object):
     def testExecuteBat(self, embed_data):
 
         def DoTest(slash):
-            python_filename = os.path.normcase(embed_data.GetDataFilename('testExecute.py_', absolute=True))
+            python_filename = os.path.normcase(embed_data.GetDataFilename('testExecute.py_'))
             cmd_filename = embed_data.GetDataDirectory() + slash + 'testExecute.bat'
             self._AssertExecute(
                 Dedent(
@@ -264,11 +264,6 @@ class Test(object):
             'testPythonExecuteAndEnviron: BRAVO: bravo',
             'testPythonExecuteAndEnviron: PYTHONIOENCODING: %s' % DEFAULT_ENCODING,
         ]
-
-        if 'TRAVIS_BUILD_DIR' in os.environ:
-            expected_output.append(
-                os.path.expandvars('testPythonExecuteAndEnviron: PYTHONPATH: $TRAVIS_BUILD_DIR/source/python')
-            )
 
         if sys.platform != 'win32' and b'LD_LIBRARY_PATH' in os.environ:
             expected_output.append(

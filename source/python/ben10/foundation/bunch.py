@@ -14,6 +14,27 @@ import copy
 
 
 #===================================================================================================
+# _IsBunchAttribute
+#===================================================================================================
+def _IsBunchAttribute(name, value):
+    '''
+    Returns whether the given combination of attribute name and value classifies it as a bunch
+    attribute.
+
+    :param str name: The attribute name.
+    :param object value: The attribute itself.
+    :return boolean:
+    '''
+    import inspect
+
+    result = name.startswith('__') \
+        or inspect.isfunction(value) \
+        or type(value) in (classmethod, staticmethod, property)
+    return not result
+
+
+
+#===================================================================================================
 # MetaBunch
 #===================================================================================================
 class MetaBunch(type):
@@ -38,7 +59,6 @@ class MetaBunch(type):
             where __slots__ are taken into account.
         '''
         from types import NoneType
-        import inspect
 
         # define as local functions the __init__ and __repr__ that we'll
         # use in the new class
@@ -110,10 +130,7 @@ class MetaBunch(type):
         from weak_ref import WeakList
 
         for k, value in classdict.iteritems():
-            if k.startswith('__') or inspect.isfunction(value) or type(value) is property:
-                # methods: copy to newdict
-                newdict[k] = value
-            else:
+            if _IsBunchAttribute(k ,value):
                 # class variables, store name in __slots__ and name and
                 # value as an item in __defaults__
 
@@ -139,6 +156,9 @@ class MetaBunch(type):
 
                 newdict['__slots__'].append(k)
                 newdict['__defaults__'][k] = (value, copy_op)
+            else:
+                # methods: copy to newdict
+                newdict[k] = value
 
         # finally delegate the rest of the work to type.__new__
         return type.__new__(cls, classname, bases, newdict)
@@ -175,7 +195,6 @@ class MetaHashableBunch(MetaBunch):
 
     @Override(MetaBunch.__new__)
     def __new__(cls, classname, bases, classdict):
-        import inspect
 
         def __init__(self, **kw):
             '''
@@ -212,10 +231,7 @@ class MetaHashableBunch(MetaBunch):
         )
 
         for k, value in classdict.iteritems():
-            if k.startswith('__') or inspect.isfunction(value):
-                # methods: copy to newdict
-                newdict[k] = value
-            else:
+            if _IsBunchAttribute(k, value):
                 # put the attribute using the private name
                 private_k = '_' + k
                 newdict[private_k] = value
@@ -224,6 +240,9 @@ class MetaHashableBunch(MetaBunch):
                 # get method itself is not put into the class namespace, only the property itself
                 get_func = cls._MakeGetter(private_k)
                 newdict[k] = property(get_func)
+            else:
+                # methods: copy to newdict
+                newdict[k] = value
 
 
         result = MetaBunch.__new__(cls, classname, bases, newdict)
@@ -299,5 +318,3 @@ def ConvertToDict(bunch):
         result[key] = getattr(bunch, key)
 
     return result
-
-

@@ -294,7 +294,7 @@ def Execute(
             popen.stdin.close()
 
         if popen.stdout:
-            # TODO: EDEN-245: Refactor System.Execute and derivates (git, scons, etc)
+            # TODO: BEN-31: Refactor System.Execute and derivates (git, scons, etc)
             if clean_eol:  # Read one line at the time, and remove EOLs
                 for line in iter(popen.stdout.readline, b""):
                     line = line.rstrip(b'\n\r')
@@ -806,10 +806,6 @@ def ExecutePython(
     # Make sure we have LD_LIBRARY_PATH in the user-given environ on linux.
     if sys.platform != 'win32' and environ is not None:
         environ.setdefault('LD_LIBRARY_PATH', COPY_FROM_ENVIRONMENT)
-
-    # TODO: BEN-70: Find a better way to find ben10's python dir on travis-ci.
-    if 'TRAVIS_BUILD_DIR' in os.environ:
-        extra_environ['PYTHONPATH'] = os.path.expandvars(b'$TRAVIS_BUILD_DIR/source/python')
 
     return GetSubprocessOutput(
         command_line,

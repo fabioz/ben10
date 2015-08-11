@@ -13,6 +13,8 @@ pytest-cov
 pytest-localserver
 pytest-timeout
 pytest-xdist
+pytest-cache
+pyyaml
 rarfile
 ruamel.ordereddict
 wheel
