@@ -20,7 +20,6 @@ dependencies:
   - mock==1.0.1
   - path.py==7.3
   - pyftpdlib==1.4.0
-  - pyopenssl==0.15.1
   - pytest==2.7.0
   - pytest-cache==1.0
   - pytest-cov==1.8.1
@@ -36,9 +35,11 @@ dependencies:
 
   {% if os.sys.platform != 'win32' %}
   - unrar==5.2.7
+  - pyopenssl==0.15.1
   {% else %}
   - gnuwin32=0.6.3
   - openssl=1.0.0e
+  - pyopenssl==0.13.1 # Copied from dist, not the same version as unix
   - pywin32==217
   {% endif %}
 
