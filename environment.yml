@@ -50,10 +50,6 @@ environment:
   - LD_LIBRARY_PATH:
     - $CONDA_ENV_PATH/lib
   {% else %}
-  - PATH:
-    - "%CONDA_ENV_PATH%\\Library\\lib"
-
-  # Git needs us to set this
-  - HOME: "%HOMEDRIVE%\\%HOMEPATH%"
+  - HOME: "%HOMEDRIVE%\\%HOMEPATH%" # Git needs us to set this
   {% endif %}
   - PYTEST_PLUGINS: ben10.fixtures
