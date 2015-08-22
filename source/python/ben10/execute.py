@@ -485,6 +485,23 @@ def GetSubprocessOutput(
     return output, retcode
 
 
+def GetSubprocessOutputChecked(command_line, *args, **kwargs):
+    """
+    Same parameters as GetSubprocessOutput() except that it will raise an exception if the
+    caller raises an error, otherwise it returns just the output of the call.
+
+    Similar to what subprocess.check_call is to subprocess.call.
+
+    :rtype: unicode
+    :return: the output of the process
+
+    :raise subprocess.CalledProcessError: if the command returned non-zero status.
+    """
+    output, returncode = GetSubprocessOutput(command_line, *args, **kwargs)
+    if returncode != 0:
+        raise subprocess.CalledProcessError(returncode=returncode, cmd=command_line, output=output)
+    return output
+
 
 def ProcessOpen(
         command_line,
