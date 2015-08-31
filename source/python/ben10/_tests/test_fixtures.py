@@ -1,10 +1,12 @@
 from __future__ import unicode_literals
+from ben10 import filesystem
 from ben10.filesystem import CreateFile, StandardizePath
-from ben10.fixtures import InstallFaultHandler, MultipleFilesNotFound, _EmbedDataFixture
+from ben10.fixtures import InstallFaultHandler, MultipleFilesNotFound
 from ben10.foundation import handle_exception
 from ben10.foundation.handle_exception import IgnoringHandleException
 from ben10.foundation.string import Dedent
 import faulthandler
+import io
 import os
 import pytest
 
@@ -382,3 +384,59 @@ def testSessionTmpDirXDist(testdir):
     assert {'session-tmp-dir-0', 'session-tmp-dir-1'}.issubset(os.listdir(str(testdir.tmpdir.join('tmp'))))
 
 
+def testFakeTr(testdir, embed_data):
+    testdir.makeini('''
+        [pytest]
+        addopts = -p ben10.fixtures
+    ''')
+
+    foo_ts = embed_data['foo.ts']
+    bar_ts = embed_data['bar.ts']
+    source = '''
+        def test_foo(fake_tr):
+            fake_tr.SetRelativeLocation(None)
+            fake_tr.AddTranslations('{}')
+            fake_tr.AddTranslations('{}')
+
+            assert tr('foo') == 'translated foo'
+            assert tr('bar') == 'translated bar'
+    '''.format(foo_ts, bar_ts)
+
+    test_file = testdir.makepyfile(test_file=source)
+
+    with io.open(foo_ts, 'w', encoding='utf-8') as foo_ts_file:
+        foo_ts_file.write('''\
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE TS>
+<TS version="2.0" language="en_US">
+<context>
+    <name>test_file</name>
+    <message>
+        <location filename="{}" line="42"/>
+        <source>foo</source>
+        <translation>translated foo</translation>
+    </message>
+</context>
+</TS>
+'''.format(filesystem.StandardizePath(str(test_file)))
+        )
+
+    with io.open(bar_ts, 'w', encoding='utf-8') as foo_ts_file:
+        foo_ts_file.write('''\
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE TS>
+<TS version="2.0" language="en_US">
+<context>
+    <name>test_file</name>
+    <message>
+        <location filename="{}" line="42"/>
+        <source>bar</source>
+        <translation>translated bar</translation>
+    </message>
+</context>
+</TS>
+'''.format(filesystem.StandardizePath(str(test_file)))
+        )
+
+    result = testdir.inline_run()
+    result.assertoutcome(passed=1)

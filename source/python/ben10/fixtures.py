@@ -886,3 +886,116 @@ def IsMasterNode(config):
     node or not running xdist at all.
     """
     return not IsSlaveNode(config)
+
+
+# ==================================================================================================
+# FakeTrFixture
+# ==================================================================================================
+@pytest.fixture
+def fake_tr(mocker):
+    """
+    Fixture that replaces `tr` method used to translate messages by an implementation that only
+    is able to translate messages contained in explicitly added Qt translation files.
+
+    This method aids tests that want to translate messages but are localized at points where Qt
+    is not included in environment. This weird scenario happens because currently our translation
+    files are all in Qt format, even for libraries without Qt as dependency.
+
+    :type mocker: MockTest
+    """
+    fake_tr_ = FakeTrFixture()
+    # Translations files are located at the root of python path of each project.
+    fake_tr_.SetRelativeLocation('/python/')
+
+    import __builtin__
+    mocker.patch.object(__builtin__, 'tr', fake_tr_)
+
+    return fake_tr_
+
+
+class FakeTrFixture(object):
+    """
+    Implementation of `fake_tr` fixture.
+    """
+
+    def __init__(self):
+        # {context: {location: {source: translation}}}
+        self._translations = {}
+        self._relative_location = None
+
+    def SetRelativeLocation(self, path):
+        """
+        Changes location of translation calls to be relative to first match
+        of given path, using a reverse search.
+
+        :param unicode path: A full or partial path.
+        """
+        self._relative_location = path
+
+    def AddTranslations(self, locale_filename):
+        """
+        Add _translations in file to list of known translated messages.
+
+        :param unicode locale_filename: A translation file (.ts extension).
+        """
+        import xml.etree.ElementTree as ET
+        locale_file = ET.parse(locale_filename)
+        root = locale_file.getroot()
+
+        translations = self._translations
+        for context_node in root.getchildren():
+            name_node = context_node.find('name')
+            context_name = name_node.text
+
+            messages = translations.setdefault(context_name, {})
+            for message_node in context_node.findall('message'):
+                source_node = message_node.find('source')
+                source = source_node.text
+
+                location_node = message_node.find('location')
+                location = location_node.get('filename')
+
+                translation_node = message_node.find('translation')
+                translation = translation_node.text
+
+                locations = messages.setdefault(location, {})
+                # If missing translation it is going to simply return source value
+                locations[source] = translation or source
+
+    def GetTranslation(self, context, location, source):
+        """
+        :param unicode context: Context of message.
+        :param unicode location: File where message is located.
+        :param unicode source: Message to be translated.
+        """
+        context_ = self._translations[context]
+        location_ = context_[location]
+        return unicode(location_[source])
+
+    def __call__(self, text, context=None):
+        from os.path import basename, splitext
+        import sys
+
+        if not text:
+            return text
+
+        # get the calling filename
+        f = sys._getframe(1)
+        try:
+            filename = f.f_code.co_filename
+        finally:
+            del f
+
+        if context is None:
+            # extract directory and extension
+            context = basename(splitext(filename)[0])
+
+        from ben10 import filesystem
+        location = filesystem.StandardizePath(filename)
+
+        if self._relative_location is not None:
+            relative_index = location.rfind(self._relative_location)
+            assert relative_index != -1
+            location = location[relative_index + len(self._relative_location):]
+
+        return self.GetTranslation(context, location, text)
