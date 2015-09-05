@@ -185,7 +185,7 @@ def handled_exceptions():
                 handle_exception.HandleException()
 
         # Check that they're there...
-        handled_exceptions = handled_exceptions.GetHandledExceptions()
+        assert len(handled_exceptions.GetHandledExceptions()) == 1
 
         # Clear them
         handled_exceptions.ClearHandledExceptions()
