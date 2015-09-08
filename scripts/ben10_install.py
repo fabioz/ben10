@@ -13,6 +13,7 @@ class Ben10InstallCommand(BaseInstallCommand):
 
     @Override(BaseInstallCommand.Install)
     def Install(self, command_line_args):
+        self.InstallConstantsGenerated()
         self.InstallCog('`self.python_dir`/ben10')
 
 

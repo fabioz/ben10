@@ -2,6 +2,7 @@
 *.pyc
 *.swp
 *.*~
+*_generated.py
 .coverage
 /.cache/
 /.idea/
