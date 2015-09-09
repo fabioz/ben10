@@ -288,11 +288,11 @@ class Test(object):
         command_line = [sys.executable, embed_data.GetDataFilename('testHelloExitOne.py_')]
         with pytest.raises(subprocess.CalledProcessError) as exc_info:
             GetSubprocessOutputChecked(command_line)
-        assert StripDebugRefs(exc_info.value.output.strip()) == 'Hello, world!'
+        assert StripDebugRefs(exc_info.value.output).strip() == 'Hello, world!'
         assert exc_info.value.returncode == 1
         assert exc_info.value.cmd == command_line
 
 
     def testGetSubprocessOutputCheckedSuccess(self, embed_data):
         command_line = [sys.executable, embed_data.GetDataFilename('testPythonExecute.py_')]
-        assert StripDebugRefs(GetSubprocessOutputChecked(command_line).strip()) == "testPythonExecute: Hello, world!"
+        assert StripDebugRefs(GetSubprocessOutputChecked(command_line)).strip() == "testPythonExecute: Hello, world!"
