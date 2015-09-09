@@ -4,6 +4,7 @@ from ben10.execute import (DEFAULT_ENCODING, EnvironmentContextManager, Execute,
     ExecutePython, GetSubprocessOutput, GetSubprocessOutputChecked, PrintEnvironment)
 from ben10.foundation.exceptions import ExceptionToUnicode
 from ben10.foundation.string import Dedent
+from coilib50.debug import StripDebugRefs
 from txtout.txtout import TextOutput
 import io
 import mock
@@ -287,11 +288,11 @@ class Test(object):
         command_line = [sys.executable, embed_data.GetDataFilename('testHelloExitOne.py_')]
         with pytest.raises(subprocess.CalledProcessError) as exc_info:
             GetSubprocessOutputChecked(command_line)
-        assert exc_info.value.output.strip() == 'Hello, world!'
+        assert StripDebugRefs(exc_info.value.output.strip()) == 'Hello, world!'
         assert exc_info.value.returncode == 1
         assert exc_info.value.cmd == command_line
 
 
     def testGetSubprocessOutputCheckedSuccess(self, embed_data):
         command_line = [sys.executable, embed_data.GetDataFilename('testPythonExecute.py_')]
-        assert GetSubprocessOutputChecked(command_line).strip() == "testPythonExecute: Hello, world!"
+        assert StripDebugRefs(GetSubprocessOutputChecked(command_line).strip()) == "testPythonExecute: Hello, world!"
