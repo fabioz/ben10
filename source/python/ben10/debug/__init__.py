@@ -29,6 +29,7 @@ def StripDebugRefs(text, end_only=True):
     :rtype: str
     :return: stripped text
     """
+    import re
     if IsPythonDebug():
         pattern = r'(\[\d+ refs\]\n?)'
         if end_only:
