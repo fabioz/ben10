@@ -1,10 +1,10 @@
 # coding: UTF-8
 from __future__ import unicode_literals
+from ben10.debug import StripDebugRefs
 from ben10.execute import (DEFAULT_ENCODING, EnvironmentContextManager, Execute, ExecuteNoWait,
     ExecutePython, GetSubprocessOutput, GetSubprocessOutputChecked, PrintEnvironment)
 from ben10.foundation.exceptions import ExceptionToUnicode
 from ben10.foundation.string import Dedent
-from coilib50.debug import StripDebugRefs
 from txtout.txtout import TextOutput
 import io
 import mock
