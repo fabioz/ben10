@@ -49,7 +49,5 @@ environment:
   {% if os.sys.platform != 'win32' %}
   - LD_LIBRARY_PATH:
     - $CONDA_ENV_PATH/lib
-  {% else %}
-  - HOME: "%HOMEDRIVE%\\%HOMEPATH%" # Git needs us to set this
   {% endif %}
   - PYTEST_PLUGINS: ben10.fixtures
