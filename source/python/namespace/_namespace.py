@@ -19,15 +19,6 @@ class InvalidNamespaceKeyName(RuntimeError):
         RuntimeError.__init__(self, 'Invalid namespace key name "%s"' % namespace_key)
 
 
-#===================================================================================================
-# UnknowFlagError
-#===================================================================================================
-class UnknowFlagError(Exception):
-    '''
-    Error associated with the use of a flag that has not been previously declared
-    '''
-
-
 
 #===================================================================================================
 # NamespaceKeyError
@@ -986,25 +977,6 @@ class Namespace(object):
         self._declared_flags[name] = description
 
 
-    def CheckFlagsDeclared(self, flags):
-        '''
-        Checks if all given flags are declared, raising an error if any of them aren't.
-
-        :param list(unicode) flags:
-            List of flags. Also handles "not" flags.
-            Ex.
-                The following checks both "win32" and "linux" flags.
-                CheckFlagsDeclared( ['win32', ' ! linux'] )
-
-        :raises UnknowFlagError:
-            Raises if one of the given flags are not dclared
-        '''
-        for i_flag in flags:
-            i_flag = i_flag.strip('!')
-            if i_flag not in self._declared_flags:
-                raise UnknowFlagError(i_flag)
-
-
     def EvaluateFlags(self, flags):
         '''
         :param unicode flags:
@@ -1023,7 +995,6 @@ class Namespace(object):
             return True
 
         flags, _name = Flags.SplitNamespaceKey(namespace_key)
-        self.CheckFlagsDeclared(flags)
 
         flags = Flags.CreateFromFlags(flags)
         match_points = flags.MatchPointsForFlags(match_flags)
