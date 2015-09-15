@@ -92,7 +92,6 @@ class Platform(object):
             if value not in valid_values:
                 raise ValueError("Value %r not valid. Valid ones are: %s" % (value, valid_values))
 
-        _AssertValidValue(name, self._VALID_NAMES)
         _AssertValidValue(bits, self._VALID_BITS)
         _AssertValidValue(debug, self._VALID_DEBUG)
 
