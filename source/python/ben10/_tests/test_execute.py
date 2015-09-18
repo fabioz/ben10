@@ -1,5 +1,6 @@
 # coding: UTF-8
 from __future__ import unicode_literals
+from ben10.debug import StripDebugRefs
 from ben10.execute import (DEFAULT_ENCODING, EnvironmentContextManager, Execute, ExecuteNoWait,
     ExecutePython, GetSubprocessOutput, GetSubprocessOutputChecked, PrintEnvironment)
 from ben10.foundation.exceptions import ExceptionToUnicode
@@ -136,22 +137,6 @@ class Test(object):
         )
 
 
-    def testExecuteAndEnviron(self, embed_data):
-        self._AssertExecute(
-            Dedent(
-                '''
-                    testExecuteAndEnviron: ALPHA: alpha
-                    testExecuteAndEnviron: BRAVO: bravo
-                '''
-            ),
-            ['python', embed_data.GetDataFilename('testExecuteAndEnviron.py_')],
-            environ={
-                'ALPHA' : 'alpha',
-                'BRAVO' : 'bravo',
-            },
-        )
-
-
     @pytest.mark.slow
     def testExecuteNoWait(self, embed_data):
         text_filename = embed_data['testExecuteNoWait.txt']
@@ -256,42 +241,15 @@ class Test(object):
         assert obtained_output == 'testPythonExecute: Hello, world!\n'
 
 
-    def testPythonExecuteAndEnviron(self, embed_data):
-
-        # Fill the expected output, which may vary depending on the environment variables available.
-        expected_output = [
-            'testPythonExecuteAndEnviron: ALPHA: alpha',
-            'testPythonExecuteAndEnviron: BRAVO: bravo',
-            'testPythonExecuteAndEnviron: PYTHONIOENCODING: %s' % DEFAULT_ENCODING,
-        ]
-
-        if sys.platform != 'win32' and b'LD_LIBRARY_PATH' in os.environ:
-            expected_output.append(
-                'testPythonExecuteAndEnviron: LD_LIBRARY_PATH: %s' % os.environ[b'LD_LIBRARY_PATH']
-            )
-
-        expected_output = '\n'.join(sorted(expected_output)) + '\n'
-
-        obtained_output, retcode = ExecutePython(
-            embed_data.GetDataFilename('testPythonExecuteAndEnviron.py_'),
-            environ={
-                'ALPHA' : 'alpha',
-                'BRAVO' : 'bravo',
-            },
-        )
-
-        assert obtained_output == expected_output
-
-
     def testGetSubprocessOutputCheckedNonZero(self, embed_data):
         command_line = [sys.executable, embed_data.GetDataFilename('testHelloExitOne.py_')]
         with pytest.raises(subprocess.CalledProcessError) as exc_info:
             GetSubprocessOutputChecked(command_line)
-        assert exc_info.value.output.strip() == 'Hello, world!'
+        assert StripDebugRefs(exc_info.value.output, end_only=False).strip() == 'Hello, world!'
         assert exc_info.value.returncode == 1
         assert exc_info.value.cmd == command_line
 
 
     def testGetSubprocessOutputCheckedSuccess(self, embed_data):
         command_line = [sys.executable, embed_data.GetDataFilename('testPythonExecute.py_')]
-        assert GetSubprocessOutputChecked(command_line).strip() == "testPythonExecute: Hello, world!"
+        assert StripDebugRefs(GetSubprocessOutputChecked(command_line), end_only=False).strip() == "testPythonExecute: Hello, world!"

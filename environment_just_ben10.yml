@@ -1,0 +1,52 @@
+# This file was separated from environment.yml because there are some projects that use ben10, but not aasimar
+
+name: ben10
+
+dependencies:
+  - cogapp==2.4
+  - colorama==0.3.3
+  - cov-core==1.15.0
+  - coverage==3.7.1
+  - desktop==0.4.2
+  - execnet==1.2
+  - faulthandler==2.3
+  - ftputil==3.2
+  - futures==2.2.0
+  - git
+  - gprof2dot==2015.02.03
+  - logilab-astng==0.24.3
+  - logilab-common==0.60.0
+  - mock==1.0.1
+  - path.py==7.3
+  - pyftpdlib==1.4.0
+  - pytest==2.7.0
+  - pytest-cache==1.0
+  - pytest-cov==1.8.1
+  - pytest-localserver==0.3.3
+  - pytest-timeout==0.4
+  - pytest-xdist==1.12
+  - python==2.7.7
+  - pyyaml==3.11
+  - rarfile==2.7
+  - ruamel.ordereddict==0.4.6
+  - setuptools==12.2
+  - werkzeug==0.10.4
+
+  {% if os.sys.platform != 'win32' %}
+  - unrar==5.2.7
+  - pyopenssl==0.15.1
+  {% else %}
+  - gnuwin32=0.6.3
+  - openssl=1.0.0e
+  - pyopenssl==0.13.1 # Copied from dist, not the same version as unix
+  - pywin32==217
+  {% endif %}
+
+environment:
+  - PYTHONPATH:
+    - {{ os.path.join(root, 'source', 'python') }}
+  {% if os.sys.platform != 'win32' %}
+  - LD_LIBRARY_PATH:
+    - $CONDA_ENV_PATH/lib
+  {% endif %}
+  - PYTEST_PLUGINS: ben10.fixtures

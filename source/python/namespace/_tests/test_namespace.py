@@ -1,7 +1,7 @@
 from __future__ import unicode_literals
 from io import StringIO
 from namespace import (CantFindBestMatchException, InvalidNamespaceKeyName, Namespace,
-    NamespaceKeyError, NamespaceValue, UnknowFlagError)
+    NamespaceKeyError, NamespaceValue)
 from namespace.namespace_types import LIST, MergedTypesDontMatchException, PATH, PATHLIST, STRING
 import os
 import pytest
@@ -416,8 +416,6 @@ class Test(object):
         assert ns.EvaluateFlags('win32')
         assert ns.EvaluateFlags('win32:other_flag')
         assert not ns.EvaluateFlags('!win32')
-        with pytest.raises(UnknowFlagError):
-            ns.EvaluateFlags('rubles')
 
 
     def testCreateFromNamespaceKey(self):
