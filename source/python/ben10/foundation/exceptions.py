@@ -1,5 +1,6 @@
 from __future__ import unicode_literals
 import locale
+import six
 
 
 

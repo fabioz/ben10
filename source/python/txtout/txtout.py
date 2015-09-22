@@ -1,4 +1,5 @@
 from __future__ import unicode_literals
+from __future__ import print_function
 from ben10.foundation.types_ import CheckType
 import os
 import sys
@@ -280,12 +281,12 @@ class TextOutput(AbstractTextOutput):
         '''
         Set the output stream for the given one.
         '''
-        import color_stream
+        from .color_stream import ColorStream
 
         if stream is None:
             stream = sys.stdout
 
-        self._oss = color_stream.ColorStream(stream, force_console=force_console, verbose=verbose)
+        self._oss = ColorStream(stream, force_console=force_console, verbose=verbose)
 
         if force_console or self._oss.IsConsole():
             self.flat_output = False
@@ -786,12 +787,12 @@ class TextOutput(AbstractTextOutput):
 
             self._HandleBottomMargin(kargs)
 
-        except Exception, e:
-            print '*' * 80
-            print 'Major failure: Error while handling an exception'
-            print '-' * 80
-            print e
-            print '*' * 80
+        except Exception as e:
+            print('*' * 80)
+            print('Major failure: Error while handling an exception')
+            print('-' * 80)
+            print(e)
+            print('*' * 80)
             raise
 
 

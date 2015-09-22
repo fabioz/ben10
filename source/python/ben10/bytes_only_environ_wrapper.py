@@ -1,6 +1,7 @@
 from __future__ import unicode_literals
 import locale
 import os
+import six
 
 
 
@@ -130,10 +131,11 @@ class BytesOnlyEnvironWrapper():
 
 
     def __setitem__(self, key, item):
-        if isinstance(key, unicode):
-            key = key.encode(self._local_encoding)
-        if isinstance(item, unicode):
-            item = item.encode(self._local_encoding)
+        if six.PY2:
+            if isinstance(key, six.text_type):
+                key = key.encode(self._local_encoding)
+            if isinstance(item, six.text_type):
+                item = item.encode(self._local_encoding)
         return self.original_environ.__setitem__(key, item)
 
 

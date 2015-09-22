@@ -2,6 +2,7 @@ from __future__ import unicode_literals
 from .console import BufferedConsole
 from collections import OrderedDict
 import re
+import six
 
 
 
@@ -172,10 +173,12 @@ class Command:
             By default uses the function name converted to "command style".
             If not None, uses only the names from this argument, ignoring the function name.
         '''
+        import six
+
         self.func = func
         if names is None:
             self.names = [func.__name__]  # default to function name
-        elif isinstance(names, unicode):
+        elif isinstance(names, six.text_type):
             self.names = [names]  # a single name
         else:
             self.names = names  # already a list
@@ -218,10 +221,10 @@ class Command:
         description, long_description, arg_descriptions = self._ParseDocString(self.func.__doc__ or '')
         self.description = description or '(no description)'
         self.long_description = long_description or '(no description)'
-        for i_arg, i_description in arg_descriptions.iteritems():
+        for i_arg, i_description in six.iteritems(arg_descriptions):
             try:
                 self.args[i_arg].description = i_description
-            except KeyError, e:
+            except KeyError as e:
                 raise RuntimeError('%s: argument not found for documentation entry.' % unicode(e))
 
 
@@ -321,7 +324,7 @@ class Command:
 
         :param parser: argparse.ArgumentParser
         '''
-        for i_arg in self.args.itervalues():
+        for i_arg in six.itervalues(self.args):
             i_arg.ConfigureArgumentParser(parser)
 
 
@@ -340,7 +343,7 @@ class Command:
         '''
         args = []
         finalizers = []
-        for i_arg in self.args.itervalues():
+        for i_arg in six.itervalues(self.args):
             if i_arg.arg_type == i_arg.ARG_TYPE_FIXTURE:
                 try:
                     fixture, finalizer = fixtures[i_arg.name]

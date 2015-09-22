@@ -4,6 +4,9 @@ from __future__ import unicode_literals
         ama@esss.com.br
         fabioz@esss.com.br
 '''
+import six
+
+
 
 # Custom cache for optimization purposes.
 __bases_cache = {}
@@ -61,7 +64,7 @@ def IsSubclass(p_class, p_class_name):
     '''
     isins = isinstance  # put it in locals
 
-    if isins(p_class_name, unicode):
+    if isins(p_class_name, six.text_type):
         if p_class_name == p_class.__name__:
             return True
 
@@ -73,7 +76,7 @@ def IsSubclass(p_class, p_class_name):
             return p_class_name in names
 
 
-    elif isins(p_class_name, tuple) and len(p_class_name) > 0 and isins(p_class_name[0], unicode) :
+    elif isins(p_class_name, tuple) and len(p_class_name) > 0 and isins(p_class_name[0], six.text_type) :
 
         names = None
 

@@ -4,7 +4,6 @@ from ben10.foundation.reraise import Reraise
 from ben10.foundation.string import SafeSplit
 from ben10.foundation.types_ import CheckType
 from ben10.foundation.uname import GetExecutableDir
-from cStringIO import StringIO
 from multiprocessing.process import current_process
 from txtout.txtout import TextOutput
 import locale
@@ -12,6 +11,7 @@ import os
 import shlex
 import subprocess
 import sys
+import six
 
 
 
@@ -155,8 +155,8 @@ class EnvironmentContextManager(object):
             if self._change_sys_path:
                 sys.path += os.environ.get('PYTHONPATH', '').split(os.pathsep)
 
-        except Exception, e:
-            stream = StringIO()
+        except Exception as e:
+            stream = six.StringIO()
             oss = TextOutput(stream)
             PrintEnvironment(self._new_environ, oss)
             Reraise(e, 'While entering an EnvironmentContextManager with:%s' % stream.getvalue())
@@ -287,7 +287,7 @@ def Execute(
             if input:
                 try:
                     popen.stdin.write(input)
-                except IOError, e:
+                except IOError as e:
                     import errno
                     if e.errno != errno.EPIPE and e.errno != errno.EINVAL:
                         raise
@@ -429,7 +429,7 @@ def ExecuteNoWait(
 
     try:
         return subprocess.Popen(command_line, **kwargs)
-    except Exception, e:
+    except Exception as e:
         Reraise(
             e,
             'SystemSharedScript.ExecuteNoWait:\n'
@@ -568,12 +568,12 @@ def ProcessOpen(
     locale_encoding = locale.getpreferredencoding()
 
     def CmdLineStr(cmd_line):
-        if isinstance(cmd_line, unicode):
+        if isinstance(cmd_line, six.text_type):
             return '    ' + cmd_line
         return '    ' + '\n    '.join(cmd_line)
 
     def EncodeWithLocale(value):
-        if isinstance(value, unicode):
+        if isinstance(value, six.text_type):
             return value.encode(locale_encoding)
         if isinstance(value, list):
             return [x.encode(locale_encoding) for x in value]
@@ -587,15 +587,16 @@ def ProcessOpen(
     def EnvStr(env):
         result = ''
         for i, j in sorted(env.items()):
-            i = i.decode('utf-8')
-            j = j.decode('utf-8')
+            if six.PY2:
+                i = i.decode('utf-8')
+                j = j.decode('utf-8')
             if os.sep in j:
                 j = '\n    * ' + '\n    * '.join(sorted(j.split(os.pathsep)))
             result += '  - %s = %s\n' % (i, j)
         return result
 
     # We accept strings as the command_line.
-    is_string_command_line = isinstance(command_line, unicode)
+    is_string_command_line = isinstance(command_line, six.text_type)
 
     # Handle string/list command_list
     if ignore_auto_quote and not is_string_command_line:
@@ -637,11 +638,12 @@ def ProcessOpen(
             bufsize=0,
             shell=shell,
         )
-    except Exception, e:
+    except Exception as e:
         if isinstance(e, OSError):
             # Fix encoding from OSErrors. They also come in locale.getpreferredencoding()
             # It's hard to change error messages in OSErrors, so we raise something else.
-            e = RuntimeError(unicode(str(e), encoding=locale_encoding, errors='replace'))
+            if six.PY2:
+                e = RuntimeError(six.text_type(str(e), encoding=locale_encoding, errors='replace'))
 
         Reraise(
             e,
@@ -699,7 +701,6 @@ def _GetWindowsUnicodeArgv():
     :rtype: list(unicode)
         The sys.argv as unicode.
     '''
-
     from ctypes import POINTER, byref, c_int, cdll, windll
     from ctypes.wintypes import LPCWSTR, LPWSTR
 
@@ -717,8 +718,7 @@ def _GetWindowsUnicodeArgv():
     if argc.value > 0:
         # Remove Python executable and commands if present
         start = argc.value - len(sys.argv)
-        return [argv[i] for i in
-                xrange(start, argc.value)]
+        return [argv[i] for i in six.moves.xrange(start, argc.value)]
 
 
 def _GetLinuxUnicodeArgv():
@@ -767,7 +767,8 @@ def _GetEnviron(environ=None, extra_environ=None):
         environ.update(extra_environ)
 
     # subprocess does not accept unicode strings in the environment
-    environ = {bytes(key) : bytes(value) for key, value in environ.iteritems()}
+    if six.PY2:
+        environ = {bytes(key) : bytes(value) for key, value in six.iteritems(environ)}
 
     return environ
 

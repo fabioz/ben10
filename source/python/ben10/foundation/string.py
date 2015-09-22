@@ -2,6 +2,7 @@ from __future__ import unicode_literals
 '''
 Module for string manipulation functions
 '''
+import six
 
 
 
@@ -110,7 +111,7 @@ def Indent(text, indent=1, indentation='    '):
     indentation = indent * indentation
 
     lines = text
-    if isinstance(lines, unicode):
+    if isinstance(lines, six.text_type):
         append_eol = lines.endswith('\n')
         lines = lines.splitlines()
     else:

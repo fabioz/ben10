@@ -2,7 +2,6 @@ from __future__ import unicode_literals
 from ben10.foundation.decorators import Implements
 from types import LambdaType
 import inspect
-import new
 import weakref
 
 
@@ -121,7 +120,7 @@ class WeakList(object):
 #===================================================================================================
 # ReferenceError
 #===================================================================================================
-ReferenceError = weakref.ReferenceError
+#ReferenceError = weakref.ReferenceError
 
 
 
@@ -173,6 +172,8 @@ class WeakMethodRef(object):
             @return:
                 None if the original object doesn't exist anymore.
         '''
+        import new
+
         if self.is_dead():
             return None
         if self._obj is not None:

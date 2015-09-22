@@ -11,6 +11,7 @@ import locale
 import os
 import pytest
 import sys
+import six
 
 
 
@@ -572,7 +573,7 @@ class UnicodeSamples(object):
     """
     PURE_ASCII = 'action'
     LATIN_1 = 'ação'
-    FULL_LATIN_1 = b''.join(chr(i + 1) for i in xrange(255)).decode('latin-1')
+    FULL_LATIN_1 = b''.join(six.int2byte(i + 1) for i in six.moves.range(255)).decode('latin-1')
     UNICODE = '動'
     UNICODE_MULTIPLE_LANGUAGES = UNICODE + '_ĂǜĵΜῆἄθΠηωχς пкת我。館來了。ώęăлտլმტკ सक 傷ทำ 森 ☃'
     UNICODE_PREFERRED_LOCALE = (LATIN_1 + UNICODE_MULTIPLE_LANGUAGES).encode(
@@ -815,7 +816,7 @@ def FileRegressionCheck(
 #===================================================================================================
 # Session Temporary Directory
 #===================================================================================================
-@pytest.fixture(scope=b'session')
+@pytest.fixture(scope='session')
 def session_tmp_dir(request):
     '''
     Creates a root directory to be used as a root directory for a pytest session.

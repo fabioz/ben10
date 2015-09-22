@@ -1,6 +1,6 @@
 from __future__ import unicode_literals
-from _callback_wrapper import _CallbackWrapper
-from _fast_callback import Callback
+from ._callback_wrapper import _CallbackWrapper
+from ._fast_callback import Callback
 from ben10.foundation.types_ import DevelopmentCheckType, Method
 from ben10.foundation.weak_ref import WeakMethodRef
 import weakref

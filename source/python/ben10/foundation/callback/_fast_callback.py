@@ -1,12 +1,14 @@
 from __future__ import unicode_literals
-from _callback_wrapper import _CallbackWrapper
+from ._callback_wrapper import _CallbackWrapper
 from ben10.foundation.is_frozen import IsDevelopment
 from ben10.foundation.odict import odict
 from ben10.foundation.reraise import Reraise
 import inspect
-import new
 import weakref
-
+try:
+    import new
+except ImportError:
+    import types as new
 
 
 #===================================================================================================
@@ -155,20 +157,20 @@ class Callback(object):
             for func, extra_args in to_call:
                 try:
                     func(*extra_args + args, **kwargs)
-                except Exception, e:
-                    from _callback import ErrorNotHandledInCallback
+                except Exception as e:
+                    from ._callback import ErrorNotHandledInCallback
                     #Note that if some error shouldn't really be handled here, clients can raise
                     #a subclass of ErrorNotHandledInCallback
                     if isinstance(e, ErrorNotHandledInCallback):
                         Reraise(e, 'Error while trying to call %r' % func)
                     else:
-                        from _callback import HandleErrorOnCallback
+                        from ._callback import HandleErrorOnCallback
                         HandleErrorOnCallback(func, *extra_args + args, **kwargs)
         else:
             for func, extra_args in to_call:
                 try:
                     func(*extra_args + args, **kwargs)
-                except Exception, e:
+                except Exception as e:
                     Reraise(e, 'Error while trying to call %r' % func)
 
 

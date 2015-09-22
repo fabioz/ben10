@@ -1,11 +1,12 @@
 from __future__ import unicode_literals
 from ben10.foundation.string import Dedent
 from .command import Command
-import ConfigParser
+from six.moves.configparser import SafeConfigParser
 import argparse
 import os
 import sys
 import types
+import six
 
 
 
@@ -136,14 +137,14 @@ class ConfPlugin():
         Implements IClikitPlugin.GetFixtures
         '''
 
-        class MyConfigParser(ConfigParser.SafeConfigParser):
+        class MyConfigParser(SafeConfigParser):
             '''
             Adds:
             * Filename, so it can "Save" the configuration file.
             '''
 
             def __init__(self, filename):
-                ConfigParser.SafeConfigParser.__init__(self)
+                SafeConfigParser.__init__(self)
                 self.filename = filename
                 self.read(self.filename)
 
@@ -182,10 +183,10 @@ class ConfPlugin():
             conf = MyConfigParser(filename)
 
             # Set the defaults in the object with the values from conf_default.
-            for section, options in self.conf_defaults.iteritems():
+            for section, options in six.iteritems(self.conf_defaults):
                 if not conf.has_section(section):
                     conf.add_section(section)
-                for name, value in options.iteritems():
+                for name, value in six.iteritems(options):
                     if not conf.has_option(section, name):
                         conf.set(section, name, unicode(value))
 
@@ -316,10 +317,12 @@ class App(object):
             :param funcion func:
             :param list(unicode) alias:
             '''
+            import six
+
             result = [self.ConvertToCommandName(name or func.__name__)]
             if alias is None:
                 alias = []
-            elif isinstance(alias, types.StringTypes):
+            elif isinstance(alias, six.string_types):
                 alias = [alias]
             else:
                 alias = list(alias)
@@ -474,14 +477,14 @@ class App(object):
         result = {
             'argv_' : (lambda:argv, lambda:None),
         }
-        for i_fixture_name, i_fixture_func in self.__custom_fixtures.iteritems():
+        for i_fixture_name, i_fixture_func in six.iteritems(self.__custom_fixtures):
             fixture, finalizer = GetFixtureAndFinalizer(i_fixture_func)
             result[i_fixture_name] = (fixture, finalizer)
-        for i_plugin in self.plugins.itervalues():
+        for i_plugin in six.itervalues(self.plugins):
             result.update(
                 {
                     i : (lambda:j, lambda:None)
-                    for (i,j) in i_plugin.GetFixtures().iteritems()
+                    for (i,j) in six.iteritems(i_plugin.GetFixtures())
                 }
             )
 
@@ -506,7 +509,7 @@ class App(object):
         opts, args = parser.parse_known_args(argv)
 
         # Give plugins change to handle options
-        for i_plugin in self.plugins.itervalues():
+        for i_plugin in six.itervalues(self.plugins):
             i_plugin.HandleOptions(opts.__dict__)
 
         # Print help for the available commands
@@ -539,7 +542,7 @@ class App(object):
                 self.console.PrintError('<red>ERROR: Too few arguments.</>', newlines=2)
                 self.PrintHelp(command)
                 return self.RETCODE_ERROR
-            except UnrecognizedArgumentsError, e:
+            except UnrecognizedArgumentsError as e:
                 self.console.PrintError('<red>ERROR: Unrecognized arguments: %s</>' % e.arguments, newlines=2)
                 self.PrintHelp(command)
                 return self.RETCODE_ERROR
@@ -559,7 +562,7 @@ class App(object):
             add_help=False,
         )
         r_parser.add_argument('--help', action='store_true', help='Help about a command')
-        for i_plugin in self.plugins.itervalues():
+        for i_plugin in six.itervalues(self.plugins):
             i_plugin.ConfigureOptions(r_parser)
         return r_parser
 

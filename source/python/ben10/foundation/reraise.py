@@ -2,6 +2,7 @@ from __future__ import unicode_literals
 '''
 Inspired by http://www.thescripts.com/forum/thread46361.html
 '''
+import six
 
 
 
@@ -70,7 +71,7 @@ def Reraise(exception, message, separator='\n'):
     exception.reraised_message = message
 
     # Reraise the exception with the EXTRA message information
-    raise exception, None, sys.exc_info()[-1]
+    six.reraise(exception, None, sys.exc_info()[-1])
 
 
 

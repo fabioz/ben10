@@ -201,14 +201,16 @@ def Comparable(cls):
             return NotImplemented('_cmpkey')
 
     def setter(cls, name, value):
+        # On python2 uses bytes (str), on python3 uses unicode (str)
+        name = str(name)
         value.__name__ = name
         setattr(cls, name, value)
 
-    setter(cls, b'__lt__', lambda s, o: _compare(s, o, lambda s,o: s < o))
-    setter(cls, b'__le__', lambda s, o: _compare(s, o, lambda s,o: s <= o))
-    setter(cls, b'__eq__', lambda s, o: _compare(s, o, lambda s,o: s == o))
-    setter(cls, b'__ge__', lambda s, o: _compare(s, o, lambda s,o: s >= o))
-    setter(cls, b'__gt__', lambda s, o: _compare(s, o, lambda s,o: s > o))
-    setter(cls, b'__ne__', lambda s, o: _compare(s, o, lambda s,o: s != o))
-    setter(cls, b'__hash__', lambda s: hash(s._cmpkey()))
+    setter(cls, '__lt__', lambda s, o: _compare(s, o, lambda s,o: s < o))
+    setter(cls, '__le__', lambda s, o: _compare(s, o, lambda s,o: s <= o))
+    setter(cls, '__eq__', lambda s, o: _compare(s, o, lambda s,o: s == o))
+    setter(cls, '__ge__', lambda s, o: _compare(s, o, lambda s,o: s >= o))
+    setter(cls, '__gt__', lambda s, o: _compare(s, o, lambda s,o: s > o))
+    setter(cls, '__ne__', lambda s, o: _compare(s, o, lambda s,o: s != o))
+    setter(cls, '__hash__', lambda s: hash(s._cmpkey()))
     return cls

@@ -5,6 +5,7 @@ import io
 import os
 import re
 import sys
+import six
 '''
 This module contains a selection of file related functions that can be used anywhere.
 
@@ -214,7 +215,7 @@ def CreateMD5(source_filename, target_filename=None):
     if target_filename is None:
         target_filename = source_filename + '.md5'
 
-    from urlparse import urlparse
+    from six.moves.urllib.parse import urlparse
     source_url = urlparse(source_filename)
 
     # Obtain MD5 hex
@@ -324,7 +325,7 @@ def _DoCopyFile(source_filename, target_filename, copy_symlink=True):
     :raises FileNotFoundError:
         If source_filename does not exist
     '''
-    from urlparse import urlparse
+    from six.moves.urllib.parse import urlparse
 
     source_url = urlparse(source_filename)
     target_url = urlparse(target_filename)
@@ -402,7 +403,7 @@ def _CopyFileLocal(source_filename, target_filename, copy_symlink=True):
 
             shutil.copyfile(source_filename, target_filename)
             shutil.copymode(source_filename, target_filename)
-    except Exception, e:
+    except Exception as e:
         Reraise(e, 'While executiong _filesystem._CopyFileLocal(%s, %s)' % (source_filename, target_filename))
 
 
@@ -552,7 +553,7 @@ def IsFile(path):
 
     .. seealso:: FTP LIMITATIONS at this module's doc for performance issues information
     '''
-    from urlparse import urlparse
+    from six.moves.urllib.parse import urlparse
     url = urlparse(path)
 
     if _UrlIsLocal(url):
@@ -630,7 +631,7 @@ def IsDir(directory):
 
     .. seealso:: FTP LIMITATIONS at this module's doc for performance issues information
     '''
-    from urlparse import urlparse
+    from six.moves.urllib.parse import urlparse
     directory_url = urlparse(directory)
 
     if _UrlIsLocal(directory_url):
@@ -655,7 +656,7 @@ def Exists(path):
 
     .. seealso:: FTP LIMITATIONS at this module's doc for performance issues information
     '''
-    from urlparse import urlparse
+    from six.moves.urllib.parse import urlparse
     path_url = urlparse(path)
 
     # Handle local
@@ -723,7 +724,7 @@ def DeleteFile(target_filename):
         elif IsDir(target_filename):
             from ._filesystem_exceptions import FileOnlyActionError
             raise FileOnlyActionError(target_filename)
-    except Exception, e:
+    except Exception as e:
         Reraise(e, 'While executing filesystem.DeleteFile(%s)' % (target_filename))
 
 
@@ -825,7 +826,7 @@ def MoveDirectory(source_dir, target_dir):
         from ._filesystem_exceptions import DirectoryAlreadyExistsError
         raise DirectoryAlreadyExistsError(target_dir)
 
-    from urlparse import urlparse
+    from six.moves.urllib.parse import urlparse
     source_url = urlparse(source_dir)
     target_url = urlparse(target_dir)
 
@@ -938,7 +939,7 @@ def OpenFile(filename, binary=False, newline=None, encoding=None):
 
     .. seealso:: FTP LIMITATIONS at this module's doc for performance issues information
     '''
-    from urlparse import urlparse
+    from six.moves.urllib.parse import urlparse
     filename_url = urlparse(filename)
 
     # Check if file is local
@@ -979,7 +980,7 @@ def ListFiles(directory):
 
     .. seealso:: FTP LIMITATIONS at this module's doc for performance issues information
     '''
-    from urlparse import urlparse
+    from six.moves.urllib.parse import urlparse
     directory_url = urlparse(directory)
 
     # Handle local
@@ -1080,10 +1081,10 @@ def CreateFile(filename, contents, eol_style=EOL_STYLE_NATIVE, create_dir=True, 
     '''
     # Lots of checks when writing binary files
     if binary:
-        if isinstance(contents, unicode):
+        if isinstance(contents, six.text_type):
             raise TypeError('contents must be str (bytes) when binary=True')
     else:
-        if not isinstance(contents, unicode):
+        if not isinstance(contents, six.text_type):
             raise TypeError('contents must be unicode when binary=False')
 
         # Replaces eol on each line by the given eol_style.
@@ -1101,7 +1102,7 @@ def CreateFile(filename, contents, eol_style=EOL_STYLE_NATIVE, create_dir=True, 
         if dirname:
             CreateDirectory(dirname)
 
-    from urlparse import urlparse
+    from six.moves.urllib.parse import urlparse
     filename_url = urlparse(filename)
 
     # Handle local
@@ -1163,8 +1164,7 @@ def CreateDirectory(directory):
 
     .. seealso:: FTP LIMITATIONS at this module's doc for performance issues information
     '''
-    from urlparse import urlparse
-
+    from six.moves.urllib.parse import urlparse
     directory_url = urlparse(directory)
 
     # Handle local
@@ -1488,7 +1488,7 @@ def CreateLink(target_path, link_path, override=True):
         import win32file
         try:
             win32file.CreateSymbolicLink(link_path, target_path, 1)
-        except Exception, e:
+        except Exception as e:
             Reraise(e, 'Creating link "%(link_path)s" pointing to "%(target_path)s"' % locals())
 
 
@@ -1595,7 +1595,7 @@ def _AssertIsLocal(path):
     :raises NotImplementedForRemotePathError:
         If the given path is not local
     '''
-    from urlparse import urlparse
+    from six.moves.urllib.parse import urlparse
     if not _UrlIsLocal(urlparse(path)):
         from ._filesystem_exceptions import NotImplementedForRemotePathError
         raise NotImplementedForRemotePathError

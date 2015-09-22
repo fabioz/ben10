@@ -5,6 +5,7 @@ The Console is a class that makes it easier to generate colored output.
 import os
 import re
 import sys
+import six
 
 
 
@@ -213,9 +214,9 @@ class Console(object):
             stream = self.__stdout
 
         if isinstance(message, (list, tuple)):
-            message = '\n'.join(map(unicode, message))
+            message = '\n'.join(map(six.text_type, message))
         else:
-            message = unicode(message)
+            message = six.text_type(message)
         if self.color:
             # `out` holds the stream of text we'll eventually output
             # `stack` is the currently applied color codes
@@ -261,7 +262,7 @@ class Console(object):
         text = Indent(out, indent=indent) + ('\n' * newlines)
 
         # Encode text to the target (console) encoding.
-        if isinstance(text, unicode) and (hasattr(stream, 'encoding') and stream.encoding is None):
+        if isinstance(text, six.text_type) and (hasattr(stream, 'encoding') and stream.encoding is None):
             text = text.encode('ascii', 'replace')
 
         if self.color and self.colorama:
@@ -277,7 +278,7 @@ class Console(object):
         '''
         Shortcut to Print using stderr.
         '''
-        message = unicode(message)
+        message = six.text_type(message)
         return self.Print(message, verbosity=0, newlines=newlines, indent=indent, stderr=True)
 
 

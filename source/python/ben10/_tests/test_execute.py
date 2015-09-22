@@ -13,6 +13,7 @@ import pytest
 import subprocess
 import sys
 import time
+import six
 
 
 
@@ -153,7 +154,7 @@ class Test(object):
             assert not os.path.isfile(text_filename)
 
             # Wait for the script create the file
-            for _i in xrange(50):
+            for _i in six.moves.range(50):
                 time.sleep(0.1)
                 if os.path.isfile(text_filename):
                     break
