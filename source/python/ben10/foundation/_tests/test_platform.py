@@ -40,9 +40,6 @@ class Test(object):
         assert p.GetMneumonic() == 'w64'
 
         with pytest.raises(ValueError):
-            p = Platform('INVALID', '32')
-
-        with pytest.raises(ValueError):
             p = Platform('win', 'INVALID')
 
         p = Platform('win', '32')
