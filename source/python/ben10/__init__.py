@@ -1,5 +1,7 @@
 from __future__ import unicode_literals
 from ben10.bytes_only_environ_wrapper import ReplaceEnvironWithWrapper
+import six
+
 #===================================================================================================
 # Placeholder for the "tr" function
 # The "tr" function is implemented by xgui20.translate
@@ -27,5 +29,4 @@ if not hasattr(builtins, 'tr'):
 # object to C++, which won't work with the wrapper object returned by io.open) use this to
 # communicate this intention
 builtins.builtin_open = open
-
 ReplaceEnvironWithWrapper()

@@ -262,7 +262,7 @@ class Console(object):
         text = Indent(out, indent=indent) + ('\n' * newlines)
 
         # Encode text to the target (console) encoding.
-        if isinstance(text, six.text_type) and (hasattr(stream, 'encoding') and stream.encoding is None):
+        if six.PY2 and isinstance(text, six.text_type) and (hasattr(stream, 'encoding') and stream.encoding is None):
             text = text.encode('ascii', 'replace')
 
         if self.color and self.colorama:
@@ -386,7 +386,7 @@ class BufferedConsole(Console):
         :param (1|2|3) verbosity:
         :param bool color:
         '''
-        from StringIO import StringIO
+        from six import StringIO
         self.__buffer = StringIO()
         Console.__init__(self, verbosity=verbosity, color=color, colorama=False, stdout=self.__buffer, stdin=stdin)
 
@@ -395,7 +395,7 @@ class BufferedConsole(Console):
         '''
         Returns the current value of the output buffer and resets it.
         '''
-        from StringIO import StringIO
+        from six import StringIO
 
         result = self.__buffer.getvalue()
 
