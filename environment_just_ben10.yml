@@ -25,7 +25,7 @@ dependencies:
   - pytest-localserver==0.3.3
   - pytest-timeout==0.4
   - pytest-xdist==1.12
-  - python==2.7.7
+  - python==2.7.10
   - pyyaml==3.11
   - rarfile==2.7
   - ruamel.ordereddict==0.4.6
