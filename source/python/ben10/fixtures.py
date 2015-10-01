@@ -714,9 +714,17 @@ class DataRegressionFixture(object):
             """Dump dict contents to the given filename"""
             import yaml
             with io.open(filename, 'wb') as f:
-                yaml.safe_dump(
-                    data_dict,
+                # The most definitive way to get rid of YAML aliases in the dump is to create
+                # an specialization that never allows aliases, as there isn't an argument that
+                # offers same guarantee (see http://pyyaml.org/ticket/91).
+                class NoAliasesDumper(yaml.SafeDumper):
+                    def ignore_aliases(self, data):
+                        return True
+
+                yaml.dump_all(
+                    [data_dict],
                     f,
+                    Dumper=NoAliasesDumper,
                     default_flow_style=False,
                     allow_unicode=True,
                     indent=2,

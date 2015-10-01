@@ -306,6 +306,78 @@ def testDataRegressionFixtureFullPath(testdir, tmpdir):
     result.assertoutcome(passed=1)
 
 
+def testDataRegressionFixtureNoAliases(testdir):
+    """
+    YAML standard supports aliases as can be seen here:
+    http://pyyaml.org/wiki/PyYAMLDocumentation#Aliases.
+
+    Even though this is a resourceful feature, data regression intends to be as human readable as
+    possible and it was deemed that YAML aliases make it harder for developers to understand
+    contents.
+
+    This test makes sure data regression never uses aliases when dumping expected file to YAML.
+
+    :type testdir: _pytest.pytester.TmpTestdir
+    """
+    testdir.makeini('''
+        [pytest]
+        addopts = -p ben10.fixtures
+    ''')
+
+    source = '''
+        def test(data_regression):
+            red = (255, 0, 0)
+            green = (0, 255, 0)
+            blue = (0, 0, 255)
+
+            contents = {
+                'color1': red,
+                'color2': green,
+                'color3': blue,
+                'color4': red,
+                'color5': green,
+                'color6': blue,
+            }
+            data_regression.Check(contents)
+    '''
+    testdir.makepyfile(test_file=source)
+
+    result = testdir.inline_run()
+    result.assertoutcome(failed=1)
+
+    with open(os.path.join(unicode(testdir.tmpdir), 'test_file', 'test.yml'), 'rb') as yaml_file:
+        yaml_file_contents = yaml_file.read()
+        assert yaml_file_contents == '''\
+color1:
+- 255
+- 0
+- 0
+color2:
+- 0
+- 255
+- 0
+color3:
+- 0
+- 0
+- 255
+color4:
+- 255
+- 0
+- 0
+color5:
+- 0
+- 255
+- 0
+color6:
+- 0
+- 0
+- 255
+'''
+
+    result = testdir.inline_run()
+    result.assertoutcome(passed=1)
+
+
 def testSessionTmpDir(testdir):
 
     testdir.makeini('''
