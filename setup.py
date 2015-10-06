@@ -81,6 +81,7 @@ This is a draft effort to publish a Open Source library with our base code, deve
         'pytest-localserver',
         'pytest-timeout',
         'pytest-xdist',
+        'pytest-mock',
         'rarfile',
         'ruamel.ordereddict',
         'six',

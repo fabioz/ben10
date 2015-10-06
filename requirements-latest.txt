@@ -18,3 +18,5 @@ pyyaml
 rarfile
 ruamel.ordereddict
 wheel
+mock
+pytest-mock
